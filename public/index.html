@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banner Generator</title>
+    <meta name="description" content="Generer annonsebannere i 3 størrelser fra ett bilde." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b1a'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='15' width='18' height='9' rx='1.5' fill='%23bfe3bf'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/banner.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- ============================ TOP BAR ============================ -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="28" height="28">
+            <rect width="32" height="32" rx="9" fill="currentColor" />
+            <rect x="7" y="8" width="18" height="5" rx="1.6" fill="#fff" />
+            <rect x="7" y="15" width="18" height="9" rx="1.6" fill="#bfe3bf" />
+          </svg>
+        </span>
+        <span class="brand__text"><strong>Banner</strong> Generator</span>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Visning">
+        <button class="tab is-active" data-tab="new" id="tab-new" role="tab" aria-selected="true" aria-controls="view-new">Ny banner</button>
+        <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1">
+          Historikk <span class="tab__count" id="historyCount" hidden>0</span>
+        </button>
+      </nav>
+
+      <div class="topbar__right">
+        <button class="iconbtn" id="openSettings" title="Innstillinger" aria-label="Innstillinger">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3.2" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- =========================== NY BANNER =========================== -->
+      <section class="view" id="view-new" role="tabpanel" aria-labelledby="tab-new" tabindex="0">
+        <div class="workspace">
+          <!-- ---------------------- LEFT: form ---------------------- -->
+          <form class="panel form" id="bannerForm" autocomplete="off" novalidate>
+            <div class="form__scroll">
+              <!-- Upload -->
+              <div class="field">
+                <label class="field__label">Bilde</label>
+                <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Last opp bilde">
+                  <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
+                  <div class="dropzone__empty" id="dropzoneEmpty">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <p><strong>Dra og slipp bilde her</strong><br />eller klikk for å laste opp</p>
+                    <span class="dropzone__hint">JPG · PNG · WEBP · AVIF · GIF — maks 10 MB</span>
+                  </div>
+                  <div class="dropzone__file" id="dropzoneFile" hidden>
+                    <div class="filemeta">
+                      <span class="filemeta__name" id="fileName">bilde.jpg</span>
+                      <span class="filemeta__size" id="fileSize">—</span>
+                    </div>
+                    <button type="button" class="btn-ghost btn-sm" id="removeImage">Fjern</button>
+                  </div>
+                </div>
+                <div class="urlrow">
+                  <span class="urlrow__or">eller hent fra lenke</span>
+                  <div class="urlrow__input">
+                    <input type="url" id="imageUrl" placeholder="Lim inn bildelenke (URL) — også AVIF" />
+                    <button type="button" class="btn-primary btn-sm" id="fetchUrlBtn">
+                      <span class="fetch-spinner" aria-hidden="true"></span>
+                      <span class="fetch-label">Hent</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crop / reposition -->
+              <div class="field" id="cropField" hidden>
+                <label class="field__label">
+                  Juster bildeposisjon <span class="field__hint">dra bildet for å beskjære</span>
+                </label>
+                <div class="crop" id="crop">
+                  <div class="crop__frame" id="cropFrame" title="Dra for å flytte">
+                    <img id="cropImg" alt="" draggable="false" />
+                    <span class="crop__tag">Dra for å beskjære</span>
+                    <span class="crop__ratio">Bildeområde · 580×330</span>
+                  </div>
+                </div>
+                <div class="sliders">
+                  <div class="slider">
+                    <span class="slider__icon" aria-hidden="true">⤢</span>
+                    <input type="range" id="zoom" min="0" max="30" value="0" aria-label="Zoom inn" />
+                    <output id="zoomOut">0%</output>
+                  </div>
+                  <div class="slider">
+                    <span class="slider__icon" aria-hidden="true">↔</span>
+                    <input type="range" id="posX" min="0" max="100" value="50" aria-label="Horisontal posisjon" />
+                    <output id="posXOut">50%</output>
+                  </div>
+                  <div class="slider">
+                    <span class="slider__icon" aria-hidden="true">↕</span>
+                    <input type="range" id="posY" min="0" max="100" value="50" aria-label="Vertikal posisjon" />
+                    <output id="posYOut">50%</output>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Text fields -->
+              <div class="field">
+                <label class="field__label" for="headline">
+                  Overskrift <span class="counter" id="headlineCount">0 / 120</span>
+                </label>
+                <textarea id="headline" rows="2" maxlength="120" placeholder="F.eks. Jonny vant 42 millioner – slik har han brukt pengene"></textarea>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="subtitle">
+                  Ingress <span class="field__hint">vises kun på ReadPeak</span>
+                  <span class="counter" id="subtitleCount">0 / 80</span>
+                </label>
+                <input type="text" id="subtitle" maxlength="80" placeholder="F.eks. Slik har han brukt pengene" />
+              </div>
+
+              <div class="field">
+                <label class="field__label">Tekststørrelse <span class="field__hint">overskrift &amp; ingress</span></label>
+                <div class="sizectrls">
+                  <div class="slider">
+                    <span class="slider__name">Overskrift</span>
+                    <input type="range" id="headlineScale" min="80" max="140" step="5" value="100" aria-label="Overskrift-størrelse" />
+                    <output id="headlineScaleOut">100%</output>
+                  </div>
+                  <div class="slider">
+                    <span class="slider__name">Ingress</span>
+                    <input type="range" id="subtitleScale" min="80" max="140" step="5" value="100" aria-label="Ingress-størrelse" />
+                    <output id="subtitleScaleOut">100%</output>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="brandLabel">Merkevare <span class="field__hint">ReadPeak-etikett</span></label>
+                <input type="text" id="brandLabel" maxlength="40" value="NORSK TIPPING" />
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="gameType">Spilltype</label>
+                <div class="select-wrap">
+                  <select id="gameType"></select>
+                </div>
+              </div>
+
+              <div class="field" id="customVinnerField" hidden>
+                <label class="field__label" for="customVinner">Egendefinert vinnersjanse</label>
+                <input type="text" id="customVinner" maxlength="120" placeholder="Vinnersjanse 1.premie 1:…" />
+              </div>
+
+              <div class="field">
+                <label class="field__label">Les mer-stil & farge <span class="field__hint">ReadPeak</span></label>
+                <div class="appearance">
+                  <div class="segmented" id="lesMerStyle" role="group" aria-label="Les mer-stil">
+                    <button type="button" class="seg is-active" data-val="button">Knapp</button>
+                    <button type="button" class="seg" data-val="text">Tekst</button>
+                  </div>
+                  <label class="colorpick" title="Farge på «Les mer» og «NORSK TIPPING»">
+                    <input type="color" id="accentColor" value="#000000" />
+                    <span class="colorpick__hex" id="accentHex">#000000</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="filename">Filnavn <span class="field__hint">uten filtype</span></label>
+                <input type="text" id="filename" maxlength="60" placeholder="rekdal-vikinglotto" />
+                <span class="field__preview" id="filenamePreview"></span>
+              </div>
+            </div>
+
+            <!-- Footer / generate -->
+            <div class="form__footer">
+              <button type="submit" class="btn-generate" id="generateBtn">
+                <span class="btn-generate__spinner" aria-hidden="true"></span>
+                <span class="btn-generate__label">Generer bannere · 3 størrelser</span>
+              </button>
+              <div class="result" id="result" hidden>
+                <svg class="result__check" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span class="result__text">Ferdig!</span>
+                <a class="btn-download" id="downloadLink" download>Last ned ZIP</a>
+              </div>
+            </div>
+          </form>
+
+          <!-- ---------------------- RIGHT: live previews ---------------------- -->
+          <div class="panel previews">
+            <div class="previews__head">
+              <h2>Forhåndsvisning</h2>
+              <span class="previews__note">Oppdateres mens du skriver — likt sluttresultatet</span>
+            </div>
+            <div class="previews__list">
+              <article class="pcard">
+                <header class="pcard__head"><span class="pcard__name">ReadPeak</span><span class="pcard__dim">308 × 380</span></header>
+                <div class="pcard__stage">
+                  <div class="preview-stage" style="--w:308;--h:380;--scale:0.8">
+                    <div class="preview-scaler"><div id="preview-readpeak" class="bn"></div></div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="pcard">
+                <header class="pcard__head"><span class="pcard__name">Desktop</span><span class="pcard__dim">580 × 500</span></header>
+                <div class="pcard__stage">
+                  <div class="preview-stage" style="--w:580;--h:500;--scale:0.58">
+                    <div class="preview-scaler"><div id="preview-desktop" class="bn"></div></div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="pcard">
+                <header class="pcard__head"><span class="pcard__name">Mobil</span><span class="pcard__dim">320 × 400</span></header>
+                <div class="pcard__stage">
+                  <div class="preview-stage" style="--w:320;--h:400;--scale:0.8">
+                    <div class="preview-scaler"><div id="preview-mobile" class="bn"></div></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================== HISTORIKK =========================== -->
+      <section class="view is-hidden" id="view-history" role="tabpanel" aria-labelledby="tab-history" tabindex="-1">
+        <div class="history">
+          <div class="history__head">
+            <h2>Historikk</h2>
+            <span class="history__sub">De siste 30 genererte pakkene</span>
+          </div>
+          <div class="history__grid" id="historyGrid"></div>
+          <div class="empty" id="historyEmpty" hidden>
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            <p>Ingen bannere generert ennå.</p>
+            <button class="btn-ghost" data-goto="new">Lag din første banner</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================ SETTINGS DRAWER ============================ -->
+    <div class="drawer-overlay" id="drawerOverlay" hidden></div>
+    <aside class="drawer" id="settingsDrawer" aria-hidden="true" inert aria-label="Innstillinger">
+      <header class="drawer__head">
+        <h2>Innstillinger</h2>
+        <button class="iconbtn" id="closeSettings" aria-label="Lukk">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </header>
+
+      <div class="drawer__body">
+        <section class="settings-group">
+          <h3>Spilltyper</h3>
+          <p class="settings-group__desc">Styrer «Vinnersjanse»-teksten. Tom verdi skjuler merket.</p>
+          <div class="presets" id="presetsList"></div>
+          <button type="button" class="btn-ghost btn-block" id="addPreset">+ Legg til ny</button>
+        </section>
+
+        <section class="settings-group">
+          <h3>Statiske merker</h3>
+          <div class="field">
+            <label class="field__label" for="setAnnonse">«Annonse»-tekst</label>
+            <input type="text" id="setAnnonse" maxlength="40" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="setAge">Aldersmerke-tekst <span class="field__hint">brukes hvis logo mangler</span></label>
+            <input type="text" id="setAge" maxlength="60" />
+          </div>
+          <div class="field">
+            <label class="field__label">Logo (18+ | Hjelpelinjen.no)</label>
+            <div class="logo-row">
+              <img id="logoPreview" class="logo-row__img" alt="Logo" src="assets/hjelpelinjen-logo.png" />
+              <label class="btn-ghost btn-sm logo-row__btn">
+                Bytt logo
+                <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp" hidden />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-group">
+          <h3>Eksport</h3>
+          <div class="field">
+            <label class="field__label" for="setQuality">Bildekvalitet <span class="counter" id="qualityOut">92</span></label>
+            <input type="range" id="setQuality" min="70" max="100" value="92" />
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" id="setTimestamp" />
+            <span>Inkluder tidsstempel i filnavn</span>
+          </label>
+        </section>
+      </div>
+
+      <footer class="drawer__foot">
+        <button type="button" class="btn-ghost" id="resetSettings">Tilbakestill</button>
+        <button type="button" class="btn-primary" id="saveSettings">Lagre innstillinger</button>
+      </footer>
+    </aside>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <footer class="appfoot">
+      <span class="appfoot__text">
+        Laget med hjerte, humor og altfor mye kaffe&nbsp;☕ av
+        <a class="appfoot__link" href="https://www.linkedin.com/in/abrahamceviz/" target="_blank" rel="noopener noreferrer"><strong>Abraham Ceviz</strong></a>.
+        Jeg håper jeg etterlater et lite, varmt minne hos dere – og at dere ikke glemmer meg
+        helt med det aller første.&nbsp;💚
+      </span>
+    </footer>
+
+    <script src="assets/banner.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

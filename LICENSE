@@ -1,0 +1,77 @@
+Banner Generator — Proprietary, Source-Available License
+Copyright (c) 2026 Abraham Ceviz. All rights reserved.
+
+The source code of this software ("the Software") is published openly for
+transparency, review, and educational purposes. Publishing the source does NOT
+place the Software in the public domain and does NOT grant any open-source
+redistribution rights. All intellectual-property and licensing rights in and to
+the Software are, and shall remain, the exclusive property of Abraham Ceviz
+("the Author").
+
+--------------------------------------------------------------------------------
+1. GRANT TO ABC NYHETER
+--------------------------------------------------------------------------------
+ABC Nyheter is granted a perpetual, worldwide, royalty-free, irrevocable, and
+non-exclusive right to use, run, host, deploy, copy, modify, adapt, and create
+derivative works of the Software for any of its own purposes — internal or
+commercial — without restriction and without any further permission from, or
+payment to, the Author. This grant explicitly permits ABC Nyheter to use the
+Software "as it wishes."
+
+--------------------------------------------------------------------------------
+2. PERMISSIONS FOR THE GENERAL PUBLIC
+--------------------------------------------------------------------------------
+Subject to the restrictions in Section 3, any other individual or organization
+("You") may:
+  (a) view, read, and study the source code;
+  (b) clone the repository and run the Software locally, in unmodified form,
+      solely for personal, non-commercial evaluation, testing, and learning.
+
+--------------------------------------------------------------------------------
+3. RESTRICTIONS
+--------------------------------------------------------------------------------
+Except for ABC Nyheter under Section 1, and except where required by mandatory
+applicable law, You may NOT, without the Author's prior written permission:
+  (a) sell, resell, sublicense, rent, lease, or otherwise commercialize the
+      Software, whether in its original form OR in any modified form;
+  (b) distribute, publish, or share modified versions of the Software;
+  (c) redistribute the Software as part of another product or service;
+  (d) use the Software, in whole or in part, to build or operate a product or
+      service that competes with the Software or with ABC Nyheter;
+  (e) remove, obscure, or alter this license, the copyright notices, or the
+      author attribution — including the visible credit to "Abraham Ceviz" and
+      the link to https://www.linkedin.com/in/abrahamceviz/ in the application's
+      user interface.
+
+In short: the code is open to read and to run locally, but it may not be sold,
+nor may modified copies be distributed or sold, by anyone other than the Author
+and ABC Nyheter.
+
+--------------------------------------------------------------------------------
+4. OWNERSHIP
+--------------------------------------------------------------------------------
+All rights not expressly granted in this license are reserved by the Author.
+Nothing in this license transfers ownership of the Software, or of any
+intellectual-property rights therein, to ABC Nyheter or to any other party.
+
+--------------------------------------------------------------------------------
+5. THIRD-PARTY COMPONENTS
+--------------------------------------------------------------------------------
+The Software depends on third-party open-source packages (e.g. Express,
+Puppeteer, Multer, Archiver) and bundles the Arimo font (Apache License 2.0).
+Those components remain under their respective licenses; this license governs
+only the original code authored for this project.
+
+--------------------------------------------------------------------------------
+6. NO WARRANTY
+--------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------------------
+For permissions beyond the scope of this license, contact the Author:
+Abraham Ceviz — https://www.linkedin.com/in/abrahamceviz/

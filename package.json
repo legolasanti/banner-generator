@@ -1,0 +1,24 @@
+{
+  "name": "banner-generator",
+  "version": "1.0.0",
+  "description": "Genererer annonsebannere i 3 størrelser (ReadPeak, Desktop, Mobil) fra ett bilde og noen tekstfelt. Erstatter manuell Canva-flyt.",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "archiver": "^6.0.1",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "puppeteer": "^21.11.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

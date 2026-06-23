@@ -1,0 +1,11 @@
+node_modules/
+uploads/*
+!uploads/.gitkeep
+history/*
+!history/.gitkeep
+.DS_Store
+npm-debug.log*
+*.log
+
+history.json
+settings.json
