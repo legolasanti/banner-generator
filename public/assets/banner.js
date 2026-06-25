@@ -91,10 +91,13 @@
   // Default is plain text (button only when explicitly requested).
   function ctaMarkup(data) {
     var accent = safeColor(data.accentColor, "#000000");
+    var size = Number(data.lesMerSize);
+    if (!isFinite(size)) size = 17;
+    size = Math.max(12, Math.min(28, size));
     if (data.lesMerStyle === "button") {
-      return '<span class="bn__cta" style="background:' + accent + '">Les mer</span>';
+      return '<span class="bn__cta" style="background:' + accent + ";font-size:" + size + 'px">Les mer</span>';
     }
-    return '<span class="bn__cta bn__cta--text" style="color:' + accent + '">Les mer</span>';
+    return '<span class="bn__cta bn__cta--text" style="color:' + accent + ";font-size:" + size + 'px">Les mer</span>';
   }
 
   function renderReadpeak(data) {
@@ -150,12 +153,23 @@
   function renderBanner(root, type, data) {
     if (!root) return;
     data = data || {};
-    root.className = "bn bn--" + type;
-    // Per-banner text-size multipliers (driven by the "Tekststørrelse" control).
-    var hl = Number(data.headlineScale);
+    var cls = "bn bn--" + type;
+    // Per-format headline scale (falls back to a legacy global, then 1).
+    var key =
+      type === "readpeak"
+        ? "headlineScaleReadpeak"
+        : type === "desktop"
+        ? "headlineScaleDesktop"
+        : "headlineScaleMobile";
+    var hl = Number(data[key]);
+    if (!isFinite(hl)) hl = Number(data.headlineScale);
     if (!isFinite(hl)) hl = 1;
     var st = Number(data.subtitleScale);
     if (!isFinite(st)) st = 1;
+    if (type === "readpeak" && !(data.subtitle && String(data.subtitle).trim())) {
+      cls += " bn--no-ingress";
+    }
+    root.className = cls;
     root.style.setProperty("--hl-scale", Math.max(0.5, Math.min(2, hl)));
     root.style.setProperty("--st-scale", Math.max(0.5, Math.min(2, st)));
     if (type === "readpeak") {

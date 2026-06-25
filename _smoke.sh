@@ -31,6 +31,7 @@ HTTP=$(curl -s -o "$TMP/out.zip" -w "%{http_code}" \
   -F "brandLabel=NORSK TIPPING" \
   -F "vinnersjanse=Vinnersjanse 1.premie 1:61 mill. per rekke" \
   -F "imagePositionX=40" -F "imagePositionY=30" \
+  -F "resolution=1" \
   -F "filename=Test Banner Æ Ø Å!!" -F "jpegQuality=92" \
   "http://localhost:$PORT/api/generate")
 [ "$HTTP" = "200" ] || { cat "$TMP/server.log"; fail "generate returned $HTTP"; }
@@ -55,6 +56,21 @@ check_dim "$(ls "$TMP/zip"/*mobile*.png)" 320 400
 echo "→ filename sanitized?"
 ls "$TMP/zip" | grep -q "test-banner-ae-o-a" || fail "filename not sanitized as expected"
 echo "  ✓ sanitized to test-banner-ae-o-a-*"
+
+echo "→ JPEG + 2× resolution"
+HTTP3=$(curl -s -o "$TMP/hq.zip" -w "%{http_code}" \
+  -F "image=@${TESTIMG};type=image/png" \
+  -F "headline=HQ test" -F "vinnersjanse=" \
+  -F "imagePositionX=50" -F "imagePositionY=50" \
+  -F "resolution=2" -F "format=jpeg" \
+  -F "filename=hq-test" \
+  "http://localhost:$PORT/api/generate")
+[ "$HTTP3" = "200" ] || fail "hq generate returned $HTTP3"
+unzip -o "$TMP/hq.zip" -d "$TMP/hq" >/dev/null || fail "hq zip invalid"
+ls "$TMP/hq"/*.jpg >/dev/null 2>&1 || fail "expected .jpg files for JPEG format"
+DW=$(sips -g pixelWidth "$(ls "$TMP/hq"/*desktop*.jpg)" | awk '/pixelWidth/{print $2}')
+[ "$DW" = "1160" ] || fail "2× desktop width is $DW, expected 1160"
+echo "  ✓ JPEG output, desktop = ${DW}px wide (2×)"
 
 echo "→ GET /api/history"
 HID=$(curl -fsS "http://localhost:$PORT/api/history" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s);if(!a.length)process.exit(2);console.log(a[0].id)})") || fail "history empty"

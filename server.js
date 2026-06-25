@@ -59,6 +59,7 @@ const DEFAULT_SETTINGS = {
   export: {
     jpegQuality: 92,
     includeTimestampInFilename: false,
+    format: "png", // default download format ("png" | "jpeg")
   },
 };
 
@@ -173,6 +174,7 @@ function normalizeSettings(raw) {
     if (raw.export && typeof raw.export === "object") {
       out.export.jpegQuality = Math.round(clampNumber(raw.export.jpegQuality, 70, 100, 92));
       out.export.includeTimestampInFilename = !!raw.export.includeTimestampInFilename;
+      out.export.format = raw.export.format === "jpeg" ? "jpeg" : "png";
     }
   }
   return out;
@@ -298,10 +300,15 @@ async function getBrowser() {
   return _launching;
 }
 
-async function renderBannerPng(spec, data, browser) {
+async function renderBannerPng(spec, data, browser, opts) {
+  opts = opts || {};
+  const dpr = clampNumber(opts.deviceScaleFactor, 1, 3, 2);
+  const isJpeg = opts.format === "jpeg";
   const page = await browser.newPage();
   try {
-    await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: 1 });
+    // deviceScaleFactor > 1 renders at higher resolution (crisper output);
+    // the screenshot pixel size becomes logical size × dpr.
+    await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: dpr });
     // Inject data BEFORE any script in the template runs.
     await page.evaluateOnNewDocument((d) => {
       window.__DATA__ = d;
@@ -313,18 +320,19 @@ async function renderBannerPng(spec, data, browser) {
     if (renderError) throw new Error("Template (" + spec.key + ") render error: " + renderError);
     // settle paint
     await new Promise((r) => setTimeout(r, 250));
-    const buffer = await page.screenshot({
-      type: "png",
+    const shot = {
+      type: isJpeg ? "jpeg" : "png",
       clip: { x: 0, y: 0, width: spec.width, height: spec.height },
       captureBeyondViewport: false,
-    });
-    return buffer;
+    };
+    if (isJpeg) shot.quality = Math.round(clampNumber(opts.jpegQuality, 70, 100, 92));
+    return await page.screenshot(shot);
   } finally {
     await page.close().catch(() => {});
   }
 }
 
-async function generateAllBuffers(data) {
+async function generateAllBuffers(data, opts) {
   // One retry for the whole batch if the browser died mid-render.
   let lastErr;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -332,7 +340,7 @@ async function generateAllBuffers(data) {
       const browser = await getBrowser();
       const out = {};
       for (const spec of SPECS) {
-        out[spec.key] = await renderBannerPng(spec, data, browser);
+        out[spec.key] = await renderBannerPng(spec, data, browser, opts);
       }
       return out;
     } catch (err) {
@@ -435,10 +443,18 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const imagePositionX = clampNumber(b.imagePositionX, 0, 100, 50);
     const imagePositionY = clampNumber(b.imagePositionY, 0, 100, 50);
     const imageZoom = clampNumber(b.imageZoom, 0, 30, 0);
-    const headlineScale = clampNumber(b.headlineScale, 0.5, 2, 1);
+    // Per-format headline scales (+ fallback to a legacy global headlineScale)
+    const legacyHl = clampNumber(b.headlineScale, 0.5, 2, 1);
+    const hlReadpeak = clampNumber(b.headlineScaleReadpeak, 0.5, 2, legacyHl);
+    const hlDesktop = clampNumber(b.headlineScaleDesktop, 0.5, 2, legacyHl);
+    const hlMobile = clampNumber(b.headlineScaleMobile, 0.5, 2, legacyHl);
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
+    const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
     const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#000000";
+    const resolution = clampNumber(b.resolution, 1, 3, 2);
+    const format = b.format === "jpeg" ? "jpeg" : b.format === "png" ? "png" : settings.export.format || "png";
+    const ext = format === "jpeg" ? "jpg" : "png";
     const baseName = sanitizeFilename(b.filename);
 
     const includeTs = settings.export.includeTimestampInFilename;
@@ -453,8 +469,11 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       imagePositionX,
       imagePositionY,
       imageZoom,
-      headlineScale,
+      headlineScaleReadpeak: hlReadpeak,
+      headlineScaleDesktop: hlDesktop,
+      headlineScaleMobile: hlMobile,
       subtitleScale,
+      lesMerSize,
       headline,
       subtitle,
       brandLabel,
@@ -467,7 +486,13 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     };
 
     // Serialize the heavy Puppeteer work.
-    const buffers = await enqueue(() => generateAllBuffers(data));
+    const buffers = await enqueue(() =>
+      generateAllBuffers(data, {
+        deviceScaleFactor: resolution,
+        format,
+        jpegQuality: settings.export.jpegQuality,
+      })
+    );
 
     // Persist to history/<id>/ — id carries a short random suffix so two
     // generations in the same millisecond with the same filename can't collide.
@@ -479,7 +504,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
 
     const files = {};
     for (const spec of SPECS) {
-      const fname = `${fileBase}-${spec.label}.png`;
+      const fname = `${fileBase}-${spec.label}.${ext}`;
       await fsp.writeFile(path.join(folderAbs, fname), buffers[spec.key]);
       files[spec.key] = fname;
     }

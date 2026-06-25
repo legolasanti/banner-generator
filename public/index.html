@@ -135,22 +135,6 @@
               </div>
 
               <div class="field">
-                <label class="field__label">Tekststørrelse <span class="field__hint">overskrift &amp; ingress</span></label>
-                <div class="sizectrls">
-                  <div class="slider">
-                    <span class="slider__name">Overskrift</span>
-                    <input type="range" id="headlineScale" min="80" max="140" step="5" value="100" aria-label="Overskrift-størrelse" />
-                    <output id="headlineScaleOut">100%</output>
-                  </div>
-                  <div class="slider">
-                    <span class="slider__name">Ingress</span>
-                    <input type="range" id="subtitleScale" min="80" max="140" step="5" value="100" aria-label="Ingress-størrelse" />
-                    <output id="subtitleScaleOut">100%</output>
-                  </div>
-                </div>
-              </div>
-
-              <div class="field">
                 <label class="field__label" for="brandLabel">Merkevare <span class="field__hint">ReadPeak-etikett</span></label>
                 <input type="text" id="brandLabel" maxlength="40" value="NORSK TIPPING" />
               </div>
@@ -178,6 +162,67 @@
                     <input type="color" id="accentColor" value="#000000" />
                     <span class="colorpick__hex" id="accentHex">#000000</span>
                   </label>
+                </div>
+              </div>
+
+              <!-- Advanced (collapsible) -->
+              <div class="field">
+                <button type="button" class="adv-toggle" id="advToggle" aria-expanded="false" aria-controls="advPanel">
+                  <svg class="adv-toggle__chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+                  <span>Avanserte innstillinger</span>
+                </button>
+                <div class="adv" id="advPanel" hidden>
+                  <div class="adv__group">
+                    <span class="adv__label">Tekststørrelse <span class="field__hint">per format</span></span>
+                    <div class="sizectrls">
+                      <div class="slider">
+                        <span class="slider__name">ReadPeak</span>
+                        <input type="range" id="hlReadpeak" min="70" max="160" step="5" value="100" aria-label="ReadPeak overskrift-størrelse" />
+                        <output id="hlReadpeakOut">100%</output>
+                      </div>
+                      <div class="slider">
+                        <span class="slider__name">Desktop</span>
+                        <input type="range" id="hlDesktop" min="70" max="160" step="5" value="100" aria-label="Desktop overskrift-størrelse" />
+                        <output id="hlDesktopOut">100%</output>
+                      </div>
+                      <div class="slider">
+                        <span class="slider__name">Mobil</span>
+                        <input type="range" id="hlMobile" min="70" max="160" step="5" value="100" aria-label="Mobil overskrift-størrelse" />
+                        <output id="hlMobileOut">100%</output>
+                      </div>
+                      <div class="slider">
+                        <span class="slider__name">Ingress</span>
+                        <input type="range" id="subtitleScale" min="70" max="160" step="5" value="100" aria-label="Ingress-størrelse" />
+                        <output id="subtitleScaleOut">100%</output>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="adv__group">
+                    <span class="adv__label">Les mer-størrelse</span>
+                    <div class="slider">
+                      <span class="slider__name">Punkt</span>
+                      <input type="range" id="lesMerSize" min="14" max="24" step="1" value="17" aria-label="Les mer-størrelse" />
+                      <output id="lesMerSizeOut">17</output>
+                    </div>
+                  </div>
+
+                  <div class="adv__group adv__group--row">
+                    <span class="adv__label">Oppløsning <span class="field__hint">høyere = skarpere</span></span>
+                    <div class="segmented" id="resolution" role="group" aria-label="Oppløsning">
+                      <button type="button" class="seg" data-val="1">1×</button>
+                      <button type="button" class="seg is-active" data-val="2">2×</button>
+                      <button type="button" class="seg" data-val="3">3×</button>
+                    </div>
+                  </div>
+
+                  <div class="adv__group adv__group--row">
+                    <span class="adv__label">Filformat <span class="field__hint">denne nedlastingen</span></span>
+                    <div class="segmented" id="formatSel" role="group" aria-label="Filformat">
+                      <button type="button" class="seg is-active" data-val="png">PNG</button>
+                      <button type="button" class="seg" data-val="jpeg">JPEG</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -300,7 +345,14 @@
         <section class="settings-group">
           <h3>Eksport</h3>
           <div class="field">
-            <label class="field__label" for="setQuality">Bildekvalitet <span class="counter" id="qualityOut">92</span></label>
+            <label class="field__label">Standard filformat</label>
+            <div class="segmented" id="setFormat" role="group" aria-label="Standard filformat">
+              <button type="button" class="seg is-active" data-val="png">PNG</button>
+              <button type="button" class="seg" data-val="jpeg">JPEG</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="setQuality">JPEG-kvalitet <span class="counter" id="qualityOut">92</span></label>
             <input type="range" id="setQuality" min="70" max="100" value="92" />
           </div>
           <label class="checkbox">

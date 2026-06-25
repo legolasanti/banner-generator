@@ -60,9 +60,13 @@
   background:
     repeating-linear-gradient(45deg, #e7ebe3 0 12px, #eef1ea 12px 24px);
 }
-.bn--desktop  .bn__media { height: 330px; }
-.bn--mobile   .bn__media { height: 230px; }
-.bn--readpeak .bn__media { height: 200px; }
+/* Image-area heights match the real ad ratios (measured from the references):
+   ReadPeak 160/380, Desktop 355/500, Mobile 275/400. The photo is fixed into
+   this area with object-fit:cover, so different source photos all sit
+   consistently inside the same frame. */
+.bn--desktop  .bn__media { height: 355px; }
+.bn--mobile   .bn__media { height: 275px; }
+.bn--readpeak .bn__media { height: 160px; }
 
 .bn__img {
   width: 100%;
@@ -162,11 +166,10 @@
 /* Desktop & Mobile: headline only, top-aligned, left aligned */
 .bn--desktop .bn__body,
 .bn--mobile  .bn__body {
-  height: 170px;
   justify-content: flex-start;
 }
-.bn--desktop .bn__body { padding: 18px 20px; }
-.bn--mobile  .bn__body { padding: 16px 16px; }
+.bn--desktop .bn__body { height: 145px; padding: 14px 20px; }
+.bn--mobile  .bn__body { height: 125px; padding: 12px 16px; }
 
 /* Base sizes are +35% vs the original (per request) and scale with the
    per-banner --hl-scale variable set by the "Tekststørrelse" control. */
@@ -201,9 +204,9 @@
 .bn--readpeak .bn__age img { height: 15px; }
 
 .bn--readpeak .bn__body {
-  height: 180px;
-  padding: 13px 13px 13px;
-  gap: 5px;
+  height: 220px;
+  padding: 14px 14px 14px;
+  gap: 6px;
   background: #edf5ed;
 }
 .bn__brandlabel {
@@ -216,9 +219,11 @@
 .bn--readpeak .bn__headline {
   font-size: calc(22px * var(--hl-scale, 1));
   line-height: 1.14;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   letter-spacing: -0.008em;
 }
+/* When there is no Ingress, let the headline use the freed-up space. */
+.bn--readpeak.bn--no-ingress .bn__headline { -webkit-line-clamp: 5; }
 .bn__subtitle {
   color: #555555;
   font-size: calc(17.5px * var(--st-scale, 1));

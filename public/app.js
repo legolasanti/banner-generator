@@ -19,7 +19,7 @@
       { id: "sport", label: "Sport (ingen vinnersjanse)", vinnersjanse: "" },
     ],
     staticBadges: { annonseText: "Annonse", ageBadgeText: "18+ | Hjelpelinjen.no" },
-    export: { jpegQuality: 92, includeTimestampInFilename: false },
+    export: { jpegQuality: 92, includeTimestampInFilename: false, format: "png" },
   };
 
   const state = {
@@ -30,8 +30,11 @@
     posX: 50,
     posY: 50,
     zoom: 0,
-    headlineScale: 1,
+    hl: { readpeak: 1, desktop: 1, mobile: 1 },
     subtitleScale: 1,
+    lesMerSize: 17,
+    resolution: 2,
+    format: "png",
     lesMerStyle: "text",
     accentColor: "#000000",
     logoVersion: 0,
@@ -71,10 +74,21 @@
     headlineCount: $("#headlineCount"),
     subtitle: $("#subtitle"),
     subtitleCount: $("#subtitleCount"),
-    headlineScale: $("#headlineScale"),
-    headlineScaleOut: $("#headlineScaleOut"),
+    advToggle: $("#advToggle"),
+    advPanel: $("#advPanel"),
+    hlReadpeak: $("#hlReadpeak"),
+    hlReadpeakOut: $("#hlReadpeakOut"),
+    hlDesktop: $("#hlDesktop"),
+    hlDesktopOut: $("#hlDesktopOut"),
+    hlMobile: $("#hlMobile"),
+    hlMobileOut: $("#hlMobileOut"),
     subtitleScale: $("#subtitleScale"),
     subtitleScaleOut: $("#subtitleScaleOut"),
+    lesMerSize: $("#lesMerSize"),
+    lesMerSizeOut: $("#lesMerSizeOut"),
+    resolution: $("#resolution"),
+    formatSel: $("#formatSel"),
+    setFormat: $("#setFormat"),
     brandLabel: $("#brandLabel"),
     gameType: $("#gameType"),
     customVinnerField: $("#customVinnerField"),
@@ -177,8 +191,11 @@
       brandLabel: el.brandLabel.value,
       vinnersjanse: currentVinnersjanse(),
       imageZoom: state.zoom,
-      headlineScale: state.headlineScale,
+      headlineScaleReadpeak: state.hl.readpeak,
+      headlineScaleDesktop: state.hl.desktop,
+      headlineScaleMobile: state.hl.mobile,
       subtitleScale: state.subtitleScale,
+      lesMerSize: state.lesMerSize,
       lesMerStyle: state.lesMerStyle,
       accentColor: state.accentColor,
       logoUrl: logoUrl(),
@@ -423,7 +440,8 @@
       return;
     }
     const ts = state.settings.export.includeTimestampInFilename ? "-{tidsstempel}" : "";
-    el.filenamePreview.textContent = "→ " + sanitizeFilename(v) + ts + "-desktop-580x500.png";
+    const ext = state.format === "jpeg" ? "jpg" : "png";
+    el.filenamePreview.textContent = "→ " + sanitizeFilename(v) + ts + "-desktop-580x500." + ext;
   }
 
   function rebuildGameSelect(keepValue) {
@@ -465,17 +483,66 @@
     });
     el.filename.addEventListener("input", updateFilenamePreview);
     el.gameType.addEventListener("change", onGameChange);
-    el.headlineScale.addEventListener("input", () => {
-      state.headlineScale = +el.headlineScale.value / 100;
-      el.headlineScaleOut.textContent = el.headlineScale.value + "%";
-      renderPreviews();
-    });
-    el.subtitleScale.addEventListener("input", () => {
-      state.subtitleScale = +el.subtitleScale.value / 100;
-      el.subtitleScaleOut.textContent = el.subtitleScale.value + "%";
-      renderPreviews();
-    });
     updateCounters();
+  }
+
+  // Generic segmented control: highlights the clicked button, calls onChange.
+  function segmented(container, onChange) {
+    $$(".seg", container).forEach((b) =>
+      b.addEventListener("click", () => {
+        $$(".seg", container).forEach((x) => x.classList.toggle("is-active", x === b));
+        onChange(b.dataset.val);
+      })
+    );
+  }
+  function segmentedSet(container, val) {
+    $$(".seg", container).forEach((x) => x.classList.toggle("is-active", x.dataset.val === String(val)));
+  }
+
+  function initAdvanced() {
+    el.advToggle.addEventListener("click", () => {
+      const willOpen = el.advPanel.hidden;
+      el.advPanel.hidden = !willOpen;
+      el.advToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    const bindScale = (input, out, apply) =>
+      input.addEventListener("input", () => {
+        out.textContent = input.value + "%";
+        apply(+input.value / 100);
+        renderPreviews();
+      });
+    bindScale(el.hlReadpeak, el.hlReadpeakOut, (v) => (state.hl.readpeak = v));
+    bindScale(el.hlDesktop, el.hlDesktopOut, (v) => (state.hl.desktop = v));
+    bindScale(el.hlMobile, el.hlMobileOut, (v) => (state.hl.mobile = v));
+    bindScale(el.subtitleScale, el.subtitleScaleOut, (v) => (state.subtitleScale = v));
+
+    el.lesMerSize.addEventListener("input", () => {
+      state.lesMerSize = +el.lesMerSize.value;
+      el.lesMerSizeOut.textContent = el.lesMerSize.value;
+      renderPreviews();
+    });
+
+    segmented(el.resolution, (val) => (state.resolution = +val));
+    segmented(el.formatSel, (val) => {
+      state.format = val;
+      updateFilenamePreview();
+    });
+  }
+
+  // Scale each preview banner to fit its (gray) card, so it never overflows on
+  // smaller screens. Larger banners (Desktop) get a lower max scale.
+  function fitPreviews() {
+    $$(".preview-stage").forEach((stage) => {
+      const wrap = stage.closest(".pcard__stage");
+      if (!wrap) return;
+      const w = parseFloat(stage.style.getPropertyValue("--w")) || 320;
+      const max = w >= 500 ? 0.66 : 0.9;
+      const avail = wrap.clientWidth;
+      let scale = avail > 0 ? Math.min(avail / w, max) : max;
+      if (!isFinite(scale) || scale <= 0) scale = max;
+      stage.style.setProperty("--scale", scale.toFixed(4));
+    });
   }
 
   // -------- generate --------------------------------------------------------
@@ -519,10 +586,15 @@
     fd.append("imagePositionX", state.posX);
     fd.append("imagePositionY", state.posY);
     fd.append("imageZoom", state.zoom);
-    fd.append("headlineScale", state.headlineScale);
+    fd.append("headlineScaleReadpeak", state.hl.readpeak);
+    fd.append("headlineScaleDesktop", state.hl.desktop);
+    fd.append("headlineScaleMobile", state.hl.mobile);
     fd.append("subtitleScale", state.subtitleScale);
+    fd.append("lesMerSize", state.lesMerSize);
     fd.append("lesMerStyle", state.lesMerStyle);
     fd.append("accentColor", state.accentColor);
+    fd.append("resolution", state.resolution);
+    fd.append("format", state.format);
     fd.append("filename", el.filename.value);
     fd.append("jpegQuality", state.settings.export.jpegQuality);
 
@@ -656,6 +728,7 @@
     el.viewNew.tabIndex = tab === "new" ? 0 : -1;
     el.viewHistory.tabIndex = tab === "history" ? 0 : -1;
     if (tab === "history") loadHistory();
+    if (tab === "new") requestAnimationFrame(fitPreviews);
   }
 
   function initTabs() {
@@ -710,6 +783,11 @@
     return row;
   }
 
+  function activeSeg(container) {
+    const b = container.querySelector(".seg.is-active");
+    return b ? b.dataset.val : null;
+  }
+
   function collectSettingsFromForm() {
     const presets = $$(".preset-row", el.presetsList)
       .map((row) => ({
@@ -726,6 +804,7 @@
       export: {
         jpegQuality: +el.setQuality.value,
         includeTimestampInFilename: el.setTimestamp.checked,
+        format: activeSeg(el.setFormat) || "png",
       },
     };
   }
@@ -737,6 +816,7 @@
     el.setQuality.value = s.export.jpegQuality;
     el.qualityOut.textContent = s.export.jpegQuality;
     el.setTimestamp.checked = s.export.includeTimestampInFilename;
+    segmentedSet(el.setFormat, s.export.format || "png");
     el.logoPreview.src = logoUrl();
   }
 
@@ -779,6 +859,9 @@
       });
       if (!res.ok) throw new Error();
       state.settings = await res.json();
+      // saving a new default format also updates the current session
+      state.format = state.settings.export.format || "png";
+      segmentedSet(el.formatSel, state.format);
       fillSettingsForm(state.settings);
       rebuildGameSelect();
       renderPreviews();
@@ -817,6 +900,7 @@
       el.presetsList.appendChild(presetRow({ label: "", vinnersjanse: "" }))
     );
     el.setQuality.addEventListener("input", () => (el.qualityOut.textContent = el.setQuality.value));
+    segmented(el.setFormat, () => {});
     el.saveSettings.addEventListener("click", saveSettings);
     el.resetSettings.addEventListener("click", () => {
       if (confirm("Tilbakestille til standardverdier? (Lagre for å bekrefte)")) {
@@ -844,16 +928,27 @@
     initDrag();
     initFields();
     initAppearance();
+    initAdvanced();
     initTabs();
     initSettings();
     el.form.addEventListener("submit", onGenerate);
     el.generateBtn.disabled = true;
 
     await loadSettings();
+    // initialise the per-session download format from the saved default
+    state.format = state.settings.export.format || "png";
+    segmentedSet(el.formatSel, state.format);
     rebuildGameSelect("vikinglotto");
     updateFilenamePreview();
     renderPreviews();
+    fitPreviews();
     loadHistory();
+
+    let raf = 0;
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fitPreviews);
+    });
   }
 
   if (document.readyState === "loading") {
