@@ -33,7 +33,7 @@
     hl: { readpeak: 1, desktop: 1, mobile: 1 },
     subtitleScale: 1,
     lesMerSize: 17,
-    resolution: 2,
+    resolution: 1,
     format: "png",
     lesMerStyle: "text",
     accentColor: "#000000",

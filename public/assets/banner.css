@@ -39,7 +39,9 @@
   color: #111111;
   font-family: "Arimo", Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: geometricPrecision;
+  /* optimizeLegibility keeps glyphs snapped/crisp at 1×; geometricPrecision
+     can blur text by not aligning to the pixel grid. */
+  text-rendering: optimizeLegibility;
   font-kerning: normal;
 }
 

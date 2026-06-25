@@ -234,7 +234,9 @@ const LAUNCH_ARGS = [
   "--disable-dev-shm-usage",
   "--disable-gpu",
   "--hide-scrollbars",
-  "--font-render-hinting=none",
+  // NOTE: deliberately NOT using --font-render-hinting=none. Disabling hinting
+  // makes text softer; keeping default hinting renders crisp, Canva-like text
+  // even at 1× resolution.
   "--force-color-profile=srgb",
 ];
 
@@ -302,7 +304,7 @@ async function getBrowser() {
 
 async function renderBannerPng(spec, data, browser, opts) {
   opts = opts || {};
-  const dpr = clampNumber(opts.deviceScaleFactor, 1, 3, 2);
+  const dpr = clampNumber(opts.deviceScaleFactor, 1, 3, 1);
   const isJpeg = opts.format === "jpeg";
   const page = await browser.newPage();
   try {
@@ -452,7 +454,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
     const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#000000";
-    const resolution = clampNumber(b.resolution, 1, 3, 2);
+    const resolution = clampNumber(b.resolution, 1, 3, 1);
     const format = b.format === "jpeg" ? "jpeg" : b.format === "png" ? "png" : settings.export.format || "png";
     const ext = format === "jpeg" ? "jpg" : "png";
     const baseName = sanitizeFilename(b.filename);
