@@ -34,10 +34,16 @@ workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
 ## Requirements
 
 - **Node.js 20 or newer** — <https://nodejs.org>
+  On macOS, download the **"macOS Installer (.pkg)"** (not the `.tar.gz`) and run
+  it through to the end. You only need to do this **once** — it stays available.
 - **Git** (only needed to clone from GitHub) — <https://git-scm.com>
 
 `npm install` also downloads a copy of Chromium for Puppeteer (~150 MB), so the
 first install needs an internet connection and a few minutes.
+
+> **Important:** after installing Node, **fully quit Terminal (Cmd + Q) and open
+> it again.** A new PATH only takes effect in a new terminal session — this is
+> the #1 reason `npm`/`node` seem "not found" right after installing.
 
 ---
 
@@ -64,13 +70,22 @@ npm run dev
 
 Anyone who wants to run this on their own machine can follow these steps.
 
-1. **Install Node.js 20+**
-   Download the LTS installer from <https://nodejs.org> and install it.
-   Verify in a terminal:
-   ```bash
-   node -v      # should print v20.x or newer
-   npm -v
-   ```
+1. **Install Node.js 20 or newer**
+   - Go to <https://nodejs.org> and download the **LTS** version.
+   - On macOS, choose the **"macOS Installer (.pkg)"** — **not** the `.tar.gz`.
+   - Open the downloaded `.pkg` and run it to the end (Continue → Install).
+   - **Fully quit Terminal (Cmd + Q) and open it again** — the new PATH only
+     applies to a new terminal session.
+   - Verify:
+     ```bash
+     node -v      # should print v20.x or newer
+     npm -v       # should print 10.x or similar
+     ```
+   - You install Node **once**; it then works in every new terminal. You do
+     **not** need to reinstall it each time.
+   - If `node`/`npm` are still "command not found" after this, the machine
+     probably has **nvm**. Fix it once with `nvm alias default 20` and make sure
+     `~/.zshrc` loads nvm (see Troubleshooting), then open a new terminal.
 
 2. **Install Git** (if not already installed) from <https://git-scm.com>.
 
@@ -113,8 +128,17 @@ $env:PORT=8080; npm start  # Windows PowerShell
 
 ### Troubleshooting
 
-- **`node: command not found`** → Node isn't installed or isn't on your PATH.
-  Reinstall Node 20+, then open a fresh terminal.
+- **`node: command not found` / `npm: command not found`** → Node isn't on your
+  PATH in this terminal session. Install Node via the **macOS .pkg** (above),
+  then **quit Terminal completely (Cmd + Q) and reopen it**. You do not need to
+  reinstall Node every time — once it's installed it persists.
+  - If it still fails, you likely have **nvm**. Add these lines to the end of
+    `~/.zshrc`, then run `nvm alias default 20` and open a new terminal:
+    ```bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    ```
+  - Quick one-off (nvm): `source ~/.nvm/nvm.sh && nvm use 20 && npm start`
 - **Puppeteer fails to launch the browser** → the bundled Chromium can lag very
   new OS versions. The server automatically falls back to a system-installed
   Google Chrome on macOS. You can also point it at any Chrome/Chromium:

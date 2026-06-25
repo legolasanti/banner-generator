@@ -34,10 +34,17 @@ Canva-flyten. Laget for ABC Nyheter / Norsk Tipping-formatet.
 ## Krav
 
 - **Node.js 20 eller nyere** — <https://nodejs.org>
+  På macOS: last ned **«macOS Installer (.pkg)»** (ikke `.tar.gz`) og kjør den
+  helt ferdig. Dette gjør du bare **én gang** — det blir værende.
 - **Git** (kun for å klone fra GitHub) — <https://git-scm.com>
 
 `npm install` laster også ned en Chromium-kopi til Puppeteer (~150 MB), så første
 installasjon krever internett og noen minutter.
+
+> **Viktig:** etter at du har installert Node, **avslutt Terminal helt (Cmd + Q)
+> og åpne den på nytt.** Ny PATH gjelder først i en ny terminaløkt — dette er den
+> vanligste grunnen til at `npm`/`node` virker «ikke funnet» rett etter
+> installasjon.
 
 ---
 
@@ -62,11 +69,22 @@ npm run dev
 
 ## Sette det opp på en annen maskin (steg for steg)
 
-1. **Installer Node.js 20+** fra <https://nodejs.org>. Sjekk i terminalen:
-   ```bash
-   node -v      # skal vise v20.x eller nyere
-   npm -v
-   ```
+1. **Installer Node.js 20 eller nyere**
+   - Gå til <https://nodejs.org> og last ned **LTS**-versjonen.
+   - På macOS: velg **«macOS Installer (.pkg)»** — **ikke** `.tar.gz`.
+   - Åpne `.pkg`-filen og kjør den helt ferdig (Continue → Install).
+   - **Avslutt Terminal helt (Cmd + Q) og åpne den på nytt** — ny PATH gjelder
+     bare i en ny terminaløkt.
+   - Sjekk:
+     ```bash
+     node -v      # skal vise v20.x eller nyere
+     npm -v       # skal vise 10.x e.l.
+     ```
+   - Du installerer Node **én gang**; deretter virker det i hver nye terminal.
+     Du trenger **ikke** installere det på nytt hver gang.
+   - Hvis `node`/`npm` fortsatt er «command not found», har maskinen trolig
+     **nvm**. Kjør `nvm alias default 20` én gang og sørg for at `~/.zshrc`
+     laster nvm (se Feilsøking), åpne så en ny terminal.
 
 2. **Installer Git** (om nødvendig) fra <https://git-scm.com>.
 
@@ -108,8 +126,17 @@ $env:PORT=8080; npm start   # Windows PowerShell
 
 ### Feilsøking
 
-- **`node: command not found`** → Node er ikke installert eller mangler i PATH.
-  Installer Node 20+ på nytt og åpne et nytt terminalvindu.
+- **`node: command not found` / `npm: command not found`** → Node er ikke i PATH
+  i denne terminaløkten. Installer Node via **macOS .pkg** (over), og **avslutt
+  Terminal helt (Cmd + Q) og åpne på nytt**. Du trenger ikke installere Node hver
+  gang — når det først er installert, blir det værende.
+  - Hvis det fortsatt feiler, har du trolig **nvm**. Legg disse linjene nederst i
+    `~/.zshrc`, kjør `nvm alias default 20`, og åpne en ny terminal:
+    ```bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    ```
+  - Rask engangsløsning (nvm): `source ~/.nvm/nvm.sh && nvm use 20 && npm start`
 - **Puppeteer klarer ikke å starte nettleseren** → den innebygde Chromium kan
   henge etter helt nye OS-versjoner. Serveren faller automatisk tilbake til en
   installert Google Chrome på macOS. Du kan også peke på en hvilken som helst
