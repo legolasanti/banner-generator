@@ -437,7 +437,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const imageZoom = clampNumber(b.imageZoom, 0, 30, 0);
     const headlineScale = clampNumber(b.headlineScale, 0.5, 2, 1);
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
-    const lesMerStyle = b.lesMerStyle === "text" ? "text" : "button";
+    const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
     const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#000000";
     const baseName = sanitizeFilename(b.filename);
 

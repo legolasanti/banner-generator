@@ -32,7 +32,7 @@
     zoom: 0,
     headlineScale: 1,
     subtitleScale: 1,
-    lesMerStyle: "button",
+    lesMerStyle: "text",
     accentColor: "#000000",
     logoVersion: 0,
     lastBlobUrl: null,

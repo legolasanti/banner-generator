@@ -88,17 +88,17 @@
   }
 
   // "Les mer" — either a filled button or plain bold text, in the accent colour.
+  // Default is plain text (button only when explicitly requested).
   function ctaMarkup(data) {
     var accent = safeColor(data.accentColor, "#000000");
-    if (data.lesMerStyle === "text") {
-      return '<span class="bn__cta bn__cta--text" style="color:' + accent + '">Les mer</span>';
+    if (data.lesMerStyle === "button") {
+      return '<span class="bn__cta" style="background:' + accent + '">Les mer</span>';
     }
-    return '<span class="bn__cta" style="background:' + accent + '">Les mer</span>';
+    return '<span class="bn__cta bn__cta--text" style="color:' + accent + '">Les mer</span>';
   }
 
   function renderReadpeak(data) {
     var annonse = escapeHtml(data.annonseText || "Annonse");
-    var accent = safeColor(data.accentColor, "#000000");
     return (
       // Image flush at the very top; Annonse + 18+ overlay the image (like
       // Desktop/Mobile), no separate top bar.
@@ -111,9 +111,7 @@
       vinnerBadge(data) +
       "</div>" +
       '<div class="bn__body">' +
-      '<span class="bn__brandlabel" style="color:' +
-      accent +
-      '">' +
+      '<span class="bn__brandlabel">' +
       escapeHtml(data.brandLabel || "NORSK TIPPING") +
       "</span>" +
       '<h2 class="bn__headline">' +
