@@ -30,7 +30,7 @@
     posX: 50,
     posY: 50,
     zoom: 0,
-    hl: { readpeak: 1, desktop: 1, mobile: 1 },
+    hl: { readpeak: 1, desktop: 1, mobile: 1, newsgrid: 1 },
     subtitleScale: 1,
     lesMerSize: 17,
     resolution: 1,
@@ -39,6 +39,14 @@
     accentColor: "#000000",
     logoVersion: 0,
     lastBlobUrl: null,
+    downloadSet: "all", // "all" | "core" | "newsgrid" — what Generer actually produces
+    showVinnerOnNewsgrid: false, // off by default — only turned on when fronting a jackpot
+  };
+
+  const DOWNLOAD_SET_LABELS = {
+    all: { count: "4 størrelser", primary: "Last ned alle 4 (ZIP)" },
+    core: { count: "3 størrelser", primary: "Last ned ZIP" },
+    newsgrid: { count: "1 størrelse (190×190)", primary: "Last ned 190×190" },
   };
 
   const IMAGE_MIME_RE = /^image\/(jpeg|png|webp|avif|gif)$/;
@@ -82,6 +90,8 @@
     hlDesktopOut: $("#hlDesktopOut"),
     hlMobile: $("#hlMobile"),
     hlMobileOut: $("#hlMobileOut"),
+    hlNewsgrid: $("#hlNewsgrid"),
+    hlNewsgridOut: $("#hlNewsgridOut"),
     subtitleScale: $("#subtitleScale"),
     subtitleScaleOut: $("#subtitleScaleOut"),
     lesMerSize: $("#lesMerSize"),
@@ -93,6 +103,7 @@
     gameType: $("#gameType"),
     customVinnerField: $("#customVinnerField"),
     customVinner: $("#customVinner"),
+    newsgridVinner: $("#newsgridVinner"),
     lesMerStyle: $("#lesMerStyle"),
     accentColor: $("#accentColor"),
     accentHex: $("#accentHex"),
@@ -100,14 +111,20 @@
     filenamePreview: $("#filenamePreview"),
 
     form: $("#bannerForm"),
+    downloadSet: $("#downloadSet"),
     generateBtn: $("#generateBtn"),
     result: $("#result"),
     downloadLink: $("#downloadLink"),
+    resultAlt: $("#resultAlt"),
+    downloadNewsgrid: $("#downloadNewsgrid"),
+    downloadAll: $("#downloadAll"),
+    downloadCore: $("#downloadCore"),
 
     previews: {
       readpeak: $("#preview-readpeak"),
       desktop: $("#preview-desktop"),
       mobile: $("#preview-mobile"),
+      newsgrid: $("#preview-newsgrid"),
     },
 
     historyGrid: $("#historyGrid"),
@@ -190,10 +207,12 @@
       subtitle: el.subtitle.value,
       brandLabel: el.brandLabel.value,
       vinnersjanse: currentVinnersjanse(),
+      showVinnerOnNewsgrid: state.showVinnerOnNewsgrid,
       imageZoom: state.zoom,
       headlineScaleReadpeak: state.hl.readpeak,
       headlineScaleDesktop: state.hl.desktop,
       headlineScaleMobile: state.hl.mobile,
+      headlineScaleNewsgrid: state.hl.newsgrid,
       subtitleScale: state.subtitleScale,
       lesMerSize: state.lesMerSize,
       lesMerStyle: state.lesMerStyle,
@@ -209,6 +228,7 @@
     window.renderBanner(el.previews.readpeak, "readpeak", data);
     window.renderBanner(el.previews.desktop, "desktop", data);
     window.renderBanner(el.previews.mobile, "mobile", data);
+    window.renderBanner(el.previews.newsgrid, "newsgrid", data);
   }
 
   // -------- position / crop -------------------------------------------------
@@ -483,6 +503,10 @@
     });
     el.filename.addEventListener("input", updateFilenamePreview);
     el.gameType.addEventListener("change", onGameChange);
+    el.newsgridVinner.addEventListener("change", () => {
+      state.showVinnerOnNewsgrid = el.newsgridVinner.checked;
+      renderPreviews();
+    });
     updateCounters();
   }
 
@@ -515,6 +539,7 @@
     bindScale(el.hlReadpeak, el.hlReadpeakOut, (v) => (state.hl.readpeak = v));
     bindScale(el.hlDesktop, el.hlDesktopOut, (v) => (state.hl.desktop = v));
     bindScale(el.hlMobile, el.hlMobileOut, (v) => (state.hl.mobile = v));
+    bindScale(el.hlNewsgrid, el.hlNewsgridOut, (v) => (state.hl.newsgrid = v));
     bindScale(el.subtitleScale, el.subtitleScaleOut, (v) => (state.subtitleScale = v));
 
     el.lesMerSize.addEventListener("input", () => {
@@ -530,6 +555,13 @@
     });
   }
 
+  function initDownloadSet() {
+    segmented(el.downloadSet, (val) => {
+      state.downloadSet = val;
+      setLoading(false); // refreshes the "Generer bannere · N størrelser" label
+    });
+  }
+
   // Scale each preview banner to fit its (gray) card, so it never overflows on
   // smaller screens. Larger banners (Desktop) get a lower max scale.
   function fitPreviews() {
@@ -537,7 +569,11 @@
       const wrap = stage.closest(".pcard__stage");
       if (!wrap) return;
       const w = parseFloat(stage.style.getPropertyValue("--w")) || 320;
-      const max = w >= 500 ? 0.66 : 0.9;
+      // Nyhetsgrid renders at 190×190 — tiny next to the others, so it gets a
+      // much higher on-screen scale to stay legible. This only affects the
+      // preview; the actual generated PNG is always exactly 190×190.
+      const isNewsgrid = !!wrap.closest(".pcard--newsgrid");
+      const max = isNewsgrid ? 1.7 : w >= 500 ? 0.66 : 0.9;
       const avail = wrap.clientWidth;
       let scale = avail > 0 ? Math.min(avail / w, max) : max;
       if (!isFinite(scale) || scale <= 0) scale = max;
@@ -559,7 +595,7 @@
     el.generateBtn.disabled = on || !state.imageDataUrl;
     el.generateBtn.querySelector(".btn-generate__label").textContent = on
       ? "Genererer …"
-      : "Generer bannere · 3 størrelser";
+      : "Generer bannere · " + DOWNLOAD_SET_LABELS[state.downloadSet].count;
   }
 
   function filenameFromDisposition(header, fallback) {
@@ -583,12 +619,14 @@
     fd.append("subtitle", el.subtitle.value);
     fd.append("brandLabel", el.brandLabel.value);
     fd.append("vinnersjanse", currentVinnersjanse());
+    fd.append("showVinnerOnNewsgrid", state.showVinnerOnNewsgrid ? "1" : "0");
     fd.append("imagePositionX", state.posX);
     fd.append("imagePositionY", state.posY);
     fd.append("imageZoom", state.zoom);
     fd.append("headlineScaleReadpeak", state.hl.readpeak);
     fd.append("headlineScaleDesktop", state.hl.desktop);
     fd.append("headlineScaleMobile", state.hl.mobile);
+    fd.append("headlineScaleNewsgrid", state.hl.newsgrid);
     fd.append("subtitleScale", state.subtitleScale);
     fd.append("lesMerSize", state.lesMerSize);
     fd.append("lesMerStyle", state.lesMerStyle);
@@ -597,30 +635,51 @@
     fd.append("format", state.format);
     fd.append("filename", el.filename.value);
     fd.append("jpegQuality", state.settings.export.jpegQuality);
+    fd.append("downloadSet", state.downloadSet);
 
     try {
       const res = await fetch("/api/generate", { method: "POST", body: fd });
       const ctype = res.headers.get("content-type") || "";
-      if (!res.ok || ctype.indexOf("application/zip") === -1) {
+      const isDownloadable = ctype.indexOf("application/zip") !== -1 || ctype.indexOf("image/") === 0;
+      if (!res.ok || !isDownloadable) {
         let msg = "Generering feilet";
         try { msg = (await res.json()).error || msg; } catch (_) {}
         throw new Error(msg);
       }
+      const entryId = res.headers.get("x-entry-id");
       const blob = await res.blob();
+      const fallbackExt = state.downloadSet === "newsgrid" ? (state.format === "jpeg" ? "jpg" : "png") : "zip";
       const name = filenameFromDisposition(
         res.headers.get("content-disposition"),
-        (sanitizeFilename(el.filename.value) || "banner") + ".zip"
+        (sanitizeFilename(el.filename.value) || "banner") + "." + fallbackExt
       );
       state.lastBlobUrl = URL.createObjectURL(blob);
       el.downloadLink.href = state.lastBlobUrl;
       el.downloadLink.download = name;
+      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[state.downloadSet].primary;
+
+      // Every generation renders + saves all 4 formats regardless of Pakke —
+      // only THIS response (the blob above) matches what was selected. The
+      // other two combinations are already on disk too, so offer them as
+      // quick secondary links against that same history entry (no re-render).
+      if (entryId) {
+        el.downloadNewsgrid.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=newsgrid";
+        el.downloadAll.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=all";
+        el.downloadCore.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=core";
+        el.downloadNewsgrid.hidden = state.downloadSet === "newsgrid";
+        el.downloadAll.hidden = state.downloadSet === "all";
+        el.downloadCore.hidden = state.downloadSet === "core";
+        el.resultAlt.hidden = false;
+      } else {
+        el.resultAlt.hidden = true;
+      }
       el.result.hidden = false;
       el.result.scrollIntoView({ behavior: "smooth", block: "nearest" });
       // Best-effort auto-download. If the browser blocks the programmatic
-      // click (e.g. "multiple downloads"), the visible "Last ned ZIP" link
-      // below is the reliable fallback.
+      // click (e.g. "multiple downloads"), the visible "Last ned" link below
+      // is the reliable fallback.
       try { el.downloadLink.click(); } catch (_) {}
-      toast("Bannere generert – last ned ZIP", "ok");
+      toast("Bannere generert", "ok");
       loadHistory();
     } catch (err) {
       toast(err.message || "Generering feilet", "err");
@@ -929,6 +988,7 @@
     initFields();
     initAppearance();
     initAdvanced();
+    initDownloadSet();
     initTabs();
     initSettings();
     el.form.addEventListener("submit", onGenerate);

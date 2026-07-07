@@ -53,6 +53,7 @@
 .bn--readpeak { width: 308px; height: 380px; }
 .bn--desktop  { width: 580px; height: 500px; }
 .bn--mobile   { width: 320px; height: 400px; }
+.bn--newsgrid { width: 190px; height: 190px; }
 
 /* ----------------------------- Image area -------------------------------- */
 .bn__media {
@@ -69,6 +70,9 @@
 .bn--desktop  .bn__media { height: 355px; }
 .bn--mobile   .bn__media { height: 275px; }
 .bn--readpeak .bn__media { height: 160px; }
+/* 107/190 — measured from the Canva reference (951×536 at its ~5× zoomed
+   export, i.e. 190×107 at 1×). Remainder (83px) is the headline area. */
+.bn--newsgrid .bn__media { height: 107px; }
 
 .bn__img {
   width: 100%;
@@ -147,6 +151,60 @@
 .bn--desktop .bn__annonse { bottom: 12px; left: 12px; font-size: 15px; padding: 4px 12px; }
 .bn--desktop .bn__vinner { bottom: 12px; right: 12px; font-size: 13px; max-width: 50%; padding: 4px 10px; }
 
+/* ------------------------- Nyhetsgrid top bar ----------------------------- */
+/* At 190×190 the photo is too small for floating pills to read well, so
+   Annonse + 18/Hjelpelinjen share one full-width bar flush across the top of
+   the image (per the Canva "NT - 190x190" reference), instead of the
+   separate floating badges used by ReadPeak/Desktop/Mobil. */
+/* Bar height set so Annonse's height is 1/6.24 of the photo height (107px,
+   i.e. ~17.1px) — down from the initial 20px (which measured 1/5.35). Both
+   cells are pinned to this exact height and stretched, so Annonse and the
+   18+ badge always match pixel-for-pixel instead of drifting to their own
+   natural (unequal) content heights. */
+.bn--newsgrid .bn__topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 17px;
+  display: flex;
+  align-items: stretch;
+  gap: 6px; /* visible seam between the Annonse box and the age badge */
+}
+.bn--newsgrid .bn__topbar-annonse {
+  display: flex;
+  align-items: center;
+  background: #4a4a4a;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+/* Reset the floating-pill positioning so the age badge sits inline in the bar. */
+.bn--newsgrid .bn__age.bn__topbar-age {
+  position: static;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  padding: 2px 5px;
+  overflow: hidden;
+}
+.bn--newsgrid .bn__age.bn__topbar-age img { height: 13px; }
+.bn--newsgrid .bn__vinner {
+  bottom: 7px;
+  right: 7px;
+  font-size: 8px;
+  max-width: 68%;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
+}
+
 /* ------------------------------ Text area -------------------------------- */
 .bn__body {
   width: 100%;
@@ -165,13 +223,15 @@
   word-break: break-word;
 }
 
-/* Desktop & Mobile: headline only, top-aligned, left aligned */
-.bn--desktop .bn__body,
-.bn--mobile  .bn__body {
+/* Desktop, Mobile & Nyhetsgrid: headline only, top-aligned, left aligned */
+.bn--desktop  .bn__body,
+.bn--mobile   .bn__body,
+.bn--newsgrid .bn__body {
   justify-content: flex-start;
 }
-.bn--desktop .bn__body { height: 145px; padding: 14px 20px; }
-.bn--mobile  .bn__body { height: 125px; padding: 12px 16px; }
+.bn--desktop  .bn__body { height: 145px; padding: 14px 20px; }
+.bn--mobile   .bn__body { height: 125px; padding: 12px 16px; }
+.bn--newsgrid .bn__body { height: 83px; padding: 9px 10px; }
 
 /* Base sizes are +35% vs the original (per request) and scale with the
    per-banner --hl-scale variable set by the "Tekststørrelse" control. */
@@ -184,6 +244,12 @@
   font-size: calc(31px * var(--hl-scale, 1));
   line-height: 1.1;
   -webkit-line-clamp: 3;
+}
+.bn--newsgrid .bn__headline {
+  font-size: calc(15.5px * var(--hl-scale, 1));
+  line-height: 1.18;
+  -webkit-line-clamp: 3;
+  letter-spacing: -0.006em;
 }
 
 /* ----------------------------- ReadPeak ---------------------------------- */

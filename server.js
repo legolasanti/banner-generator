@@ -3,10 +3,13 @@
 /* =========================================================================
  * Banner Generator — Express + Puppeteer backend
  *
- * Generates ad banners in 3 fixed sizes (ReadPeak 308×380, Desktop 580×500,
- * Mobile 320×400) from one uploaded photo + a few text fields, and returns a
- * ZIP of the three PNGs. Keeps the last 30 packages in history/ and stores
- * editable settings in settings.json. No database — flat files only.
+ * Generates ad banners in 4 fixed sizes (ReadPeak 308×380, Desktop 580×500,
+ * Mobile 320×400, Nyhetsgrid 190×190) from one uploaded photo + a few text
+ * fields. Every generation renders and saves all four; the caller then picks
+ * which combination to download (the original 3, the 190×190 alone, or all
+ * 4 zipped together) without re-rendering. Keeps the last 30 packages in
+ * history/ and stores editable settings in settings.json. No database —
+ * flat files only.
  * ========================================================================= */
 
 const path = require("path");
@@ -37,13 +40,24 @@ const PORT = process.env.PORT || 4050;
 const MAX_HISTORY = 30;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 
-// The three banner formats. `key` is used in the API/UI, `file` is the
-// Puppeteer template, width/height are the exact output pixel dimensions.
-const SPECS = [
+// The three original banner formats. `key` is used in the API/UI, `file` is
+// the Puppeteer template, width/height are the exact output pixel dimensions.
+const CORE_SPECS = [
   { key: "readpeak", file: "readpeak.html", width: 308, height: 380, label: "readpeak-308x380" },
   { key: "desktop", file: "desktop.html", width: 580, height: 500, label: "desktop-580x500" },
   { key: "mobile", file: "mobile.html", width: 320, height: 400, label: "mobile-320x400" },
 ];
+// Fourth format: the 190×190 front-page news-grid placement. Kept out of
+// CORE_SPECS so it can be downloaded on its own or bundled with the core
+// three, per how the placement is actually traded (see /api/generate).
+const NEWSGRID_SPEC = { key: "newsgrid", file: "newsgrid.html", width: 190, height: 190, label: "newsgrid-190x190" };
+const SPECS = CORE_SPECS.concat(NEWSGRID_SPEC);
+
+function specsForSet(set) {
+  if (set === "newsgrid") return [NEWSGRID_SPEC];
+  if (set === "core") return CORE_SPECS;
+  return SPECS; // "all" / anything else
+}
 
 const DEFAULT_SETTINGS = {
   gamePresets: [
@@ -442,6 +456,9 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const subtitle = String(b.subtitle || "").slice(0, 80);
     const brandLabel = String(b.brandLabel || "NORSK TIPPING").slice(0, 60);
     const vinnersjanse = String(b.vinnersjanse || "").slice(0, 120);
+    // Vinnersjanse defaults OFF on the 190×190 Nyhetsgrid (image too small to
+    // read it well) — only switched on explicitly when fronting a jackpot.
+    const showVinnerOnNewsgrid = b.showVinnerOnNewsgrid === "1" || b.showVinnerOnNewsgrid === "true";
     const imagePositionX = clampNumber(b.imagePositionX, 0, 100, 50);
     const imagePositionY = clampNumber(b.imagePositionY, 0, 100, 50);
     const imageZoom = clampNumber(b.imageZoom, 0, 30, 0);
@@ -450,6 +467,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const hlReadpeak = clampNumber(b.headlineScaleReadpeak, 0.5, 2, legacyHl);
     const hlDesktop = clampNumber(b.headlineScaleDesktop, 0.5, 2, legacyHl);
     const hlMobile = clampNumber(b.headlineScaleMobile, 0.5, 2, legacyHl);
+    const hlNewsgrid = clampNumber(b.headlineScaleNewsgrid, 0.5, 2, legacyHl);
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
@@ -474,12 +492,14 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       headlineScaleReadpeak: hlReadpeak,
       headlineScaleDesktop: hlDesktop,
       headlineScaleMobile: hlMobile,
+      headlineScaleNewsgrid: hlNewsgrid,
       subtitleScale,
       lesMerSize,
       headline,
       subtitle,
       brandLabel,
       vinnersjanse,
+      showVinnerOnNewsgrid,
       lesMerStyle,
       accentColor,
       logoUrl,
@@ -532,7 +552,24 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       await writeHistory(history);
     });
 
-    // Stream ZIP of the three freshly-rendered PNGs.
+    // All four formats are rendered above and saved to history regardless.
+    // `downloadSet` only controls what THIS response streams — the other
+    // combinations remain one click away via /api/history/:id/download,
+    // reusing the files already on disk (no re-render needed):
+    //   "core"     → the original 3 (ReadPeak/Desktop/Mobil) — default
+    //   "newsgrid" → just the 190×190 news-grid placement, as a single file
+    //   "all"      → all 4, zipped together
+    const downloadSet = ["core", "newsgrid", "all"].includes(b.downloadSet) ? b.downloadSet : "core";
+    const setSpecs = specsForSet(downloadSet);
+    res.setHeader("X-Entry-Id", id);
+
+    if (downloadSet === "newsgrid") {
+      const spec = setSpecs[0];
+      res.setHeader("Content-Type", format === "jpeg" ? "image/jpeg" : "image/png");
+      res.setHeader("Content-Disposition", `attachment; filename="${files[spec.key]}"`);
+      return res.send(buffers[spec.key]);
+    }
+
     res.setHeader("Content-Type", "application/zip");
     res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.zip"`);
 
@@ -544,7 +581,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       else res.destroy();
     });
     archive.pipe(res);
-    for (const spec of SPECS) {
+    for (const spec of setSpecs) {
       archive.append(buffers[spec.key], { name: files[spec.key] });
     }
     await archive.finalize();
@@ -573,6 +610,24 @@ app.get("/api/history/:id/download", async (req, res) => {
     return res.status(404).json({ error: "Filene finnes ikke lenger" });
   }
 
+  // ?set=core|newsgrid|all — which formats to include. Defaults to "all" so
+  // the plain history "Last ned" link keeps giving everything that was
+  // generated for that entry (older entries simply lack a "newsgrid" file,
+  // and are skipped below, same as any other missing/removed file).
+  const set = ["core", "newsgrid", "all"].includes(req.query.set) ? req.query.set : "all";
+  const setSpecs = specsForSet(set);
+  const files = entry.files || {};
+
+  if (set === "newsgrid") {
+    const spec = setSpecs[0];
+    const fname = files[spec.key];
+    const fpath = fname && path.join(folderAbs, fname);
+    if (!fname || !(await pathExists(fpath))) {
+      return res.status(404).json({ error: "Nyhetsgrid-filen finnes ikke for denne oppføringen" });
+    }
+    return res.download(fpath, fname);
+  }
+
   res.setHeader("Content-Type", "application/zip");
   res.setHeader("Content-Disposition", `attachment; filename="${entry.fileBase || entry.filename}.zip"`);
 
@@ -583,8 +638,7 @@ app.get("/api/history/:id/download", async (req, res) => {
     else res.destroy();
   });
   archive.pipe(res);
-  const files = entry.files || {};
-  for (const spec of SPECS) {
+  for (const spec of setSpecs) {
     const fname = files[spec.key];
     if (fname && (await pathExists(path.join(folderAbs, fname)))) {
       archive.file(path.join(folderAbs, fname), { name: fname });

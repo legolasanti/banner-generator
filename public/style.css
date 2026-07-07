@@ -449,12 +449,13 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .result {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; flex-direction: column; gap: 10px;
   margin-top: 12px; padding: 12px 14px;
   background: var(--green-soft); border: 1px solid #cfe6cb; border-radius: var(--r);
   animation: pop 0.35s var(--ease) both;
 }
 @keyframes pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+.result__top { display: flex; align-items: center; gap: 10px; }
 .result__check { color: var(--green); flex: none; }
 .result__text { font-weight: 600; font-size: 13.5px; color: var(--green-deep); }
 .btn-download {
@@ -465,17 +466,42 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 }
 .btn-download:hover { background: var(--green-deep); transform: translateY(-1px); }
 
+/* Secondary "download it as something else instead" links — same package,
+   already saved to history, just not what the Pakke selector was set to. */
+.result__alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 2px; border-top: 1px dashed #cfe6cb; }
+.result__alt-label { font-size: 11.5px; color: var(--ink-3); }
+.result__alt-link { font-size: 12px; font-weight: 600; color: var(--green-deep); text-decoration: underline; text-underline-offset: 2px; }
+.result__alt-link:hover { color: var(--green); }
+
+/* Segmented control that needs to fit 3 longer labels ("Kun de 3 første" etc). */
+.segmented--wide { flex-wrap: wrap; }
+.segmented--wide .seg { flex: 1 1 auto; font-size: 12px; padding: 7px 8px; }
+
 /* ----------------------------- Previews --------------------------------- */
 .previews { display: flex; flex-direction: column; }
 .previews__head { padding: 18px 22px; border-bottom: 1px solid var(--border); }
 .previews__head h2 { font-size: 15px; }
 .previews__note { font-size: 12px; color: var(--ink-3); }
-.previews__list {
+.previews__body {
   flex: 1; overflow-y: auto; padding: 22px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.previews__list {
   display: grid; gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-content: start; justify-items: center;
 }
+/* Nyhetsgrid is a different placement with its own crop — always its own row
+   below the 3 core formats, never sharing a row with them. */
+.previews__list--newsgrid {
+  grid-template-columns: none;
+  justify-items: start;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border);
+}
+.pcard--newsgrid { width: 360px; max-width: 100%; }
+.pcard__toggle { width: 100%; font-size: 12px; padding-top: 2px; border-top: 1px dashed var(--border); }
+.pcard__toggle input { width: 15px; height: 15px; }
 
 .pcard {
   background: var(--surface-2);

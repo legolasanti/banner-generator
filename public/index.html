@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Banner Generator</title>
-    <meta name="description" content="Generer annonsebannere i 3 størrelser fra ett bilde." />
+    <meta name="description" content="Generer annonsebannere i 4 størrelser fra ett bilde." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b1a'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='15' width='18' height='9' rx='1.5' fill='%23bfe3bf'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -195,6 +195,11 @@
                         <input type="range" id="subtitleScale" min="70" max="160" step="5" value="100" aria-label="Ingress-størrelse" />
                         <output id="subtitleScaleOut">100%</output>
                       </div>
+                      <div class="slider">
+                        <span class="slider__name">Nyhetsgrid</span>
+                        <input type="range" id="hlNewsgrid" min="70" max="160" step="5" value="100" aria-label="Nyhetsgrid overskrift-størrelse" />
+                        <output id="hlNewsgridOut">100%</output>
+                      </div>
                     </div>
                   </div>
 
@@ -235,14 +240,30 @@
 
             <!-- Footer / generate -->
             <div class="form__footer">
+              <div class="field">
+                <label class="field__label">Pakke <span class="field__hint">hva skal genereres/lastes ned</span></label>
+                <div class="segmented segmented--wide" id="downloadSet" role="group" aria-label="Pakke">
+                  <button type="button" class="seg is-active" data-val="all">Alle 4</button>
+                  <button type="button" class="seg" data-val="core">Kun de 3 første</button>
+                  <button type="button" class="seg" data-val="newsgrid">Kun Nyhetsgrid 190×190</button>
+                </div>
+              </div>
               <button type="submit" class="btn-generate" id="generateBtn">
                 <span class="btn-generate__spinner" aria-hidden="true"></span>
-                <span class="btn-generate__label">Generer bannere · 3 størrelser</span>
+                <span class="btn-generate__label">Generer bannere · 4 størrelser</span>
               </button>
               <div class="result" id="result" hidden>
-                <svg class="result__check" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span class="result__text">Ferdig!</span>
-                <a class="btn-download" id="downloadLink" download>Last ned ZIP</a>
+                <div class="result__top">
+                  <svg class="result__check" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  <span class="result__text">Ferdig!</span>
+                  <a class="btn-download" id="downloadLink" download>Last ned</a>
+                </div>
+                <div class="result__alt" id="resultAlt">
+                  <span class="result__alt-label">eller last ned i stedet:</span>
+                  <a class="result__alt-link" id="downloadNewsgrid" download>Kun Nyhetsgrid 190×190</a>
+                  <a class="result__alt-link" id="downloadAll" download>Alle 4 (ZIP)</a>
+                  <a class="result__alt-link" id="downloadCore" download>Kun de 3 første (ZIP)</a>
+                </div>
               </div>
             </div>
           </form>
@@ -253,8 +274,9 @@
               <h2>Forhåndsvisning</h2>
               <span class="previews__note">Oppdateres mens du skriver — likt sluttresultatet</span>
             </div>
-            <div class="previews__list">
-              <article class="pcard">
+            <div class="previews__body">
+              <div class="previews__list">
+                <article class="pcard">
                 <header class="pcard__head"><span class="pcard__name">ReadPeak</span><span class="pcard__dim">308 × 380</span></header>
                 <div class="pcard__stage">
                   <div class="preview-stage" style="--w:308;--h:380;--scale:0.8">
@@ -280,6 +302,27 @@
                   </div>
                 </div>
               </article>
+            </div>
+
+            <!-- Nyhetsgrid sits on its own row below the 3 core formats,
+                 never side-by-side with them (different placement, own crop). -->
+            <div class="previews__list previews__list--newsgrid">
+              <article class="pcard pcard--newsgrid">
+                <header class="pcard__head">
+                  <span class="pcard__name">Nyhetsgrid <span class="field__hint">forsiden</span></span>
+                  <span class="pcard__dim">190 × 190</span>
+                </header>
+                <div class="pcard__stage">
+                  <div class="preview-stage" style="--w:190;--h:190;--scale:1.7">
+                    <div class="preview-scaler"><div id="preview-newsgrid" class="bn"></div></div>
+                  </div>
+                </div>
+                <label class="checkbox pcard__toggle">
+                  <input type="checkbox" id="newsgridVinner" />
+                  <span>Vis vinnersjanse her <span class="field__hint">kun ved vinnerpott — av som standard</span></span>
+                </label>
+              </article>
+            </div>
             </div>
           </div>
         </div>

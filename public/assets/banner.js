@@ -144,10 +144,46 @@
     );
   }
 
+  // Nyhetsgrid 190×190 — the front-page news-grid placement. The image is
+  // small at this size, so Annonse + 18/Hjelpelinjen are merged into one
+  // full-width bar across the top of the photo (instead of two floating
+  // pills) to stay legible; see the Canva reference "NT - 190x190".
+  // Vinnersjanse defaults OFF here (too small to read) — only switched on
+  // explicitly when fronting a jackpot ("vinnerpott"), per Monika.
+  function renderNewsgrid(data) {
+    var annonse = escapeHtml(data.annonseText || "Annonse");
+    var vinnerText = data.showVinnerOnNewsgrid ? String(data.vinnersjanse || "").trim() : "";
+    var vinner = vinnerText ? '<span class="bn__badge bn__vinner">' + escapeHtml(vinnerText) + "</span>" : "";
+    return (
+      '<div class="bn__media">' +
+      mediaImg(data) +
+      '<span class="bn__topbar">' +
+      '<span class="bn__topbar-annonse">' +
+      annonse +
+      "</span>" +
+      ageBadge(data, "bn__topbar-age") +
+      "</span>" +
+      vinner +
+      "</div>" +
+      '<div class="bn__body">' +
+      '<h2 class="bn__headline">' +
+      escapeHtml(data.headline || "Overskrift kommer her") +
+      "</h2>" +
+      "</div>"
+    );
+  }
+
+  var HL_SCALE_KEYS = {
+    readpeak: "headlineScaleReadpeak",
+    desktop: "headlineScaleDesktop",
+    mobile: "headlineScaleMobile",
+    newsgrid: "headlineScaleNewsgrid",
+  };
+
   /**
    * Render a banner into a root element.
    * @param {HTMLElement} root
-   * @param {"readpeak"|"desktop"|"mobile"} type
+   * @param {"readpeak"|"desktop"|"mobile"|"newsgrid"} type
    * @param {Object} data
    */
   function renderBanner(root, type, data) {
@@ -155,12 +191,7 @@
     data = data || {};
     var cls = "bn bn--" + type;
     // Per-format headline scale (falls back to a legacy global, then 1).
-    var key =
-      type === "readpeak"
-        ? "headlineScaleReadpeak"
-        : type === "desktop"
-        ? "headlineScaleDesktop"
-        : "headlineScaleMobile";
+    var key = HL_SCALE_KEYS[type] || "headlineScaleDesktop";
     var hl = Number(data[key]);
     if (!isFinite(hl)) hl = Number(data.headlineScale);
     if (!isFinite(hl)) hl = 1;
@@ -174,6 +205,8 @@
     root.style.setProperty("--st-scale", Math.max(0.5, Math.min(2, st)));
     if (type === "readpeak") {
       root.innerHTML = renderReadpeak(data);
+    } else if (type === "newsgrid") {
+      root.innerHTML = renderNewsgrid(data);
     } else {
       root.innerHTML = renderDesktopOrMobile(data);
     }
