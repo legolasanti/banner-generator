@@ -289,10 +289,21 @@ mappe `reservebilder/` med ett reservebilde per format, og en `LES-MEG.txt`.
 ha hver kreativ som sin egen ZIP. Reservebilder lastes opp for seg i CM360; de
 ligger bevisst utenfor kreativ-ZIP-en, fordi Google ikke tillater dem der.
 
+Velger du bare ett format, *er* nedlastingen selve kreativ-ZIP-en, klar til
+opplasting som den er. Reservebildet finner du som den tilsvarende filen under
+**Historikk → Bilder**.
+
+**Oppløsning** er skjult i HTML5-modus: en HTML5-kreativ vises alltid i sin
+`ad.size`, og reservebildene må bli værende i 1× for at målene skal stemme med
+kreativen.
+
 Sett målene på kreativen i CM360 nøyaktig likt formatet (580 × 500 osv.) —
-kreativen, `ad.size`-taggen og reservebildet må alle stemme overens. Vil du
-dobbeltsjekke en pakke før opplasting, tar Googles egen validator imot ZIP-en
-direkte: <https://h5validator.appspot.com/dcm/asset>.
+kreativen, `ad.size`-taggen og reservebildet må alle stemme overens.
+
+Campaign Manager 360 kontrollerer ZIP-en ved opplasting og sier fra om noe er
+galt; det er den sjekken du skal stole på. Googles frittstående HTML5-validator
+(`h5validator.appspot.com/dcm/asset`) ble varslet utfaset i april 2025 — den
+svarer kanskje fortsatt, men ikke bygg rutinen din på den.
 
 ---
 
@@ -312,6 +323,10 @@ grensen lagres som JPEG i stedet, og appen sier fra under nedlastingsknappen,
 sammen med den faktiske størrelsen på hver fil. 4:4:4 er viktig her — standard
 4:2:0, som de fleste kodere bruker, er nettopp det som smører ut liten farget
 tekst og Norsk Tipping-merket.
+
+**Auto** sammenligner de to og tar den minste: PNG på flate flater, der den er
+både mindre og skarpere, og JPEG på foto, der tapsfritt koster flere ganger så
+mange byte uten at du ser forskjell.
 
 Grensen endres (eller slås av med `0`) under **Innstillinger → Eksport**.
 

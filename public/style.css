@@ -525,7 +525,7 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 .pcard__head { width: 100%; display: flex; align-items: baseline; justify-content: space-between; }
 .pcard__name { font-weight: 700; font-size: 13px; }
 .pcard__dim { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-.pcard__stage { display: flex; justify-content: center; align-items: center; padding: 4px 0; }
+.pcard__stage { width: 100%; display: flex; justify-content: center; align-items: center; padding: 4px 0; }
 
 .preview-stage {
   width: calc(var(--w) * var(--scale) * 1px);

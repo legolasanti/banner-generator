@@ -212,7 +212,7 @@
                     </div>
                   </div>
 
-                  <div class="adv__group adv__group--row">
+                  <div class="adv__group adv__group--row" id="resolutionGroup">
                     <span class="adv__label">Oppløsning <span class="field__hint">1× er annonsestørrelsen</span></span>
                     <div class="segmented" id="resolution" role="group" aria-label="Oppløsning">
                       <button type="button" class="seg is-active" data-val="1">1×</button>
@@ -406,7 +406,7 @@
               <img id="iconPreview" class="logo-row__img logo-row__img--icon" alt="Merke" src="assets/norsktipping-icon.svg" />
               <label class="btn-ghost btn-sm logo-row__btn">
                 Bytt merke
-                <input type="file" id="iconInput" accept="image/png,image/jpeg,image/webp" hidden />
+                <input type="file" id="iconInput" accept="image/png,image/jpeg" hidden />
               </label>
               <button type="button" class="btn-ghost btn-sm" id="resetIcon" hidden>Bruk standard</button>
             </div>
@@ -422,7 +422,9 @@
               <button type="button" class="seg" data-val="jpeg">JPEG</button>
               <button type="button" class="seg" data-val="auto">Auto</button>
             </div>
-            <span class="field__preview">Auto velger det minste formatet som holder seg innenfor grensen under.</span>
+            <span class="field__preview">
+              Auto velger den minste filen som fortsatt ser bra ut: PNG på flate flater, JPEG på foto.
+            </span>
           </div>
           <div class="field">
             <label class="field__label" for="setMaxSize">

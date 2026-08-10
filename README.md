@@ -287,10 +287,21 @@ each creative as its own ZIP. Backup images are uploaded separately in CM360;
 they are deliberately kept out of the creative ZIP, because Google forbids them
 there.
 
+Pick a single format and the download *is* the creative ZIP, ready to upload as
+it stands. Its backup image is the matching file under **Historikk → Bilder**.
+
+The **Oppløsning** control is hidden in HTML5 mode: an HTML5 creative always
+serves at its `ad.size`, and the backup images have to stay at 1× so their
+dimensions match the creative.
+
 Set the creative's dimensions in CM360 to exactly match the format
 (580 × 500 etc.) — the creative, the `ad.size` tag and the backup image all have
-to agree. To double-check a package before uploading, Google's own validator
-takes the ZIP directly: <https://h5validator.appspot.com/dcm/asset>.
+to agree.
+
+CM360 validates the ZIP on upload and reports anything it does not like, which
+is the check to rely on. Google's standalone HTML5 validator
+(`h5validator.appspot.com/dcm/asset`) was announced for deprecation in April
+2025 — it may still answer, but do not build a workflow on it.
 
 ---
 
@@ -309,6 +320,10 @@ under the limit is saved as JPEG instead, and the app says so under the download
 button along with each file's real size. 4:4:4 chroma matters here — the default
 4:2:0 that most encoders use is what smears small coloured text and the Norsk
 Tipping mark.
+
+**Auto** compares the two and takes the smaller: PNG on flat artwork, where it
+is both smaller and sharper, JPEG on a photo, where lossless costs several times
+the bytes for no visible gain.
 
 Change the limit (or switch it off with `0`) under **Innstillinger → Eksport**.
 
@@ -401,21 +416,34 @@ look in one place and both change — the preview is a faithful copy of the resu
 
 | Method + path                    | Description                                          |
 | -------------------------------- | ---------------------------------------------------- |
-| `POST /api/generate`             | Multipart: image + fields → streams a ZIP of 3 PNGs  |
+| `POST /api/generate`             | Multipart: image + fields → streams the download      |
 | `POST /api/fetch-image`          | `{url}` → fetches an image from a link (SSRF-guarded)|
 | `GET  /api/history`              | List of the last 30 packages                         |
-| `GET  /api/history/:id/download` | Re-download a previous package                       |
+| `GET  /api/history/:id/download` | Re-download a package — `?set=core\|newsgrid\|all`, `&type=html` |
 | `DELETE /api/history/:id`        | Delete a package                                     |
-| `GET  /api/settings`             | Read settings                                        |
+| `GET  /api/settings`             | Read settings (+ `ageIcon`, `imageTools`, read-only) |
 | `POST /api/settings`             | Save settings                                        |
-| `POST /api/settings/logo`        | Upload a new logo                                    |
+| `POST /api/settings/badge-icon`  | Replace the mark in the 18+ badge (PNG/JPG)          |
+| `DELETE /api/settings/badge-icon`| Go back to the built-in mark                         |
 | `GET  /api/health`               | Status (browser connected?)                          |
+
+All four formats are rendered and saved on every generate; `downloadSet` only
+picks what the response streams. Writes are rejected when they arrive with a
+foreign `Origin`.
 
 `POST /api/generate` fields: `image` (file, max 10 MB, JPG/PNG/WEBP/AVIF/GIF),
 `headline`, `subtitle`, `brandLabel`, `vinnersjanse` (empty = badge hidden),
-`imagePositionX`/`imagePositionY` (0–100), `imageZoom` (0–30), `headlineScale`
-& `subtitleScale` (0.5–2), `lesMerStyle` (`button` | `text`), `accentColor`
-(hex), `filename`, `jpegQuality`.
+`showVinnerOnNewsgrid`, `imagePositionX`/`imagePositionY` (0–100), `imageZoom`
+(0–30), `headlineScaleReadpeak`/`Desktop`/`Mobile`/`Newsgrid` &
+`subtitleScale` (0.5–2), `lesMerStyle` (`button` | `text`), `lesMerSize`,
+`accentColor` (hex), `resolution` (1 | 1.5 | 2), `format`
+(`png` | `jpeg` | `auto`), `filename`, `downloadSet`
+(`all` | `core` | `newsgrid`), `outputType` (`image` | `html`) and — required
+for `html` — `clickUrl`.
+
+The response carries `X-Entry-Id` and `X-Banner-Report`: a URI-encoded JSON
+array with each format's filename, pixel size, byte size and any note (for
+example a PNG that had to become a JPEG to make the size limit).
 
 ---
 

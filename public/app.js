@@ -120,6 +120,7 @@
     lesMerSize: $("#lesMerSize"),
     lesMerSizeOut: $("#lesMerSizeOut"),
     resolution: $("#resolution"),
+    resolutionGroup: $("#resolutionGroup"),
     formatSel: $("#formatSel"),
     budgetNote: $("#budgetNote"),
     setFormat: $("#setFormat"),
@@ -511,6 +512,13 @@
   function updateBudgetNote() {
     if (!el.budgetNote) return;
     const kb = state.settings.export.maxFileSizeKb;
+    const tools = state.settings.imageTools;
+    // Never promise a limit the server cannot actually enforce.
+    if (tools && tools.available === false) {
+      el.budgetNote.textContent =
+        "Størrelsesgrensen er av: bildebiblioteket «sharp» mangler. Kjør «npm install» på nytt.";
+      return;
+    }
     el.budgetNote.textContent = kb
       ? "Hver fil holdes under " + kb + " KB. Kommer en PNG over, lagres den som JPEG."
       : "Ingen størrelsesgrense er satt (skrus på i Innstillinger).";
@@ -617,10 +625,16 @@
   // Image vs HTML5 changes what is produced, what the button says, and whether
   // a landing-page URL is required.
   function applyOutputType() {
-    el.clickUrlField.hidden = state.outputType !== "html";
+    const isHtml = state.outputType === "html";
+    el.clickUrlField.hidden = !isHtml;
+    // An HTML5 creative always serves at its ad.size, so the resolution control
+    // has nothing to act on — and the backup images have to stay at 1× to match
+    // what Campaign Manager 360 expects.
+    if (el.resolutionGroup) el.resolutionGroup.hidden = isHtml;
     el.outputTypeNote.textContent = OUTPUT_TYPE_NOTES[state.outputType] || "";
     updateFilenamePreview();
-    setLoading(false);
+    // Never clear the spinner out from under a generation that is still running.
+    if (!el.generateBtn.classList.contains("is-loading")) setLoading(false);
   }
 
   function initOutputType() {
@@ -637,15 +651,19 @@
   // smaller screens. Larger banners (Desktop) get a lower max scale.
   function fitPreviews() {
     $$(".preview-stage").forEach((stage) => {
-      const wrap = stage.closest(".pcard__stage");
-      if (!wrap) return;
+      const card = stage.closest(".pcard");
+      if (!card) return;
       const w = parseFloat(stage.style.getPropertyValue("--w")) || 320;
       // Nyhetsgrid renders at 190×190 — tiny next to the others, so it gets a
       // much higher on-screen scale to stay legible. This only affects the
       // preview; the actual generated PNG is always exactly 190×190.
-      const isNewsgrid = !!wrap.closest(".pcard--newsgrid");
+      const isNewsgrid = card.classList.contains("pcard--newsgrid");
       const max = isNewsgrid ? 1.8 : w >= 500 ? 0.66 : 0.9;
-      const avail = wrap.clientWidth;
+      // Measure the CARD, not the stage: the stage shrink-wraps its own
+      // content, so measuring it just reads back the scale already applied and
+      // the banner never actually shrinks to fit a narrow column.
+      const pad = parseFloat(getComputedStyle(card).paddingLeft) || 0;
+      const avail = card.clientWidth - pad * 2;
       let scale = avail > 0 ? Math.min(avail / w, max) : max;
       if (!isFinite(scale) || scale <= 0) scale = max;
       stage.style.setProperty("--scale", scale.toFixed(4));
@@ -679,7 +697,7 @@
   // What actually came out: name, size, and any compromise the encoder had to
   // make. Without this the user only finds out in Finder — which is exactly how
   // an over-the-limit file gets uploaded by accident.
-  function renderReport(rawHeader) {
+  function renderReport(rawHeader, asHtml) {
     el.resultFiles.innerHTML = "";
     if (!rawHeader) return;
     let rows;
@@ -690,7 +708,6 @@
     }
     if (!Array.isArray(rows)) return;
 
-    const asHtml = state.outputType === "html";
     rows.forEach((row) => {
       const bytes = asHtml ? row.htmlBytes : row.bytes;
       if (!bytes) return;
@@ -736,6 +753,11 @@
     }
     hideResult();
     setLoading(true);
+    // Freeze what this run is producing: the controls stay live while the
+    // server works, and the result has to describe the request that was sent,
+    // not whatever the form says by the time it comes back.
+    const outputType = state.outputType;
+    const downloadSet = state.downloadSet;
 
     const fd = new FormData();
     fd.append("image", state.imageBlob, state.imageName);
@@ -759,8 +781,8 @@
     fd.append("format", state.format);
     fd.append("filename", el.filename.value);
     fd.append("jpegQuality", state.settings.export.jpegQuality);
-    fd.append("downloadSet", state.downloadSet);
-    fd.append("outputType", state.outputType);
+    fd.append("downloadSet", downloadSet);
+    fd.append("outputType", outputType);
     fd.append("clickUrl", el.clickUrl.value.trim());
 
     try {
@@ -774,11 +796,11 @@
       }
       const entryId = res.headers.get("x-entry-id");
       const blob = await res.blob();
-      const isHtml = state.outputType === "html";
+      const isHtml = outputType === "html";
       // Only a single-image download can end in something other than .zip, and
       // the size limit may have turned that PNG into a JPEG — so trust the
       // server's Content-Disposition first and keep this purely as a fallback.
-      const fallbackExt = !isHtml && state.downloadSet === "newsgrid" ? "png" : "zip";
+      const fallbackExt = !isHtml && downloadSet === "newsgrid" ? "png" : "zip";
       const name = filenameFromDisposition(
         res.headers.get("content-disposition"),
         (sanitizeFilename(el.filename.value) || "banner") + "." + fallbackExt
@@ -786,8 +808,8 @@
       state.lastBlobUrl = URL.createObjectURL(blob);
       el.downloadLink.href = state.lastBlobUrl;
       el.downloadLink.download = name;
-      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[state.outputType][state.downloadSet].primary;
-      renderReport(res.headers.get("x-banner-report"));
+      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[outputType][downloadSet].primary;
+      renderReport(res.headers.get("x-banner-report"), isHtml);
 
       // Every generation renders + saves all 4 formats regardless of Pakke —
       // only THIS response (the blob above) matches what was selected. The
@@ -799,9 +821,9 @@
         el.downloadNewsgrid.href = link("newsgrid");
         el.downloadAll.href = link("all");
         el.downloadCore.href = link("core");
-        el.downloadNewsgrid.hidden = state.downloadSet === "newsgrid";
-        el.downloadAll.hidden = state.downloadSet === "all";
-        el.downloadCore.hidden = state.downloadSet === "core";
+        el.downloadNewsgrid.hidden = downloadSet === "newsgrid";
+        el.downloadAll.hidden = downloadSet === "all";
+        el.downloadCore.hidden = downloadSet === "core";
         el.resultAlt.hidden = false;
       } else {
         el.resultAlt.hidden = true;

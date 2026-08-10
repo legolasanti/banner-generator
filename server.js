@@ -46,8 +46,10 @@ const SETTINGS_JSON = path.join(ROOT, "settings.json");
 const FONTS_DIR = path.join(ASSETS_DIR, "fonts");
 const BANNER_CSS = path.join(ASSETS_DIR, "banner.css");
 // Optional replacement for the Norsk Tipping mark in the 18+ badge. When none
-// of these exist, banner.js draws its built-in inline SVG.
-const AGE_ICON_EXTS = ["svg", "png", "webp", "jpg"];
+// of these exist, banner.js draws its built-in inline SVG. Only types Campaign
+// Manager 360 accepts inside a creative ZIP — a WEBP mark would be copied into
+// every HTML5 package and get the whole creative rejected.
+const AGE_ICON_EXTS = ["svg", "png", "jpg"];
 const ageIconPath = (ext) => path.join(ASSETS_DIR, "age-icon." + ext);
 
 const PORT = process.env.PORT || 4050;
@@ -522,7 +524,8 @@ async function loadFontFiles() {
  * @returns {Promise<Object<string,string>>} spec key → path relative to the entry folder
  */
 async function buildHtmlPackages(params) {
-  const { folderAbs, fileBase, rendered, photoBuffer, zoom, clickUrl, ageIcon, maxBytes, title, report } = params;
+  const { folderAbs, fileBase, rendered, photoBuffer, zoom, clickUrl, ageIcon, maxBytes, photoName, title, report } =
+    params;
 
   const css = await fsp.readFile(BANNER_CSS, "utf8");
   const fonts = await loadFontFiles();
@@ -551,7 +554,7 @@ async function buildHtmlPackages(params) {
         icon,
         clickUrl,
         title,
-        photo: { name: "image.jpg", buffer: photo.buffer },
+        photo: { name: photoName, buffer: photo.buffer },
       });
       if (!maxBytes || zip.length <= maxBytes) break;
       photoBudget = Math.max(40 * 1024, photoBudget - (zip.length - maxBytes) - 4 * 1024);
@@ -638,6 +641,29 @@ app.use((req, res, next) => {
   next();
 });
 
+// The UI is served from the same origin it calls, so a state-changing request
+// carrying a FOREIGN Origin is not this app — it is some other page open in the
+// operator's browser reaching localhost. Block those: they could otherwise
+// rewrite settings, swap the 18+ badge mark or delete history. Requests with no
+// Origin at all (curl, scripts) are left alone; a browser always sends one on a
+// cross-origin write.
+const READ_ONLY_METHODS = ["GET", "HEAD", "OPTIONS"];
+app.use((req, res, next) => {
+  if (READ_ONLY_METHODS.includes(req.method)) return next();
+  const origin = req.get("origin");
+  if (!origin) return next();
+  let originHost;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    return res.status(403).json({ error: "Ugyldig Origin" });
+  }
+  if (originHost !== req.get("host")) {
+    return res.status(403).json({ error: "Forespørselen kom fra et annet nettsted og ble blokkert" });
+  }
+  next();
+});
+
 app.use(express.json({ limit: "1mb" }));
 
 // Static: app frontend + history (read-only, for thumbnails / re-download)
@@ -656,16 +682,18 @@ const uploadImage = multer({
   },
 }).single("image");
 
-// Raster only, deliberately: an uploaded SVG would be served from this origin
-// and SVG can carry script. The built-in mark is already vector, so nothing is
-// lost. (A hand-placed assets/age-icon.svg is still honoured — that requires
-// filesystem access anyway.)
+// PNG/JPG only, deliberately. SVG is out because an uploaded one would be
+// served from this origin and SVG can carry script — and the built-in mark is
+// already vector, so nothing is lost. (A hand-placed assets/age-icon.svg is
+// still honoured; that needs filesystem access anyway.) WEBP is out because
+// the mark is copied into every Campaign Manager 360 package, and WEBP is not
+// an accepted asset type there.
 const uploadBadgeIcon = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 4 * 1024 * 1024 },
   fileFilter(req, file, cb) {
-    const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype);
-    cb(ok ? null : new Error("Ikonet må være PNG, JPG eller WEBP"), ok);
+    const ok = ["image/jpeg", "image/png"].includes(file.mimetype);
+    cb(ok ? null : new Error("Ikonet må være PNG eller JPG"), ok);
   },
 }).single("icon");
 
@@ -729,11 +757,24 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // creative per format, where the headline stays live text.
     const outputType = b.outputType === "html" ? "html" : "image";
     let clickUrl = "";
+    let photoAsset = null;
     if (outputType === "html") {
       const parsed = normalizeClickUrl(b.clickUrl);
       if (!parsed.ok) return res.status(400).json({ error: parsed.error });
       clickUrl = parsed.url;
+      photoAsset = imageTools.photoAsset(req.file.buffer);
+      if (!photoAsset.ok) {
+        return res.status(400).json({
+          error:
+            "HTML5-pakken kan bare bruke JPG, PNG eller GIF når bildebiblioteket (sharp) mangler. " +
+            "Kjør «npm install» på nytt, eller last opp bildet som JPG.",
+        });
+      }
     }
+    // An HTML5 creative is always its ad.size, so the resolution control only
+    // affects the images. Forcing 1× keeps the backup images the same size as
+    // the creative — Campaign Manager 360 requires them to match.
+    const renderScale = outputType === "html" ? 1 : resolution;
 
     const includeTs = settings.export.includeTimestampInFilename;
     const now = new Date();
@@ -768,7 +809,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // Serialize the heavy Puppeteer work.
     const rendered = await enqueue(() =>
       generateAll(data, {
-        scale: resolution,
+        scale: renderScale,
         superSample: settings.export.superSample,
         format,
         maxBytes,
@@ -776,7 +817,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         // Only pay for the markup capture when an HTML5 package needs it.
         assetNames:
           outputType === "html"
-            ? { photo: "image.jpg", icon: ageIcon ? "age-icon." + ageIcon.ext : "" }
+            ? { photo: photoAsset.name, icon: ageIcon ? "age-icon." + ageIcon.ext : "" }
             : null,
       })
     );
@@ -821,6 +862,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         clickUrl,
         ageIcon,
         maxBytes,
+        photoName: photoAsset.name,
         title: headline || baseName,
         report,
       });
@@ -1021,8 +1063,10 @@ app.post("/api/settings/badge-icon", withMulter(uploadBadgeIcon), async (req, re
   try {
     if (!req.file) return res.status(400).json({ error: "Mangler ikon-fil" });
     await fsp.mkdir(ASSETS_DIR, { recursive: true });
-    const ext = { "image/png": "png", "image/webp": "webp", "image/jpeg": "jpg" }[req.file.mimetype];
-    if (!ext) return res.status(400).json({ error: "Ikonet må være PNG, WEBP eller JPG" });
+    // Trust the BYTES, not the declared Content-Type — the extension decides how
+    // this file is served back out of public/, so it has to match what it is.
+    const ext = { "image/png": "png", "image/jpeg": "jpg" }[sniffImageMime(req.file.buffer)];
+    if (!ext) return res.status(400).json({ error: "Ikonet må være PNG eller JPG" });
     // Only one custom mark can be active, so clear the other extensions first.
     for (const other of AGE_ICON_EXTS) {
       if (other !== ext) await fsp.rm(ageIconPath(other), { force: true }).catch(() => {});

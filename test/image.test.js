@@ -84,6 +84,20 @@ test("image encoding", { skip: sharp ? false : "sharp is not installed" }, async
     assert.equal(out.note, "");
   });
 
+  await t.test("auto keeps PNG for flat artwork", async () => {
+    const png = await simplePng(580, 500);
+    const out = await imageTools.encodeToBudget(png, { format: "auto", maxBytes: 200 * KB });
+    assert.equal(out.ext, "png", "a flat banner compresses smaller AND sharper as PNG");
+  });
+
+  await t.test("auto picks JPEG for a photo, where PNG costs far more", async () => {
+    const png = await photoLikePng(580, 500);
+    const lossless = await imageTools.encodeToBudget(png, { format: "png", maxBytes: 0 });
+    const auto = await imageTools.encodeToBudget(png, { format: "auto", maxBytes: 200 * KB });
+    assert.equal(auto.ext, "jpg", "auto must not be a synonym for png");
+    assert.ok(auto.bytes < lossless.bytes, "auto should be the smaller of the two");
+  });
+
   await t.test("reports the miss rather than shipping something unreadable", async () => {
     const png = await noisyPng(580, 500);
     // Unreachable by design: no encoder puts 580×500 of pure noise into 3 KB.
@@ -103,6 +117,30 @@ test("image encoding", { skip: sharp ? false : "sharp is not installed" }, async
     const png = await simplePng(190, 190);
     const out = await imageTools.downscale(png, 190, 190);
     assert.equal(out, png, "no re-encode when the size already matches");
+  });
+});
+
+test("photo asset naming", async (t) => {
+  // Only the three types Campaign Manager 360 accepts for a display asset may
+  // be recognised. A WEBP or AVIF called image.jpg would get the whole creative
+  // rejected on upload.
+  const cases = [
+    ["jpg", Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1])],
+    ["png", Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13])],
+    ["gif", Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(8)])],
+    ["", Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBP")])],
+    ["", Buffer.concat([Buffer.alloc(4), Buffer.from("ftypavif"), Buffer.alloc(4)])],
+    ["", Buffer.from("not an image at all")],
+  ];
+  for (const [expected, buffer] of cases) {
+    await t.test(`recognises ${expected || "nothing"} in ${buffer.slice(0, 4).toString("latin1").replace(/[^\x20-\x7e]/g, ".")}`, () => {
+      assert.equal(imageTools.sniffExtension(buffer), expected);
+    });
+  }
+
+  await t.test("names the packaged photo image.jpg while sharp re-encodes it", { skip: sharp ? false : "no sharp" }, () => {
+    const asset = imageTools.photoAsset(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0]));
+    assert.deepEqual(asset, { name: "image.jpg", ok: true });
   });
 });
 
