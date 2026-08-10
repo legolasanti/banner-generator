@@ -1,0 +1,18 @@
+<!--
+  Norsk Tipping brand mark — ICON ONLY.
+  Extracted from references/norsktipping-full-color.svg by dropping the
+  "Norsk Tipping" wordmark <path> and cropping the viewBox to the mark's own
+  bounds (x 0–19.805, y 0–19.943), so it can sit next to real "18+ |
+  Hjelpelinjen.no" text instead of being baked into a bitmap lockup.
+  Keep in sync with the inline copy in public/assets/banner.js (AGE_ICON_SVG).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.805 19.943" width="20" height="20" role="img" aria-label="Norsk Tipping">
+  <polygon fill="#FFC000" points="4.048 0 0 4.076 5.856 9.972 0 15.867 4.048 19.943 13.951 9.972"/>
+  <polygon fill="#96D94E" points="5.856 9.972 13.951 9.972 0 4.076"/>
+  <polygon fill="#00A332" points="4.048 0 0 4.076 13.951 9.972"/>
+  <polygon fill="#FF7337" points="5.856 9.972 4.048 19.943 13.951 9.972"/>
+  <polygon fill="#FF7EA9" points="15.757 0 10.82 4.971 14.869 9.047 19.805 4.076"/>
+  <polygon fill="#EF2500" points="15.757 0 14.869 9.047 19.805 4.076"/>
+  <polygon fill="#00C1FF" points="19.805 15.867 14.869 10.896 10.82 14.972"/>
+  <polygon fill="#0058FF" points="15.757 19.943 19.805 15.867 10.82 14.972"/>
+</svg>

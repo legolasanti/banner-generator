@@ -403,6 +403,8 @@ select { cursor: pointer; padding-right: 34px; }
 .adv__group { display: flex; flex-direction: column; gap: 9px; }
 .adv__group--row { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .adv__label { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.adv__note { margin: -6px 0 0; font-size: 11.5px; color: var(--ink-3); }
+.adv__note:empty { display: none; }
 .slider output { font-family: var(--mono); font-size: 11px; color: var(--ink-2); width: 38px; text-align: right; }
 
 input[type="range"] {
@@ -466,6 +468,16 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 }
 .btn-download:hover { background: var(--green-deep); transform: translateY(-1px); }
 
+/* What actually came out of the generator: one row per format with its real
+   size, so an over-the-limit file is caught here rather than in Finder. */
+.result__files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.result__files:empty { display: none; }
+.result__file { display: flex; align-items: baseline; gap: 8px; font-size: 11.5px; color: var(--ink-2); }
+.result__file-name { font-family: var(--mono); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result__file-size { margin-left: auto; font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--green-deep); flex: none; }
+.result__file-size.is-over { color: #a3261d; }
+.result__file-note { flex-basis: 100%; font-size: 10.5px; color: var(--ink-3); font-style: italic; }
+
 /* Secondary "download it as something else instead" links — same package,
    already saved to history, just not what the Pakke selector was set to. */
 .result__alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 2px; border-top: 1px dashed #cfe6cb; }
@@ -491,15 +503,12 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-content: start; justify-items: center;
 }
-/* Nyhetsgrid is a different placement with its own crop — always its own row
-   below the 3 core formats, never sharing a row with them. */
-.previews__list--newsgrid {
-  grid-template-columns: none;
-  justify-items: start;
-  padding-top: 4px;
-  border-top: 1px dashed var(--border);
-}
-.pcard--newsgrid { width: 360px; max-width: 100%; }
+/* Nyhetsgrid is a different placement with its own crop, so it never shares a
+   row with the core three. Pinning it to column 1 pushes it to the next row
+   while it stays inside the SAME grid — so it gets the identical card width
+   instead of stretching across the whole panel with the banner marooned in the
+   middle of a sea of white. */
+.pcard--newsgrid { grid-column: 1; }
 .pcard__toggle { width: 100%; font-size: 12px; padding-top: 2px; border-top: 1px dashed var(--border); }
 .pcard__toggle input { width: 15px; height: 15px; }
 
@@ -636,6 +645,9 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
   height: 26px; width: auto; max-width: 170px; object-fit: contain;
   background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
 }
+/* The mark is a small square, not a wide lockup — give it a square well so a
+   26px-tall icon does not float in a 170px box. */
+.logo-row__img--icon { height: 30px; width: 30px; max-width: 30px; padding: 4px; }
 .logo-row__btn { cursor: pointer; }
 
 .checkbox { display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; user-select: none; }

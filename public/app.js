@@ -19,7 +19,13 @@
       { id: "sport", label: "Sport (ingen vinnersjanse)", vinnersjanse: "" },
     ],
     staticBadges: { annonseText: "Annonse", ageBadgeText: "18+ | Hjelpelinjen.no" },
-    export: { jpegQuality: 92, includeTimestampInFilename: false, format: "png" },
+    export: {
+      jpegQuality: 92,
+      includeTimestampInFilename: false,
+      format: "png",
+      maxFileSizeKb: 200,
+      superSample: true,
+    },
   };
 
   const state = {
@@ -37,16 +43,33 @@
     format: "png",
     lesMerStyle: "text",
     accentColor: "#000000",
-    logoVersion: 0,
+    ageIcon: null, // { path, version } when a custom mark has been uploaded
     lastBlobUrl: null,
     downloadSet: "all", // "all" | "core" | "newsgrid" — what Generer actually produces
+    outputType: "image", // "image" (PNG/JPEG) | "html" (Campaign Manager 360)
     showVinnerOnNewsgrid: false, // off by default — only turned on when fronting a jackpot
   };
 
   const DOWNLOAD_SET_LABELS = {
-    all: { count: "4 størrelser", primary: "Last ned alle 4 (ZIP)" },
-    core: { count: "3 størrelser", primary: "Last ned ZIP" },
-    newsgrid: { count: "1 størrelse (190×190)", primary: "Last ned 190×190" },
+    image: {
+      all: { count: "4 størrelser", primary: "Last ned alle 4 (ZIP)" },
+      core: { count: "3 størrelser", primary: "Last ned ZIP" },
+      newsgrid: { count: "1 størrelse (190×190)", primary: "Last ned 190×190" },
+    },
+    // One CM360 creative per format, so several formats arrive as an outer ZIP
+    // of ready-to-upload ZIPs rather than as one merged package.
+    html: {
+      all: { count: "4 HTML5-pakker", primary: "Last ned alle 4 HTML5-pakker" },
+      core: { count: "3 HTML5-pakker", primary: "Last ned 3 HTML5-pakker" },
+      newsgrid: { count: "1 HTML5-pakke (190×190)", primary: "Last ned HTML5-pakke" },
+    },
+  };
+
+  const OUTPUT_TYPE_NOTES = {
+    image: "Flate bildefiler. Bruk denne til vanlige bildeplasseringer.",
+    html:
+      "Én opplastingsklar ZIP per format til Campaign Manager 360. Overskriften " +
+      "blir ekte tekst, så den er knivskarp på alle skjermer — og pakken er mye lettere.",
   };
 
   const IMAGE_MIME_RE = /^image\/(jpeg|png|webp|avif|gif)$/;
@@ -98,7 +121,12 @@
     lesMerSizeOut: $("#lesMerSizeOut"),
     resolution: $("#resolution"),
     formatSel: $("#formatSel"),
+    budgetNote: $("#budgetNote"),
     setFormat: $("#setFormat"),
+    outputType: $("#outputType"),
+    outputTypeNote: $("#outputTypeNote"),
+    clickUrlField: $("#clickUrlField"),
+    clickUrl: $("#clickUrl"),
     brandLabel: $("#brandLabel"),
     gameType: $("#gameType"),
     customVinnerField: $("#customVinnerField"),
@@ -115,6 +143,7 @@
     generateBtn: $("#generateBtn"),
     result: $("#result"),
     downloadLink: $("#downloadLink"),
+    resultFiles: $("#resultFiles"),
     resultAlt: $("#resultAlt"),
     downloadNewsgrid: $("#downloadNewsgrid"),
     downloadAll: $("#downloadAll"),
@@ -138,11 +167,16 @@
     addPreset: $("#addPreset"),
     setAnnonse: $("#setAnnonse"),
     setAge: $("#setAge"),
-    logoPreview: $("#logoPreview"),
-    logoInput: $("#logoInput"),
+    iconPreview: $("#iconPreview"),
+    iconInput: $("#iconInput"),
+    resetIcon: $("#resetIcon"),
     setQuality: $("#setQuality"),
     qualityOut: $("#qualityOut"),
+    setMaxSize: $("#setMaxSize"),
+    maxSizeOut: $("#maxSizeOut"),
+    setSuperSample: $("#setSuperSample"),
     setTimestamp: $("#setTimestamp"),
+    imageToolsWarning: $("#imageToolsWarning"),
     saveSettings: $("#saveSettings"),
     resetSettings: $("#resetSettings"),
 
@@ -185,8 +219,11 @@
     }, 3200);
   }
 
-  function logoUrl() {
-    return "assets/hjelpelinjen-logo.png" + (state.logoVersion ? "?v=" + state.logoVersion : "");
+  // Empty string means "no custom mark" — banner.js then draws its built-in
+  // inline SVG, which is the normal case.
+  function ageIconUrl() {
+    if (!state.ageIcon || !state.ageIcon.path) return "";
+    return state.ageIcon.path + (state.ageIcon.version ? "?v=" + state.ageIcon.version : "");
   }
 
   // -------- previews --------------------------------------------------------
@@ -217,7 +254,7 @@
       lesMerSize: state.lesMerSize,
       lesMerStyle: state.lesMerStyle,
       accentColor: state.accentColor,
-      logoUrl: logoUrl(),
+      ageIconUrl: ageIconUrl(),
       annonseText: state.settings.staticBadges.annonseText,
       ageBadgeText: state.settings.staticBadges.ageBadgeText,
     };
@@ -460,8 +497,23 @@
       return;
     }
     const ts = state.settings.export.includeTimestampInFilename ? "-{tidsstempel}" : "";
-    const ext = state.format === "jpeg" ? "jpg" : "png";
-    el.filenamePreview.textContent = "→ " + sanitizeFilename(v) + ts + "-desktop-580x500." + ext;
+    const base = sanitizeFilename(v) + ts + "-desktop-580x500";
+    if (state.outputType === "html") {
+      el.filenamePreview.textContent = "→ " + base + ".zip";
+      return;
+    }
+    // "auto" — and any format that has to give way to the size limit — is
+    // decided at render time, so show both possibilities rather than lie.
+    const ext = state.format === "jpeg" ? "jpg" : state.format === "auto" ? "png/jpg" : "png";
+    el.filenamePreview.textContent = "→ " + base + "." + ext;
+  }
+
+  function updateBudgetNote() {
+    if (!el.budgetNote) return;
+    const kb = state.settings.export.maxFileSizeKb;
+    el.budgetNote.textContent = kb
+      ? "Hver fil holdes under " + kb + " KB. Kommer en PNG over, lagres den som JPEG."
+      : "Ingen størrelsesgrense er satt (skrus på i Innstillinger).";
   }
 
   function rebuildGameSelect(keepValue) {
@@ -562,6 +614,25 @@
     });
   }
 
+  // Image vs HTML5 changes what is produced, what the button says, and whether
+  // a landing-page URL is required.
+  function applyOutputType() {
+    el.clickUrlField.hidden = state.outputType !== "html";
+    el.outputTypeNote.textContent = OUTPUT_TYPE_NOTES[state.outputType] || "";
+    updateFilenamePreview();
+    setLoading(false);
+  }
+
+  function initOutputType() {
+    segmented(el.outputType, (val) => {
+      state.outputType = val === "html" ? "html" : "image";
+      hideResult();
+      applyOutputType();
+    });
+    el.clickUrl.addEventListener("input", hideResult);
+    applyOutputType();
+  }
+
   // Scale each preview banner to fit its (gray) card, so it never overflows on
   // smaller screens. Larger banners (Desktop) get a lower max scale.
   function fitPreviews() {
@@ -573,7 +644,7 @@
       // much higher on-screen scale to stay legible. This only affects the
       // preview; the actual generated PNG is always exactly 190×190.
       const isNewsgrid = !!wrap.closest(".pcard--newsgrid");
-      const max = isNewsgrid ? 1.7 : w >= 500 ? 0.66 : 0.9;
+      const max = isNewsgrid ? 1.8 : w >= 500 ? 0.66 : 0.9;
       const avail = wrap.clientWidth;
       let scale = avail > 0 ? Math.min(avail / w, max) : max;
       if (!isFinite(scale) || scale <= 0) scale = max;
@@ -584,6 +655,7 @@
   // -------- generate --------------------------------------------------------
   function hideResult() {
     el.result.hidden = true;
+    el.resultFiles.innerHTML = "";
     if (state.lastBlobUrl) {
       URL.revokeObjectURL(state.lastBlobUrl);
       state.lastBlobUrl = null;
@@ -593,9 +665,56 @@
   function setLoading(on) {
     el.generateBtn.classList.toggle("is-loading", on);
     el.generateBtn.disabled = on || !state.imageDataUrl;
+    const labels = DOWNLOAD_SET_LABELS[state.outputType] || DOWNLOAD_SET_LABELS.image;
     el.generateBtn.querySelector(".btn-generate__label").textContent = on
       ? "Genererer …"
-      : "Generer bannere · " + DOWNLOAD_SET_LABELS[state.downloadSet].count;
+      : "Generer bannere · " + labels[state.downloadSet].count;
+  }
+
+  function isOverBudget(bytes) {
+    const kb = state.settings.export.maxFileSizeKb;
+    return kb > 0 && bytes > kb * 1024;
+  }
+
+  // What actually came out: name, size, and any compromise the encoder had to
+  // make. Without this the user only finds out in Finder — which is exactly how
+  // an over-the-limit file gets uploaded by accident.
+  function renderReport(rawHeader) {
+    el.resultFiles.innerHTML = "";
+    if (!rawHeader) return;
+    let rows;
+    try {
+      rows = JSON.parse(decodeURIComponent(rawHeader));
+    } catch (_) {
+      return;
+    }
+    if (!Array.isArray(rows)) return;
+
+    const asHtml = state.outputType === "html";
+    rows.forEach((row) => {
+      const bytes = asHtml ? row.htmlBytes : row.bytes;
+      if (!bytes) return;
+      const li = document.createElement("li");
+      li.className = "result__file";
+
+      const name = document.createElement("span");
+      name.className = "result__file-name";
+      name.textContent = (asHtml ? row.htmlFile : row.file) || row.label;
+
+      const size = document.createElement("span");
+      size.className = "result__file-size" + (isOverBudget(bytes) ? " is-over" : "");
+      size.textContent = formatBytes(bytes);
+
+      li.appendChild(name);
+      li.appendChild(size);
+      if (!asHtml && row.note) {
+        const note = document.createElement("span");
+        note.className = "result__file-note";
+        note.textContent = row.note;
+        li.appendChild(note);
+      }
+      el.resultFiles.appendChild(li);
+    });
   }
 
   function filenameFromDisposition(header, fallback) {
@@ -608,6 +727,11 @@
     e.preventDefault();
     if (!state.imageBlob) {
       toast("Last opp et bilde eller hent fra lenke først", "err");
+      return;
+    }
+    if (state.outputType === "html" && !el.clickUrl.value.trim()) {
+      toast("HTML5-pakken trenger en klikk-lenke (landingsside)", "err");
+      el.clickUrl.focus();
       return;
     }
     hideResult();
@@ -636,6 +760,8 @@
     fd.append("filename", el.filename.value);
     fd.append("jpegQuality", state.settings.export.jpegQuality);
     fd.append("downloadSet", state.downloadSet);
+    fd.append("outputType", state.outputType);
+    fd.append("clickUrl", el.clickUrl.value.trim());
 
     try {
       const res = await fetch("/api/generate", { method: "POST", body: fd });
@@ -648,7 +774,11 @@
       }
       const entryId = res.headers.get("x-entry-id");
       const blob = await res.blob();
-      const fallbackExt = state.downloadSet === "newsgrid" ? (state.format === "jpeg" ? "jpg" : "png") : "zip";
+      const isHtml = state.outputType === "html";
+      // Only a single-image download can end in something other than .zip, and
+      // the size limit may have turned that PNG into a JPEG — so trust the
+      // server's Content-Disposition first and keep this purely as a fallback.
+      const fallbackExt = !isHtml && state.downloadSet === "newsgrid" ? "png" : "zip";
       const name = filenameFromDisposition(
         res.headers.get("content-disposition"),
         (sanitizeFilename(el.filename.value) || "banner") + "." + fallbackExt
@@ -656,16 +786,19 @@
       state.lastBlobUrl = URL.createObjectURL(blob);
       el.downloadLink.href = state.lastBlobUrl;
       el.downloadLink.download = name;
-      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[state.downloadSet].primary;
+      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[state.outputType][state.downloadSet].primary;
+      renderReport(res.headers.get("x-banner-report"));
 
       // Every generation renders + saves all 4 formats regardless of Pakke —
       // only THIS response (the blob above) matches what was selected. The
       // other two combinations are already on disk too, so offer them as
       // quick secondary links against that same history entry (no re-render).
       if (entryId) {
-        el.downloadNewsgrid.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=newsgrid";
-        el.downloadAll.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=all";
-        el.downloadCore.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=core";
+        const suffix = isHtml ? "&type=html" : "";
+        const link = (set) => "/api/history/" + encodeURIComponent(entryId) + "/download?set=" + set + suffix;
+        el.downloadNewsgrid.href = link("newsgrid");
+        el.downloadAll.href = link("all");
+        el.downloadCore.href = link("core");
         el.downloadNewsgrid.hidden = state.downloadSet === "newsgrid";
         el.downloadAll.hidden = state.downloadSet === "all";
         el.downloadCore.hidden = state.downloadSet === "core";
@@ -740,8 +873,17 @@
       actions.className = "hcard__actions";
       const dl = document.createElement("a");
       dl.className = "btn-ghost btn-sm";
-      dl.textContent = "Last ned";
+      dl.textContent = entry.htmlFiles ? "Bilder" : "Last ned";
       dl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download";
+      // Entries generated as HTML5 keep both: the images (also the backup
+      // images for CM360) and the ready-to-upload packages.
+      let htmlDl = null;
+      if (entry.htmlFiles) {
+        htmlDl = document.createElement("a");
+        htmlDl.className = "btn-ghost btn-sm";
+        htmlDl.textContent = "HTML5";
+        htmlDl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?set=all&type=html";
+      }
       const del = document.createElement("button");
       del.className = "btn-ghost btn-sm is-danger";
       del.type = "button";
@@ -749,6 +891,7 @@
       del.addEventListener("click", () => deleteEntry(entry, card));
 
       actions.appendChild(dl);
+      if (htmlDl) actions.appendChild(htmlDl);
       actions.appendChild(del);
       body.appendChild(name);
       body.appendChild(head);
@@ -862,10 +1005,16 @@
       },
       export: {
         jpegQuality: +el.setQuality.value,
+        maxFileSizeKb: +el.setMaxSize.value,
+        superSample: el.setSuperSample.checked,
         includeTimestampInFilename: el.setTimestamp.checked,
         format: activeSeg(el.setFormat) || "png",
       },
     };
+  }
+
+  function maxSizeLabel(kb) {
+    return kb > 0 ? kb + " KB" : "ingen grense";
   }
 
   function fillSettingsForm(s) {
@@ -874,9 +1023,13 @@
     el.setAge.value = s.staticBadges.ageBadgeText;
     el.setQuality.value = s.export.jpegQuality;
     el.qualityOut.textContent = s.export.jpegQuality;
+    el.setMaxSize.value = s.export.maxFileSizeKb;
+    el.maxSizeOut.textContent = maxSizeLabel(s.export.maxFileSizeKb);
+    el.setSuperSample.checked = s.export.superSample !== false;
     el.setTimestamp.checked = s.export.includeTimestampInFilename;
     segmentedSet(el.setFormat, s.export.format || "png");
-    el.logoPreview.src = logoUrl();
+    el.iconPreview.src = ageIconUrl() || "assets/norsktipping-icon.svg";
+    el.resetIcon.hidden = !state.ageIcon;
   }
 
   function openDrawer() {
@@ -925,26 +1078,42 @@
       rebuildGameSelect();
       renderPreviews();
       updateFilenamePreview();
+      updateBudgetNote();
       toast("Innstillinger lagret", "ok");
     } catch (_) {
       toast("Kunne ikke lagre innstillinger", "err");
     }
   }
 
-  async function uploadLogo(file) {
+  async function uploadIcon(file) {
     if (!file) return;
     const fd = new FormData();
-    fd.append("logo", file);
+    fd.append("icon", file);
     try {
-      const res = await fetch("/api/settings/logo", { method: "POST", body: fd });
+      const res = await fetch("/api/settings/badge-icon", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      state.logoVersion = Date.now();
-      el.logoPreview.src = logoUrl();
+      state.ageIcon = data.ageIcon || null;
+      el.iconPreview.src = ageIconUrl() || "assets/norsktipping-icon.svg";
+      el.resetIcon.hidden = !state.ageIcon;
       renderPreviews();
-      toast("Logo oppdatert", "ok");
+      toast("Merket er oppdatert", "ok");
     } catch (err) {
-      toast(err.message || "Kunne ikke laste opp logo", "err");
+      toast(err.message || "Kunne ikke laste opp merket", "err");
+    }
+  }
+
+  async function resetIcon() {
+    try {
+      const res = await fetch("/api/settings/badge-icon", { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      state.ageIcon = null;
+      el.iconPreview.src = "assets/norsktipping-icon.svg";
+      el.resetIcon.hidden = true;
+      renderPreviews();
+      toast("Standardmerket er i bruk igjen", "ok");
+    } catch (_) {
+      toast("Kunne ikke fjerne merket", "err");
     }
   }
 
@@ -959,6 +1128,7 @@
       el.presetsList.appendChild(presetRow({ label: "", vinnersjanse: "" }))
     );
     el.setQuality.addEventListener("input", () => (el.qualityOut.textContent = el.setQuality.value));
+    el.setMaxSize.addEventListener("input", () => (el.maxSizeOut.textContent = maxSizeLabel(+el.setMaxSize.value)));
     segmented(el.setFormat, () => {});
     el.saveSettings.addEventListener("click", saveSettings);
     el.resetSettings.addEventListener("click", () => {
@@ -966,17 +1136,28 @@
         fillSettingsForm(JSON.parse(JSON.stringify(DEFAULTS)));
       }
     });
-    el.logoInput.addEventListener("change", () => {
-      uploadLogo(el.logoInput.files[0]);
-      el.logoInput.value = "";
+    el.iconInput.addEventListener("change", () => {
+      uploadIcon(el.iconInput.files[0]);
+      el.iconInput.value = "";
     });
+    el.resetIcon.addEventListener("click", resetIcon);
   }
 
   // -------- boot ------------------------------------------------------------
   async function loadSettings() {
     try {
       const s = await (await fetch("/api/settings")).json();
-      if (s && s.gamePresets) state.settings = s;
+      if (!s || !s.gamePresets) return;
+      state.settings = s;
+      state.ageIcon = s.ageIcon || null;
+      // The size limit and the extra-sharpness pass both need sharp. Say so
+      // plainly rather than quietly producing 1 MB files.
+      if (s.imageTools && !s.imageTools.available) {
+        el.imageToolsWarning.hidden = false;
+        el.imageToolsWarning.textContent =
+          "Bildebiblioteket «sharp» mangler, så størrelsesgrensen og ekstra skarphet er slått av " +
+          "for denne økten. Kjør «npm install» på nytt for å få dem tilbake.";
+      }
     } catch (_) {
       /* keep defaults */
     }
@@ -989,6 +1170,7 @@
     initAppearance();
     initAdvanced();
     initDownloadSet();
+    initOutputType();
     initTabs();
     initSettings();
     el.form.addEventListener("submit", onGenerate);
@@ -1000,6 +1182,7 @@
     segmentedSet(el.formatSel, state.format);
     rebuildGameSelect("vikinglotto");
     updateFilenamePreview();
+    updateBudgetNote();
     renderPreviews();
     fitPreviews();
     loadHistory();

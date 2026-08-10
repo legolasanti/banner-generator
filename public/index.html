@@ -213,11 +213,11 @@
                   </div>
 
                   <div class="adv__group adv__group--row">
-                    <span class="adv__label">Oppløsning <span class="field__hint">høyere = skarpere</span></span>
+                    <span class="adv__label">Oppløsning <span class="field__hint">1× er annonsestørrelsen</span></span>
                     <div class="segmented" id="resolution" role="group" aria-label="Oppløsning">
                       <button type="button" class="seg is-active" data-val="1">1×</button>
+                      <button type="button" class="seg" data-val="1.5">1,5×</button>
                       <button type="button" class="seg" data-val="2">2×</button>
-                      <button type="button" class="seg" data-val="3">3×</button>
                     </div>
                   </div>
 
@@ -226,8 +226,10 @@
                     <div class="segmented" id="formatSel" role="group" aria-label="Filformat">
                       <button type="button" class="seg is-active" data-val="png">PNG</button>
                       <button type="button" class="seg" data-val="jpeg">JPEG</button>
+                      <button type="button" class="seg" data-val="auto">Auto</button>
                     </div>
                   </div>
+                  <p class="adv__note" id="budgetNote"></p>
                 </div>
               </div>
 
@@ -235,6 +237,27 @@
                 <label class="field__label" for="filename">Filnavn <span class="field__hint">uten filtype</span></label>
                 <input type="text" id="filename" maxlength="60" placeholder="rekdal-vikinglotto" />
                 <span class="field__preview" id="filenamePreview"></span>
+              </div>
+
+              <!-- Image vs HTML5. HTML5 keeps the headline as live text and is
+                   what Campaign Manager 360 takes as an HTML5-visning. -->
+              <div class="field">
+                <label class="field__label">Nedlastingstype</label>
+                <div class="segmented segmented--wide" id="outputType" role="group" aria-label="Nedlastingstype">
+                  <button type="button" class="seg is-active" data-val="image">Bilde · PNG/JPEG</button>
+                  <button type="button" class="seg" data-val="html">HTML5 · Campaign Manager 360</button>
+                </div>
+                <span class="field__preview" id="outputTypeNote"></span>
+              </div>
+
+              <div class="field" id="clickUrlField" hidden>
+                <label class="field__label" for="clickUrl">
+                  Klikk-lenke <span class="field__hint">landingssiden annonsen går til (clickTag)</span>
+                </label>
+                <input type="url" id="clickUrl" placeholder="https://www.norsk-tipping.no/..." />
+                <span class="field__preview">
+                  Campaign Manager 360 overstyrer denne med sin egen sporingslenke når annonsen kjører.
+                </span>
               </div>
             </div>
 
@@ -258,6 +281,7 @@
                   <span class="result__text">Ferdig!</span>
                   <a class="btn-download" id="downloadLink" download>Last ned</a>
                 </div>
+                <ul class="result__files" id="resultFiles"></ul>
                 <div class="result__alt" id="resultAlt">
                   <span class="result__alt-label">eller last ned i stedet:</span>
                   <a class="result__alt-link" id="downloadNewsgrid" download>Kun Nyhetsgrid 190×190</a>
@@ -277,52 +301,52 @@
             <div class="previews__body">
               <div class="previews__list">
                 <article class="pcard">
-                <header class="pcard__head"><span class="pcard__name">ReadPeak</span><span class="pcard__dim">308 × 380</span></header>
-                <div class="pcard__stage">
-                  <div class="preview-stage" style="--w:308;--h:380;--scale:0.8">
-                    <div class="preview-scaler"><div id="preview-readpeak" class="bn"></div></div>
+                  <header class="pcard__head"><span class="pcard__name">ReadPeak</span><span class="pcard__dim">308 × 380</span></header>
+                  <div class="pcard__stage">
+                    <div class="preview-stage" style="--w:308;--h:380;--scale:0.8">
+                      <div class="preview-scaler"><div id="preview-readpeak" class="bn"></div></div>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
 
-              <article class="pcard">
-                <header class="pcard__head"><span class="pcard__name">Desktop</span><span class="pcard__dim">580 × 500</span></header>
-                <div class="pcard__stage">
-                  <div class="preview-stage" style="--w:580;--h:500;--scale:0.58">
-                    <div class="preview-scaler"><div id="preview-desktop" class="bn"></div></div>
+                <article class="pcard">
+                  <header class="pcard__head"><span class="pcard__name">Desktop</span><span class="pcard__dim">580 × 500</span></header>
+                  <div class="pcard__stage">
+                    <div class="preview-stage" style="--w:580;--h:500;--scale:0.58">
+                      <div class="preview-scaler"><div id="preview-desktop" class="bn"></div></div>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
 
-              <article class="pcard">
-                <header class="pcard__head"><span class="pcard__name">Mobil</span><span class="pcard__dim">320 × 400</span></header>
-                <div class="pcard__stage">
-                  <div class="preview-stage" style="--w:320;--h:400;--scale:0.8">
-                    <div class="preview-scaler"><div id="preview-mobile" class="bn"></div></div>
+                <article class="pcard">
+                  <header class="pcard__head"><span class="pcard__name">Mobil</span><span class="pcard__dim">320 × 400</span></header>
+                  <div class="pcard__stage">
+                    <div class="preview-stage" style="--w:320;--h:400;--scale:0.8">
+                      <div class="preview-scaler"><div id="preview-mobile" class="bn"></div></div>
+                    </div>
                   </div>
-                </div>
-              </article>
-            </div>
+                </article>
 
-            <!-- Nyhetsgrid sits on its own row below the 3 core formats,
-                 never side-by-side with them (different placement, own crop). -->
-            <div class="previews__list previews__list--newsgrid">
-              <article class="pcard pcard--newsgrid">
-                <header class="pcard__head">
-                  <span class="pcard__name">Nyhetsgrid <span class="field__hint">forsiden</span></span>
-                  <span class="pcard__dim">190 × 190</span>
-                </header>
-                <div class="pcard__stage">
-                  <div class="preview-stage" style="--w:190;--h:190;--scale:1.7">
-                    <div class="preview-scaler"><div id="preview-newsgrid" class="bn"></div></div>
+                <!-- Nyhetsgrid is a different placement with its own crop, so it
+                     is pinned to column 1 (see .pcard--newsgrid in style.css) —
+                     it always starts a new row instead of sharing one with the
+                     core three, while keeping the exact same card width. -->
+                <article class="pcard pcard--newsgrid">
+                  <header class="pcard__head">
+                    <span class="pcard__name">Nyhetsgrid <span class="field__hint">forsiden</span></span>
+                    <span class="pcard__dim">190 × 190</span>
+                  </header>
+                  <div class="pcard__stage">
+                    <div class="preview-stage" style="--w:190;--h:190;--scale:1.8">
+                      <div class="preview-scaler"><div id="preview-newsgrid" class="bn"></div></div>
+                    </div>
                   </div>
-                </div>
-                <label class="checkbox pcard__toggle">
-                  <input type="checkbox" id="newsgridVinner" />
-                  <span>Vis vinnersjanse her <span class="field__hint">kun ved vinnerpott — av som standard</span></span>
-                </label>
-              </article>
-            </div>
+                  <label class="checkbox pcard__toggle">
+                    <input type="checkbox" id="newsgridVinner" />
+                    <span>Vis vinnersjanse her <span class="field__hint">kun ved vinnerpott — av som standard</span></span>
+                  </label>
+                </article>
+              </div>
             </div>
           </div>
         </div>
@@ -370,17 +394,21 @@
             <input type="text" id="setAnnonse" maxlength="40" />
           </div>
           <div class="field">
-            <label class="field__label" for="setAge">Aldersmerke-tekst <span class="field__hint">brukes hvis logo mangler</span></label>
+            <label class="field__label" for="setAge">Aldersmerke-tekst <span class="field__hint">skrives som ekte tekst i banneret</span></label>
             <input type="text" id="setAge" maxlength="60" />
           </div>
           <div class="field">
-            <label class="field__label">Logo (18+ | Hjelpelinjen.no)</label>
+            <label class="field__label">
+              Merke ved siden av teksten
+              <span class="field__hint">Norsk Tipping-symbolet — innebygd som SVG</span>
+            </label>
             <div class="logo-row">
-              <img id="logoPreview" class="logo-row__img" alt="Logo" src="assets/hjelpelinjen-logo.png" />
+              <img id="iconPreview" class="logo-row__img logo-row__img--icon" alt="Merke" src="assets/norsktipping-icon.svg" />
               <label class="btn-ghost btn-sm logo-row__btn">
-                Bytt logo
-                <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp" hidden />
+                Bytt merke
+                <input type="file" id="iconInput" accept="image/png,image/jpeg,image/webp" hidden />
               </label>
+              <button type="button" class="btn-ghost btn-sm" id="resetIcon" hidden>Bruk standard</button>
             </div>
           </div>
         </section>
@@ -392,16 +420,34 @@
             <div class="segmented" id="setFormat" role="group" aria-label="Standard filformat">
               <button type="button" class="seg is-active" data-val="png">PNG</button>
               <button type="button" class="seg" data-val="jpeg">JPEG</button>
+              <button type="button" class="seg" data-val="auto">Auto</button>
             </div>
+            <span class="field__preview">Auto velger det minste formatet som holder seg innenfor grensen under.</span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="setMaxSize">
+              Maks filstørrelse per fil <span class="counter" id="maxSizeOut">200 KB</span>
+            </label>
+            <input type="range" id="setMaxSize" min="0" max="500" step="10" value="200" list="maxSizeTicks" />
+            <datalist id="maxSizeTicks"><option value="0"></option><option value="150"></option><option value="200"></option><option value="300"></option></datalist>
+            <span class="field__preview">
+              0 = ingen grense. Kommer en PNG over grensen, lagres den som JPEG i stedet.
+            </span>
           </div>
           <div class="field">
             <label class="field__label" for="setQuality">JPEG-kvalitet <span class="counter" id="qualityOut">92</span></label>
             <input type="range" id="setQuality" min="70" max="100" value="92" />
+            <span class="field__preview">Øvre grense. Er grensen over satt, senkes kvaliteten automatisk til filen passer.</span>
           </div>
+          <label class="checkbox">
+            <input type="checkbox" id="setSuperSample" />
+            <span>Ekstra skarphet <span class="field__hint">render i 2× og skaler ned – skarpere foto, litt tregere</span></span>
+          </label>
           <label class="checkbox">
             <input type="checkbox" id="setTimestamp" />
             <span>Inkluder tidsstempel i filnavn</span>
           </label>
+          <p class="settings-group__desc" id="imageToolsWarning" hidden></p>
         </section>
       </div>
 
