@@ -112,7 +112,7 @@
   // "Les mer" — either a filled button or plain bold text, in the accent colour.
   // Default is plain text (button only when explicitly requested).
   function ctaMarkup(data) {
-    var accent = safeColor(data.accentColor, "#000000");
+    var accent = safeColor(data.accentColor, "#2f2f2f");
     var size = Number(data.lesMerSize);
     if (!isFinite(size)) size = 17;
     size = Math.max(12, Math.min(28, size));

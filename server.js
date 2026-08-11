@@ -746,7 +746,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
-    const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#000000";
+    const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#2f2f2f";
     // 1× is the size the ad server actually takes; 1.5×/2× exist for retina
     // and for reuse outside the placement.
     const resolution = clampNumber(b.resolution, 1, 2, 1);

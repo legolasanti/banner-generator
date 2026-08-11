@@ -207,6 +207,53 @@ button { font-family: inherit; }
 .form__scroll { flex: 1; overflow-y: auto; padding: 22px; }
 .form__footer { padding: 16px 20px; border-top: 1px solid var(--border); background: var(--surface-2); }
 
+/* The form is long. Four numbered steps turn it from a wall of inputs into
+   something you can scan, and give the eye somewhere to rest between groups. */
+.fgroup { margin-bottom: 22px; }
+.fgroup + .fgroup { padding-top: 20px; border-top: 1px solid var(--border); }
+.fgroup:last-child { margin-bottom: 4px; }
+.fgroup__title {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 14px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.fgroup__step {
+  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--green-soft); color: var(--green-deep);
+  font-size: 11px; font-weight: 800; letter-spacing: 0;
+}
+.fgroup .field:last-child { margin-bottom: 0; }
+
+/* A field with a leading icon — currently the click-through URL, where the
+   icon says "this is a link" faster than the label does. */
+.inputicon { position: relative; display: flex; align-items: center; }
+.inputicon__icon {
+  position: absolute; left: 11px; color: var(--ink-3);
+  pointer-events: none; transition: color 0.16s var(--ease);
+}
+.inputicon input { padding-left: 36px; }
+.inputicon:focus-within .inputicon__icon { color: var(--green); }
+
+/* Two-up choice cards for a decision that changes the whole download. */
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice__opt {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  padding: 11px 13px; border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  transition: border-color 0.16s var(--ease), background 0.16s var(--ease), box-shadow 0.16s var(--ease);
+}
+.choice__opt:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.choice__opt.is-active {
+  border-color: var(--green);
+  background: var(--green-soft);
+  box-shadow: 0 0 0 1px var(--green);
+}
+.choice__title { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.choice__opt.is-active .choice__title { color: var(--green-deep); }
+.choice__desc { font-size: 11.5px; font-weight: 500; line-height: 1.35; color: var(--ink-3); }
+
 .field { margin-bottom: 18px; animation: fieldIn 0.5s var(--ease) both; }
 .field:nth-child(1) { animation-delay: 0.02s; }
 .field:nth-child(2) { animation-delay: 0.06s; }
@@ -215,18 +262,32 @@ button { font-family: inherit; }
 @keyframes fieldIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 .field__label {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
   font-size: 12.5px; font-weight: 700; color: var(--ink);
   margin-bottom: 7px; letter-spacing: -0.005em;
 }
 .field__hint { font-weight: 500; color: var(--ink-3); font-size: 11.5px; }
 .counter { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+/* Explanatory line under a field. Prose by default — it is read, not copied;
+   the ones that show a literal value opt into monospace. */
 .field__preview {
-  display: block; margin-top: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--green-deep);
+  display: block; margin-top: 6px; font-size: 11.5px; line-height: 1.4; color: var(--ink-3);
 }
 .field__preview:empty { display: none; }
+.field__preview code {
+  font-family: var(--mono); font-size: 10.5px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 4px; color: var(--ink-2);
+}
+#filenamePreview { font-family: var(--mono); color: var(--green-deep); }
 
-input[type="text"],
+/* Every text-entry control shares one look. Listing the types individually is
+   what let a type="url" field slip through unstyled and render as the browser's
+   own tiny box, so match on "not the special ones" instead — new field types
+   are then styled by default rather than by remembering to add them here.
+   The exclusions sit inside :where() so this stays at single-class weight and
+   a per-field tweak (say, room for a leading icon) still wins. */
+input:where(:not([type="color"], [type="range"], [type="checkbox"], [type="radio"], [type="file"])),
 textarea,
 select {
   width: 100%;
@@ -242,14 +303,21 @@ select {
   appearance: none;
 }
 textarea { resize: vertical; line-height: 1.4; min-height: 62px; }
-input[type="text"]::placeholder,
+input::placeholder,
 textarea::placeholder { color: #adb2a2; }
-input[type="text"]:focus,
+input:where(:not([type="color"], [type="range"], [type="checkbox"], [type="radio"], [type="file"])):focus,
 textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--green);
   box-shadow: 0 0 0 3px var(--green-ring);
+}
+
+/* Keyboard users get the same ring on every control, not just the fields. */
+:where(button, a, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--green-ring);
+  border-radius: var(--r-sm);
 }
 
 .select-wrap { position: relative; }
@@ -346,10 +414,12 @@ select { cursor: pointer; padding-right: 34px; }
 .crop { display: flex; justify-content: center; }
 .crop__frame {
   position: relative;
-  /* Matches the Desktop IMAGE-AREA ratio (580×330) that the photo is actually
-     cropped into — so what the user frames here is what gets cropped. */
+  /* Matches the Desktop IMAGE-AREA ratio that the photo is actually cropped
+     into, so what gets framed here is what gets cropped. Must stay in sync
+     with .bn--desktop .bn__media in banner.css (580×355) — it said 580×330 for
+     a while and quietly framed a wider crop than the banner really uses. */
   width: 100%;
-  aspect-ratio: 580 / 330;
+  aspect-ratio: 580 / 355;
   border-radius: var(--r);
   overflow: hidden;
   background: #e7ebe3;
@@ -497,18 +567,21 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 .previews__body {
   flex: 1; overflow-y: auto; padding: 22px;
   display: flex; flex-direction: column; gap: 20px;
+  container: previews / inline-size;
 }
+/* Two per row: ReadPeak + Desktop on top, Mobil + Nyhetsgrid below, with
+   Nyhetsgrid last. Two wide cards read far better than four narrow ones — each
+   banner gets enough room to be judged at close to its real size. The column
+   count follows the PANEL's width, not the window's, because the form beside it
+   takes a fixed slice. */
 .previews__list {
   display: grid; gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start; justify-items: center;
 }
-/* Nyhetsgrid is a different placement with its own crop, so it never shares a
-   row with the core three. Pinning it to column 1 pushes it to the next row
-   while it stays inside the SAME grid — so it gets the identical card width
-   instead of stretching across the whole panel with the banner marooned in the
-   middle of a sea of white. */
-.pcard--newsgrid { grid-column: 1; }
+@container previews (max-width: 660px) {
+  .previews__list { grid-template-columns: minmax(0, 1fr); }
+}
 .pcard__toggle { width: 100%; font-size: 12px; padding-top: 2px; border-top: 1px dashed var(--border); }
 .pcard__toggle input { width: 15px; height: 15px; }
 

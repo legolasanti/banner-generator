@@ -53,9 +53,10 @@
           <!-- ---------------------- LEFT: form ---------------------- -->
           <form class="panel form" id="bannerForm" autocomplete="off" novalidate>
             <div class="form__scroll">
-              <!-- Upload -->
+              <!-- 1 · Bilde ------------------------------------------------ -->
+              <section class="fgroup">
+                <h3 class="fgroup__title"><span class="fgroup__step">1</span>Bilde</h3>
               <div class="field">
-                <label class="field__label">Bilde</label>
                 <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Last opp bilde">
                   <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
                   <div class="dropzone__empty" id="dropzoneEmpty">
@@ -96,7 +97,7 @@
                   <div class="crop__frame" id="cropFrame" title="Dra for å flytte">
                     <img id="cropImg" alt="" draggable="false" />
                     <span class="crop__tag">Dra for å beskjære</span>
-                    <span class="crop__ratio">Bildeområde · 580×330</span>
+                    <span class="crop__ratio">Bildeområde · 580×355</span>
                   </div>
                 </div>
                 <div class="sliders">
@@ -117,8 +118,11 @@
                   </div>
                 </div>
               </div>
+              </section>
 
-              <!-- Text fields -->
+              <!-- 2 · Tekst ------------------------------------------------ -->
+              <section class="fgroup">
+                <h3 class="fgroup__title"><span class="fgroup__step">2</span>Tekst</h3>
               <div class="field">
                 <label class="field__label" for="headline">
                   Overskrift <span class="counter" id="headlineCount">0 / 120</span>
@@ -150,17 +154,21 @@
                 <label class="field__label" for="customVinner">Egendefinert vinnersjanse</label>
                 <input type="text" id="customVinner" maxlength="120" placeholder="Vinnersjanse 1.premie 1:…" />
               </div>
+              </section>
 
+              <!-- 3 · Utseende --------------------------------------------- -->
+              <section class="fgroup">
+                <h3 class="fgroup__title"><span class="fgroup__step">3</span>Utseende</h3>
               <div class="field">
-                <label class="field__label">Les mer-stil & farge <span class="field__hint">ReadPeak</span></label>
+                <label class="field__label">Les mer-stil &amp; farge <span class="field__hint">ReadPeak</span></label>
                 <div class="appearance">
                   <div class="segmented" id="lesMerStyle" role="group" aria-label="Les mer-stil">
                     <button type="button" class="seg" data-val="button">Knapp</button>
                     <button type="button" class="seg is-active" data-val="text">Tekst</button>
                   </div>
                   <label class="colorpick" title="Farge på «Les mer»">
-                    <input type="color" id="accentColor" value="#000000" />
-                    <span class="colorpick__hex" id="accentHex">#000000</span>
+                    <input type="color" id="accentColor" value="#2f2f2f" />
+                    <span class="colorpick__hex" id="accentHex">#2f2f2f</span>
                   </label>
                 </div>
               </div>
@@ -232,6 +240,11 @@
                   <p class="adv__note" id="budgetNote"></p>
                 </div>
               </div>
+              </section>
+
+              <!-- 4 · Nedlasting ------------------------------------------- -->
+              <section class="fgroup">
+                <h3 class="fgroup__title"><span class="fgroup__step">4</span>Nedlasting</h3>
 
               <div class="field">
                 <label class="field__label" for="filename">Filnavn <span class="field__hint">uten filtype</span></label>
@@ -239,26 +252,43 @@
                 <span class="field__preview" id="filenamePreview"></span>
               </div>
 
-              <!-- Image vs HTML5. HTML5 keeps the headline as live text and is
-                   what Campaign Manager 360 takes as an HTML5-visning. -->
+              <!-- Image vs HTML5 decides what the whole download is, so it gets
+                   two proper cards rather than a cramped toggle. The buttons
+                   keep .seg + data-val so the shared segmented() handler and
+                   its is-active bookkeeping work unchanged. -->
               <div class="field">
                 <label class="field__label">Nedlastingstype</label>
-                <div class="segmented segmented--wide" id="outputType" role="group" aria-label="Nedlastingstype">
-                  <button type="button" class="seg is-active" data-val="image">Bilde · PNG/JPEG</button>
-                  <button type="button" class="seg" data-val="html">HTML5 · Campaign Manager 360</button>
+                <div class="choice" id="outputType" role="group" aria-label="Nedlastingstype">
+                  <button type="button" class="seg choice__opt is-active" data-val="image">
+                    <span class="choice__title">Bilde</span>
+                    <span class="choice__desc">PNG/JPEG til vanlige bildeplasseringer</span>
+                  </button>
+                  <button type="button" class="seg choice__opt" data-val="html">
+                    <span class="choice__title">HTML5</span>
+                    <span class="choice__desc">Opplastingsklar ZIP til Campaign Manager 360</span>
+                  </button>
                 </div>
                 <span class="field__preview" id="outputTypeNote"></span>
               </div>
 
               <div class="field" id="clickUrlField" hidden>
                 <label class="field__label" for="clickUrl">
-                  Klikk-lenke <span class="field__hint">landingssiden annonsen går til (clickTag)</span>
+                  Klikk-lenke <span class="field__hint">landingssiden annonsen går til</span>
                 </label>
-                <input type="url" id="clickUrl" placeholder="https://www.norsk-tipping.no/..." />
+                <div class="inputicon">
+                  <svg class="inputicon__icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <input type="url" id="clickUrl" spellcheck="false" inputmode="url"
+                         placeholder="https://www.norsk-tipping.no/..." />
+                </div>
                 <span class="field__preview">
-                  Campaign Manager 360 overstyrer denne med sin egen sporingslenke når annonsen kjører.
+                  Legges inn som <code>clickTag</code>. Campaign Manager 360 bytter den ut med sin egen
+                  sporingslenke når annonsen kjører.
                 </span>
               </div>
+              </section>
             </div>
 
             <!-- Footer / generate -->

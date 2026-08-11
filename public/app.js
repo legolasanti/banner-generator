@@ -42,7 +42,7 @@
     resolution: 1,
     format: "png",
     lesMerStyle: "text",
-    accentColor: "#000000",
+    accentColor: "#2f2f2f",
     ageIcon: null, // { path, version } when a custom mark has been uploaded
     lastBlobUrl: null,
     downloadSet: "all", // "all" | "core" | "newsgrid" — what Generer actually produces
@@ -65,11 +65,14 @@
     },
   };
 
+  // The choice cards already say what each option is; this only adds what they
+  // have no room for. Empty for "image", where there is nothing more to say.
   const OUTPUT_TYPE_NOTES = {
-    image: "Flate bildefiler. Bruk denne til vanlige bildeplasseringer.",
+    image: "",
     html:
-      "Én opplastingsklar ZIP per format til Campaign Manager 360. Overskriften " +
-      "blir ekte tekst, så den er knivskarp på alle skjermer — og pakken er mye lettere.",
+      "Overskriften blir ekte tekst i stedet for piksler, så den er knivskarp på alle " +
+      "skjermer — og pakken blir mye lettere. Velger du flere formater, kommer de som " +
+      "én ZIP per format.",
   };
 
   const IMAGE_MIME_RE = /^image\/(jpeg|png|webp|avif|gif)$/;
@@ -647,24 +650,56 @@
     applyOutputType();
   }
 
-  // Scale each preview banner to fit its (gray) card, so it never overflows on
-  // smaller screens. Larger banners (Desktop) get a lower max scale.
+  // Everything around a preview banner inside its card: the card padding, the
+  // header line, the flex gaps and the stage's own padding. Subtracting it is
+  // what lets the height budget below be about the BANNER rather than the box.
+  const CARD_CHROME = 78;
+  const NEWSGRID_CHROME = 34; // plus its "Vis vinnersjanse" checkbox row
+
+  /**
+   * Size every preview so all four are visible at once, at the largest scale
+   * that still fits.
+   *
+   * Two constraints, whichever bites first: the width of the card, and half the
+   * panel's height — because the four banners sit in two rows and having to
+   * scroll to compare them defeats the point of a live preview.
+   */
   function fitPreviews() {
+    const body = $(".previews__body");
+    let rowHeight = Infinity;
+    if (body && body.clientHeight) {
+      const style = getComputedStyle(body);
+      const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const gap = parseFloat(style.rowGap) || 20;
+      rowHeight = (body.clientHeight - padding - gap) / 2;
+    }
+
     $$(".preview-stage").forEach((stage) => {
       const card = stage.closest(".pcard");
       if (!card) return;
       const w = parseFloat(stage.style.getPropertyValue("--w")) || 320;
-      // Nyhetsgrid renders at 190×190 — tiny next to the others, so it gets a
-      // much higher on-screen scale to stay legible. This only affects the
-      // preview; the actual generated PNG is always exactly 190×190.
+      const h = parseFloat(stage.style.getPropertyValue("--h")) || 400;
       const isNewsgrid = card.classList.contains("pcard--newsgrid");
-      const max = isNewsgrid ? 1.8 : w >= 500 ? 0.66 : 0.9;
+      // Upper bounds: ReadPeak and Mobil stop at life-size, which is the most
+      // honest a preview can be; Desktop is too wide for that; the 190×190
+      // needs magnifying to be judged at all.
+      const max = isNewsgrid ? 2 : w >= 500 ? 0.85 : 1;
+
       // Measure the CARD, not the stage: the stage shrink-wraps its own
       // content, so measuring it just reads back the scale already applied and
       // the banner never actually shrinks to fit a narrow column.
       const pad = parseFloat(getComputedStyle(card).paddingLeft) || 0;
-      const avail = card.clientWidth - pad * 2;
-      let scale = avail > 0 ? Math.min(avail / w, max) : max;
+      const availWidth = card.clientWidth - pad * 2;
+      const availHeight = rowHeight - CARD_CHROME - (isNewsgrid ? NEWSGRID_CHROME : 0);
+
+      let scale = max;
+      if (availWidth > 0) scale = Math.min(scale, availWidth / w);
+      if (isFinite(availHeight) && availHeight > 80) {
+        // …but a preview shrunk past the point of being readable helps nobody.
+        // On a short screen, let the panel scroll instead.
+        const floor = isNewsgrid ? 1.2 : 0.6;
+        scale = Math.min(scale, Math.max(availHeight / h, floor));
+      }
       if (!isFinite(scale) || scale <= 0) scale = max;
       stage.style.setProperty("--scale", scale.toFixed(4));
     });
