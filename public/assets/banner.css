@@ -90,26 +90,48 @@
   line-height: 1;
 }
 
-/* 18+ | Hjelpelinjen.no — white pill, top-right. The logo asset already
-   contains the "18+ | Hjelpelinjen.no" lockup, so we just frame it. */
+/* 18+ | Hjelpelinjen.no — white pill, top-right. Built from LIVE TEXT plus an
+   inline Norsk Tipping mark rather than one flattened bitmap lockup, so it
+   stays crisp at every output size. --age-h is the badge's nominal lockup
+   height: type size, mark size and gap all derive from it, so a format only
+   has to override that one number to scale the badge as a unit. */
 .bn__age {
+  --age-h: 15px;
   top: 9px;
   right: 9px;
+  max-width: calc(100% - 18px); /* a long custom wording stays inside the photo */
   background: #ffffff;
   border-radius: 4px;
   padding: 3px 6px;
+  gap: calc(var(--age-h) * 0.26);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
 }
-.bn__age img {
-  height: 15px;
-  width: auto;
-  object-fit: contain;
+.bn__age-text {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0; /* let it shrink inside the badge instead of pushing out */
+  color: #111111;
+  font-size: calc(var(--age-h) * 0.58);
+  line-height: 1;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
 }
-.bn__age .bn__age-fallback {
-  font-size: 11px;
-  font-weight: 700;
-  color: #111;
+/* "18+" is the regulated part and must never be the bit that gets cut. If the
+   badge runs out of room (a long custom wording on the 190×190, where the bar
+   is shared with ANNONSE) only the trailing text ellipsises. */
+.bn__age-lead { font-weight: 700; flex: none; }
+.bn__age-sep { color: #c2c2c2; font-weight: 400; margin: 0 0.36em; flex: none; }
+.bn__age-rest { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Inline <svg> has no auto width in a flex row, so both axes are pinned; the
+   0.9931 factor is the mark's own 19.805/19.943 aspect ratio. */
+.bn__age-icon {
+  flex: none;
+  display: block;
+  height: calc(var(--age-h) * 0.86);
+  width: calc(var(--age-h) * 0.854);
 }
+/* A custom mark uploaded in Innstillinger may be any ratio — let it keep it. */
+img.bn__age-icon { width: auto; object-fit: contain; }
 
 /* Annonse — light pill, bottom-left (desktop & mobile) */
 .bn__annonse {
@@ -146,8 +168,7 @@
 /* Desktop is a much larger canvas (580×500) than mobile (320×400). Scale the
    overlays up there so they read consistently with the mobile banner (the
    reference size) instead of looking tiny. */
-.bn--desktop .bn__age { top: 12px; right: 12px; padding: 4px 9px; }
-.bn--desktop .bn__age img { height: 22.5px; } /* +25% */
+.bn--desktop .bn__age { --age-h: 22.5px; top: 12px; right: 12px; padding: 4px 9px; }
 .bn--desktop .bn__annonse { bottom: 12px; left: 12px; font-size: 15px; padding: 4px 12px; }
 .bn--desktop .bn__vinner { bottom: 12px; right: 12px; font-size: 13px; max-width: 50%; padding: 4px 10px; }
 
@@ -183,10 +204,16 @@
   padding: 3px 8px;
   white-space: nowrap;
 }
-/* Reset the floating-pill positioning so the age badge sits inline in the bar. */
+/* Reset the floating-pill positioning so the age badge sits inline in the bar.
+   It hugs its own text — like the white pill on the other three formats — and
+   is pushed to the right edge, so the photo shows through between it and the
+   Annonse box instead of a wide empty white slab. It may still SHRINK (0 1) if
+   someone sets a very long wording; it just never grows. */
 .bn--newsgrid .bn__age.bn__topbar-age {
+  --age-h: 13px;
   position: static;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  margin-left: auto;
   justify-content: flex-end;
   background: #ffffff;
   border-radius: 0;
@@ -194,7 +221,6 @@
   padding: 2px 5px;
   overflow: hidden;
 }
-.bn--newsgrid .bn__age.bn__topbar-age img { height: 13px; }
 .bn--newsgrid .bn__vinner {
   bottom: 7px;
   right: 7px;
@@ -269,7 +295,6 @@
   line-height: 1;
 }
 .bn--readpeak .bn__annonse-top { position: absolute; top: 9px; left: 9px; }
-.bn--readpeak .bn__age img { height: 15px; }
 
 .bn--readpeak .bn__body {
   height: 220px;
@@ -325,6 +350,3 @@
   font-weight: 800;
   letter-spacing: 0;
 }
-
-/* Empty / hidden helpers */
-.bn__hidden { display: none !important; }

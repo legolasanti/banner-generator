@@ -52,26 +52,48 @@
     return '<img class="bn__img" alt="" src="' + src + '" style="' + style + '">';
   }
 
-  // 18+ | Hjelpelinjen.no badge. The logo asset contains the full lockup;
-  // if it fails to load we fall back to plain text so a banner is never empty.
+  // Norsk Tipping brand mark, inlined so the badge needs no asset request and
+  // stays razor sharp at every size. Keep in sync with
+  // public/assets/norsktipping-icon.svg (both derive from
+  // references/norsktipping-full-color.svg, wordmark removed).
+  var AGE_ICON_SVG =
+    '<svg class="bn__age-icon" viewBox="0 0 19.805 19.943" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
+    '<polygon fill="#FFC000" points="4.048 0 0 4.076 5.856 9.972 0 15.867 4.048 19.943 13.951 9.972"/>' +
+    '<polygon fill="#96D94E" points="5.856 9.972 13.951 9.972 0 4.076"/>' +
+    '<polygon fill="#00A332" points="4.048 0 0 4.076 13.951 9.972"/>' +
+    '<polygon fill="#FF7337" points="5.856 9.972 4.048 19.943 13.951 9.972"/>' +
+    '<polygon fill="#FF7EA9" points="15.757 0 10.82 4.971 14.869 9.047 19.805 4.076"/>' +
+    '<polygon fill="#EF2500" points="15.757 0 14.869 9.047 19.805 4.076"/>' +
+    '<polygon fill="#00C1FF" points="19.805 15.867 14.869 10.896 10.82 14.972"/>' +
+    '<polygon fill="#0058FF" points="15.757 19.943 19.805 15.867 10.82 14.972"/>' +
+    "</svg>";
+
+  // 18+ | Hjelpelinjen.no badge — REAL TEXT plus the brand mark, not one
+  // flattened bitmap lockup. The old lockup was a 150×24 PNG that turned mushy
+  // the moment the badge was scaled down (worst on the 190×190 Nyhetsgrid);
+  // live text is rendered at the output resolution and stays legible. The part
+  // before "|" is bold ("18+"), the rest regular, matching the official lockup.
   function ageBadge(data, extraClass) {
-    var logo = data.logoUrl || "";
-    var alt = escapeHtml(data.ageBadgeText || "18+ | Hjelpelinjen.no");
-    var fallback =
-      '<span class="bn__age-fallback bn__hidden">' + alt + "</span>";
-    var img = logo
-      ? '<img src="' +
-        logo +
-        '" alt="' +
-        alt +
-        "\" onerror=\"this.style.display='none';var s=this.nextElementSibling;if(s)s.classList.remove('bn__hidden');\">"
-      : '<span class="bn__age-fallback">' + alt + "</span>";
+    var raw = String(data.ageBadgeText || "18+ | Hjelpelinjen.no").trim();
+    var pipe = raw.indexOf("|");
+    var text =
+      pipe === -1
+        ? '<span class="bn__age-rest">' + escapeHtml(raw) + "</span>"
+        : '<span class="bn__age-lead">' + escapeHtml(raw.slice(0, pipe).trim()) + "</span>" +
+          '<span class="bn__age-sep" aria-hidden="true">|</span>' +
+          '<span class="bn__age-rest">' + escapeHtml(raw.slice(pipe + 1).trim()) + "</span>";
+    // A custom mark uploaded in Innstillinger overrides the inline default.
+    var icon = data.ageIconUrl
+      ? '<img class="bn__age-icon" src="' + escapeHtml(data.ageIconUrl) + '" alt="">'
+      : AGE_ICON_SVG;
     return (
       '<span class="bn__badge bn__age' +
       (extraClass ? " " + extraClass : "") +
       '">' +
-      img +
-      (logo ? fallback : "") +
+      '<span class="bn__age-text">' +
+      text +
+      "</span>" +
+      icon +
       "</span>"
     );
   }

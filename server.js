@@ -10,6 +10,12 @@
  * 4 zipped together) without re-rendering. Keeps the last 30 packages in
  * history/ and stores editable settings in settings.json. No database —
  * flat files only.
+ *
+ * Two output kinds come off the same render:
+ *   • "image" — PNG/JPEG, supersampled then resampled down and squeezed to a
+ *     per-file byte budget (see lib/image.js).
+ *   • "html"  — a Campaign Manager 360 HTML5 creative ZIP per format, with the
+ *     headline kept as live text (see lib/html5.js).
  * ========================================================================= */
 
 const path = require("path");
@@ -21,6 +27,10 @@ const express = require("express");
 const multer = require("multer");
 const archiver = require("archiver");
 const puppeteer = require("puppeteer");
+
+const imageTools = require("./lib/image");
+const html5 = require("./lib/html5");
+const safeFetch = require("./lib/safe-fetch");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -34,23 +44,36 @@ const HISTORY_DIR = path.join(ROOT, "history");
 // Kept OUTSIDE HISTORY_DIR so the static /history mount cannot serve the index.
 const HISTORY_JSON = path.join(ROOT, "history.json");
 const SETTINGS_JSON = path.join(ROOT, "settings.json");
-const LOGO_PATH = path.join(ASSETS_DIR, "hjelpelinjen-logo.png");
+const FONTS_DIR = path.join(ASSETS_DIR, "fonts");
+const BANNER_CSS = path.join(ASSETS_DIR, "banner.css");
+// Optional replacement for the Norsk Tipping mark in the 18+ badge. When none
+// of these exist, banner.js draws its built-in inline SVG. Only types Campaign
+// Manager 360 accepts inside a creative ZIP — a WEBP mark would be copied into
+// every HTML5 package and get the whole creative rejected.
+const AGE_ICON_EXTS = ["svg", "png", "jpg"];
+const ageIconPath = (ext) => path.join(ASSETS_DIR, "age-icon." + ext);
 
 const PORT = process.env.PORT || 4050;
 const MAX_HISTORY = 30;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+// Headroom below the per-file budget for the HTML5 photo, so index.html and
+// the two fonts (~25 KB) still fit inside the same limit as the image export.
+const HTML_PHOTO_RESERVE_BYTES = 40 * 1024;
 
 // The three original banner formats. `key` is used in the API/UI, `file` is
-// the Puppeteer template, width/height are the exact output pixel dimensions.
+// the Puppeteer template, width/height are the exact output pixel dimensions,
+// and `media` is the photo area inside the banner — it must stay in sync with
+// the .bn__media heights in public/assets/banner.css, because the HTML5 export
+// sizes the shipped photo from it.
 const CORE_SPECS = [
-  { key: "readpeak", file: "readpeak.html", width: 308, height: 380, label: "readpeak-308x380" },
-  { key: "desktop", file: "desktop.html", width: 580, height: 500, label: "desktop-580x500" },
-  { key: "mobile", file: "mobile.html", width: 320, height: 400, label: "mobile-320x400" },
+  { key: "readpeak", file: "readpeak.html", width: 308, height: 380, label: "readpeak-308x380", media: { width: 308, height: 160 } },
+  { key: "desktop", file: "desktop.html", width: 580, height: 500, label: "desktop-580x500", media: { width: 580, height: 355 } },
+  { key: "mobile", file: "mobile.html", width: 320, height: 400, label: "mobile-320x400", media: { width: 320, height: 275 } },
 ];
 // Fourth format: the 190×190 front-page news-grid placement. Kept out of
 // CORE_SPECS so it can be downloaded on its own or bundled with the core
 // three, per how the placement is actually traded (see /api/generate).
-const NEWSGRID_SPEC = { key: "newsgrid", file: "newsgrid.html", width: 190, height: 190, label: "newsgrid-190x190" };
+const NEWSGRID_SPEC = { key: "newsgrid", file: "newsgrid.html", width: 190, height: 190, label: "newsgrid-190x190", media: { width: 190, height: 107 } };
 const SPECS = CORE_SPECS.concat(NEWSGRID_SPEC);
 
 function specsForSet(set) {
@@ -73,9 +96,36 @@ const DEFAULT_SETTINGS = {
   export: {
     jpegQuality: 92,
     includeTimestampInFilename: false,
-    format: "png", // default download format ("png" | "jpeg")
+    // Preferred download format. The byte budget below can still override it:
+    // a banner that will not fit as PNG is written as JPEG rather than shipped
+    // over the limit. "auto" simply says "whatever is smallest that fits".
+    format: "png", // "png" | "jpeg" | "auto"
+    // Per-file ceiling in KB. 200 is the ad-server limit these banners are
+    // traded under; 0 turns the budget off entirely.
+    maxFileSizeKb: 200,
+    // Render at ~2× and resample down with Lanczos-3 instead of rasterising
+    // straight at final size. Costs a little time, removes the softness in the
+    // photo. Requires sharp; ignored when it is unavailable.
+    superSample: true,
   },
 };
+
+// Landing pages for the HTML5 export. Kept deliberately strict: the value ends
+// up inside a <script> in a file we hand to an ad server.
+function normalizeClickUrl(raw) {
+  const value = String(raw == null ? "" : raw).trim();
+  if (!value) return { ok: false, error: "Mangler klikk-lenke (landingsside-URL)" };
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return { ok: false, error: "Klikk-lenken er ikke en gyldig URL" };
+  }
+  if (!/^https?:$/.test(url.protocol)) {
+    return { ok: false, error: "Klikk-lenken må starte med http:// eller https://" };
+  }
+  return { ok: true, url: url.href };
+}
 
 // --------------------------------------------------------------------------
 // Small utilities
@@ -119,6 +169,17 @@ async function pathExists(p) {
   } catch {
     return false;
   }
+}
+
+// The 18+ badge draws its Norsk Tipping mark as an inline SVG (see banner.js),
+// so nothing has to exist on disk. This only finds a replacement someone
+// uploaded under Innstillinger, which both previews and renders then use.
+async function findAgeIcon() {
+  for (const ext of AGE_ICON_EXTS) {
+    const abs = ageIconPath(ext);
+    if (await pathExists(abs)) return { abs, ext, rel: "assets/age-icon." + ext };
+  }
+  return null;
 }
 
 // Atomic JSON write: write a temp file in the same directory then rename over
@@ -188,7 +249,15 @@ function normalizeSettings(raw) {
     if (raw.export && typeof raw.export === "object") {
       out.export.jpegQuality = Math.round(clampNumber(raw.export.jpegQuality, 70, 100, 92));
       out.export.includeTimestampInFilename = !!raw.export.includeTimestampInFilename;
-      out.export.format = raw.export.format === "jpeg" ? "jpeg" : "png";
+      out.export.format = ["jpeg", "auto", "png"].includes(raw.export.format) ? raw.export.format : "png";
+      // 0 = off; otherwise clamp to something an ad server would plausibly ask
+      // for. Absent (older settings.json) falls back to the 200 KB default.
+      out.export.maxFileSizeKb =
+        raw.export.maxFileSizeKb === 0 || raw.export.maxFileSizeKb === "0"
+          ? 0
+          : Math.round(clampNumber(raw.export.maxFileSizeKb, 10, 5000, DEFAULT_SETTINGS.export.maxFileSizeKb));
+      out.export.superSample =
+        raw.export.superSample === undefined ? true : !!raw.export.superSample;
     }
   }
   return out;
@@ -316,14 +385,34 @@ async function getBrowser() {
   return _launching;
 }
 
-async function renderBannerPng(spec, data, browser, opts) {
-  opts = opts || {};
-  const dpr = clampNumber(opts.deviceScaleFactor, 1, 3, 1);
-  const isJpeg = opts.format === "jpeg";
+/**
+ * Render one banner format and return the finished file — plus, when the HTML5
+ * export asked for it, the markup that produced it.
+ *
+ * Supersampling is the quality fix: Chrome rasterises a big source photo
+ * straight into a small banner box with a cheap filter, and that is where the
+ * softness came from. Rendering at roughly 2× and resampling down with
+ * Lanczos-3 (lib/image.js) keeps the detail. Text is unaffected either way —
+ * it is drawn from vectors at whatever resolution we render at.
+ *
+ * @returns {Promise<{image: {buffer:Buffer,ext:string,mime:string,bytes:number,note:string},
+ *                    markup: string|null, width: number, height: number}>}
+ */
+async function renderSpec(spec, data, browser, opts) {
+  const o = opts || {};
+  const scale = clampNumber(o.scale, 1, 2, 1);
+  const outWidth = Math.round(spec.width * scale);
+  const outHeight = Math.round(spec.height * scale);
+  const canProcess = imageTools.isAvailable();
+  const superSample = !!o.superSample && canProcess;
+  // Cap at 3×: beyond that the screenshot gets big and slow for no visible gain.
+  const dpr = superSample ? Math.min(3, scale * 2) : scale;
+  const wantJpegShot = !canProcess && o.format === "jpeg";
+
   const page = await browser.newPage();
   try {
-    // deviceScaleFactor > 1 renders at higher resolution (crisper output);
-    // the screenshot pixel size becomes logical size × dpr.
+    // deviceScaleFactor > 1 renders at higher resolution; the screenshot pixel
+    // size becomes logical size × dpr.
     await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: dpr });
     // Inject data BEFORE any script in the template runs.
     await page.evaluateOnNewDocument((d) => {
@@ -336,19 +425,49 @@ async function renderBannerPng(spec, data, browser, opts) {
     if (renderError) throw new Error("Template (" + spec.key + ") render error: " + renderError);
     // settle paint
     await new Promise((r) => setTimeout(r, 250));
+
     const shot = {
-      type: isJpeg ? "jpeg" : "png",
+      // With sharp present we always capture lossless and encode once, at the
+      // end, from the best possible source. Without it, Chrome's own encoder
+      // has to produce the final file directly.
+      type: wantJpegShot ? "jpeg" : "png",
       clip: { x: 0, y: 0, width: spec.width, height: spec.height },
       captureBeyondViewport: false,
     };
-    if (isJpeg) shot.quality = Math.round(clampNumber(opts.jpegQuality, 70, 100, 92));
-    return await page.screenshot(shot);
+    if (wantJpegShot) shot.quality = Math.round(clampNumber(o.jpegQuality, 70, 100, 92));
+
+    const raw = await page.screenshot(shot);
+    const resampled = await imageTools.downscale(raw, outWidth, outHeight);
+    const image = await imageTools.encodeToBudget(resampled, {
+      format: o.format,
+      maxBytes: o.maxBytes,
+      jpegQuality: o.jpegQuality,
+    });
+
+    // The HTML5 creative reuses the exact DOM that was just screenshotted, with
+    // the inlined data: URLs swapped for the filenames that go in the ZIP. Done
+    // in-page rather than by string surgery so the rewrite can never mangle a
+    // base64 payload.
+    let markup = null;
+    if (o.assetNames) {
+      markup = await page.evaluate((names) => {
+        const root = document.getElementById("banner-root");
+        if (!root) return null;
+        const photo = root.querySelector(".bn__img");
+        if (photo) photo.setAttribute("src", names.photo);
+        const icon = root.querySelector("img.bn__age-icon");
+        if (icon && names.icon) icon.setAttribute("src", names.icon);
+        return root.outerHTML;
+      }, o.assetNames);
+    }
+
+    return { image, markup, width: outWidth, height: outHeight };
   } finally {
     await page.close().catch(() => {});
   }
 }
 
-async function generateAllBuffers(data, opts) {
+async function generateAll(data, opts) {
   // One retry for the whole batch if the browser died mid-render.
   let lastErr;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -356,7 +475,7 @@ async function generateAllBuffers(data, opts) {
       const browser = await getBrowser();
       const out = {};
       for (const spec of SPECS) {
-        out[spec.key] = await renderBannerPng(spec, data, browser, opts);
+        out[spec.key] = await renderSpec(spec, data, browser, opts);
       }
       return out;
     } catch (err) {
@@ -384,6 +503,130 @@ function enqueue(task) {
 }
 
 // --------------------------------------------------------------------------
+// HTML5 (Campaign Manager 360) packaging
+// --------------------------------------------------------------------------
+async function loadFontFiles() {
+  const names = await fsp.readdir(FONTS_DIR).catch(() => []);
+  return Promise.all(
+    names
+      .filter((name) => name.endsWith(".woff2"))
+      .map(async (name) => ({ name, buffer: await fsp.readFile(path.join(FONTS_DIR, name)) }))
+  );
+}
+
+/**
+ * Build one Campaign Manager 360 HTML5 ZIP per format under history/<id>/html/.
+ *
+ * The byte budget applies to the finished ZIP, not to one file inside it, so
+ * the photo only gets the budget minus what the fonts and markup already cost.
+ * If the package still overshoots (an unusually detailed photo), the photo
+ * budget is tightened by the overshoot and the package is rebuilt once.
+ *
+ * @returns {Promise<Object<string,string>>} spec key → path relative to the entry folder
+ */
+async function buildHtmlPackages(params) {
+  const { folderAbs, fileBase, rendered, photoBuffer, zoom, clickUrl, ageIcon, maxBytes, photoName, title, report } =
+    params;
+
+  const css = await fsp.readFile(BANNER_CSS, "utf8");
+  const fonts = await loadFontFiles();
+  const icon = ageIcon ? { name: "age-icon." + ageIcon.ext, buffer: await fsp.readFile(ageIcon.abs) } : null;
+  const fixedBytes =
+    fonts.reduce((sum, font) => sum + font.buffer.length, 0) + (icon ? icon.buffer.length : 0) + 8 * 1024;
+  const overhead = Math.max(HTML_PHOTO_RESERVE_BYTES, fixedBytes);
+
+  const htmlDir = path.join(folderAbs, "html");
+  await fsp.mkdir(htmlDir, { recursive: true });
+
+  const out = {};
+  for (const spec of SPECS) {
+    const result = rendered[spec.key];
+    if (!result.markup) throw new Error("Mangler markup for " + spec.key + " – kunne ikke bygge HTML5-pakken");
+
+    let photoBudget = maxBytes ? Math.max(50 * 1024, maxBytes - overhead) : 0;
+    let zip = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const photo = await imageTools.preparePhoto(photoBuffer, spec.media, { zoom, maxBytes: photoBudget });
+      zip = await html5.buildCreativeZip({
+        spec,
+        markup: result.markup,
+        css,
+        fonts,
+        icon,
+        clickUrl,
+        title,
+        photo: { name: photoName, buffer: photo.buffer },
+      });
+      if (!maxBytes || zip.length <= maxBytes) break;
+      photoBudget = Math.max(40 * 1024, photoBudget - (zip.length - maxBytes) - 4 * 1024);
+    }
+
+    const zipName = html5.creativeZipName(fileBase, spec.label);
+    await fsp.writeFile(path.join(htmlDir, zipName), zip);
+    out[spec.key] = "html/" + zipName;
+
+    const row = report && report.find((entry) => entry.key === spec.key);
+    if (row) {
+      row.htmlFile = zipName;
+      row.htmlBytes = zip.length;
+    }
+  }
+  return out;
+}
+
+/**
+ * Stream an HTML5 download.
+ *
+ * One format goes out as the CM360 ZIP itself — that file IS the creative you
+ * upload. Several formats cannot be merged into one CM360 creative, so they
+ * travel inside an outer ZIP as separate ready-to-upload packages, alongside
+ * the backup images CM360 asks for and a short Norwegian read-me.
+ */
+async function sendHtmlDownload(res, ctx) {
+  const { folderAbs, fileBase, setSpecs, htmlFiles, files, clickUrl } = ctx;
+  const available = setSpecs.filter((spec) => htmlFiles && htmlFiles[spec.key]);
+  if (!available.length) {
+    return res.status(404).json({ error: "Denne oppføringen har ingen HTML5-pakker" });
+  }
+
+  if (available.length === 1) {
+    const rel = htmlFiles[available[0].key];
+    const abs = path.join(folderAbs, rel);
+    if (!(await pathExists(abs))) return res.status(404).json({ error: "HTML5-pakken finnes ikke lenger" });
+    return res.download(abs, path.basename(rel));
+  }
+
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename="${fileBase}-html.zip"`);
+
+  const archive = archiver("zip", { zlib: { level: 9 } });
+  archive.on("warning", (e) => console.warn("[archiver:html] " + e.message));
+  archive.on("error", (e) => {
+    console.error("[archiver:html] " + e.message);
+    if (!res.headersSent) res.status(500).json({ error: "Kunne ikke lage ZIP" });
+    else res.destroy();
+  });
+  archive.pipe(res);
+
+  const listed = [];
+  for (const spec of available) {
+    const rel = htmlFiles[spec.key];
+    const abs = path.join(folderAbs, rel);
+    if (!(await pathExists(abs))) continue;
+    // store: the nested ZIPs and the JPEG backups are already compressed.
+    archive.file(abs, { name: path.basename(rel), store: true });
+    listed.push({ zipName: path.basename(rel), width: spec.width, height: spec.height });
+
+    const backup = files && files[spec.key];
+    if (backup && (await pathExists(path.join(folderAbs, backup)))) {
+      archive.file(path.join(folderAbs, backup), { name: "reservebilder/" + backup, store: true });
+    }
+  }
+  archive.append(Buffer.from(html5.READ_ME(fileBase, clickUrl || "", listed), "utf8"), { name: "LES-MEG.txt" });
+  await archive.finalize();
+}
+
+// --------------------------------------------------------------------------
 // Express app
 // --------------------------------------------------------------------------
 const app = express();
@@ -392,7 +635,33 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
+  // The download filename and the per-file size report travel as headers, so
+  // they have to be readable by the page that asked for them.
+  res.header("Access-Control-Expose-Headers", "Content-Disposition, X-Entry-Id, X-Banner-Report");
   if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+// The UI is served from the same origin it calls, so a state-changing request
+// carrying a FOREIGN Origin is not this app — it is some other page open in the
+// operator's browser reaching localhost. Block those: they could otherwise
+// rewrite settings, swap the 18+ badge mark or delete history. Requests with no
+// Origin at all (curl, scripts) are left alone; a browser always sends one on a
+// cross-origin write.
+const READ_ONLY_METHODS = ["GET", "HEAD", "OPTIONS"];
+app.use((req, res, next) => {
+  if (READ_ONLY_METHODS.includes(req.method)) return next();
+  const origin = req.get("origin");
+  if (!origin) return next();
+  let originHost;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    return res.status(403).json({ error: "Ugyldig Origin" });
+  }
+  if (originHost !== req.get("host")) {
+    return res.status(403).json({ error: "Forespørselen kom fra et annet nettsted og ble blokkert" });
+  }
   next();
 });
 
@@ -414,14 +683,20 @@ const uploadImage = multer({
   },
 }).single("image");
 
-const uploadLogo = multer({
+// PNG/JPG only, deliberately. SVG is out because an uploaded one would be
+// served from this origin and SVG can carry script — and the built-in mark is
+// already vector, so nothing is lost. (A hand-placed assets/age-icon.svg is
+// still honoured; that needs filesystem access anyway.) WEBP is out because
+// the mark is copied into every Campaign Manager 360 package, and WEBP is not
+// an accepted asset type there.
+const uploadBadgeIcon = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 4 * 1024 * 1024 },
   fileFilter(req, file, cb) {
-    const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype);
-    cb(ok ? null : new Error("Logo må være PNG, JPG eller WEBP"), ok);
+    const ok = ["image/jpeg", "image/png"].includes(file.mimetype);
+    cb(ok ? null : new Error("Ikonet må være PNG eller JPG"), ok);
   },
-}).single("logo");
+}).single("icon");
 
 function withMulter(mw) {
   return (req, res, next) =>
@@ -472,16 +747,41 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
     const accentColor = /^#[0-9a-fA-F]{3,8}$/.test(String(b.accentColor || "")) ? String(b.accentColor) : "#000000";
-    const resolution = clampNumber(b.resolution, 1, 3, 1);
-    const format = b.format === "jpeg" ? "jpeg" : b.format === "png" ? "png" : settings.export.format || "png";
-    const ext = format === "jpeg" ? "jpg" : "png";
+    // 1× is the size the ad server actually takes; 1.5×/2× exist for retina
+    // and for reuse outside the placement.
+    const resolution = clampNumber(b.resolution, 1, 2, 1);
+    const format = ["png", "jpeg", "auto"].includes(b.format) ? b.format : settings.export.format || "png";
+    const maxBytes = settings.export.maxFileSizeKb > 0 ? settings.export.maxFileSizeKb * 1024 : 0;
     const baseName = sanitizeFilename(b.filename);
+
+    // "image" = flattened PNG/JPEG. "html" = a Campaign Manager 360 HTML5
+    // creative per format, where the headline stays live text.
+    const outputType = b.outputType === "html" ? "html" : "image";
+    let clickUrl = "";
+    let photoAsset = null;
+    if (outputType === "html") {
+      const parsed = normalizeClickUrl(b.clickUrl);
+      if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+      clickUrl = parsed.url;
+      photoAsset = imageTools.photoAsset(req.file.buffer);
+      if (!photoAsset.ok) {
+        return res.status(400).json({
+          error:
+            "HTML5-pakken kan bare bruke JPG, PNG eller GIF når bildebiblioteket (sharp) mangler. " +
+            "Kjør «npm install» på nytt, eller last opp bildet som JPG.",
+        });
+      }
+    }
+    // An HTML5 creative is always its ad.size, so the resolution control only
+    // affects the images. Forcing 1× keeps the backup images the same size as
+    // the creative — Campaign Manager 360 requires them to match.
+    const renderScale = outputType === "html" ? 1 : resolution;
 
     const includeTs = settings.export.includeTimestampInFilename;
     const now = new Date();
     const fileBase = includeTs ? `${baseName}-${fileStamp(now)}` : baseName;
 
-    const logoUrl = (await pathExists(LOGO_PATH)) ? pathToFileURL(LOGO_PATH).href : "";
+    const ageIcon = await findAgeIcon();
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     const data = {
@@ -502,17 +802,24 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       showVinnerOnNewsgrid,
       lesMerStyle,
       accentColor,
-      logoUrl,
+      ageIconUrl: ageIcon ? pathToFileURL(ageIcon.abs).href : "",
       annonseText: settings.staticBadges.annonseText,
       ageBadgeText: settings.staticBadges.ageBadgeText,
     };
 
     // Serialize the heavy Puppeteer work.
-    const buffers = await enqueue(() =>
-      generateAllBuffers(data, {
-        deviceScaleFactor: resolution,
+    const rendered = await enqueue(() =>
+      generateAll(data, {
+        scale: renderScale,
+        superSample: settings.export.superSample,
         format,
+        maxBytes,
         jpegQuality: settings.export.jpegQuality,
+        // Only pay for the markup capture when an HTML5 package needs it.
+        assetNames:
+          outputType === "html"
+            ? { photo: photoAsset.name, icon: ageIcon ? "age-icon." + ageIcon.ext : "" }
+            : null,
       })
     );
 
@@ -524,11 +831,42 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const folderAbs = path.join(HISTORY_DIR, id);
     await fsp.mkdir(folderAbs, { recursive: true });
 
+    // The extension follows what the encoder actually produced: a PNG that
+    // could not be squeezed under the byte budget comes back as a JPEG, and
+    // the file it is written to has to say so.
     const files = {};
+    const report = [];
     for (const spec of SPECS) {
-      const fname = `${fileBase}-${spec.label}.${ext}`;
-      await fsp.writeFile(path.join(folderAbs, fname), buffers[spec.key]);
+      const result = rendered[spec.key];
+      const fname = `${fileBase}-${spec.label}.${result.image.ext}`;
+      await fsp.writeFile(path.join(folderAbs, fname), result.image.buffer);
       files[spec.key] = fname;
+      report.push({
+        key: spec.key,
+        label: spec.label,
+        file: fname,
+        width: result.width,
+        height: result.height,
+        bytes: result.image.bytes,
+        note: result.image.note,
+      });
+    }
+
+    let htmlFiles = null;
+    if (outputType === "html") {
+      htmlFiles = await buildHtmlPackages({
+        folderAbs,
+        fileBase,
+        rendered,
+        photoBuffer: req.file.buffer,
+        zoom: imageZoom,
+        clickUrl,
+        ageIcon,
+        maxBytes,
+        photoName: photoAsset.name,
+        title: headline || baseName,
+        report,
+      });
     }
 
     const entry = {
@@ -539,9 +877,13 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       headline,
       subtitle,
       vinnersjanse,
+      outputType,
+      clickUrl,
       folderPath: folderRel + "/",
       thumbnailPath: `${folderRel}/${files.desktop}`,
       files,
+      htmlFiles,
+      report,
     };
 
     // Atomic, serialized history update (no lost-update race with other requests).
@@ -562,12 +904,20 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const downloadSet = ["core", "newsgrid", "all"].includes(b.downloadSet) ? b.downloadSet : "core";
     const setSpecs = specsForSet(downloadSet);
     res.setHeader("X-Entry-Id", id);
+    // Per-file sizes + any note ("saved as JPEG because PNG missed 200 KB"),
+    // so the UI can show what actually came out instead of leaving the user to
+    // discover it in Finder.
+    res.setHeader("X-Banner-Report", encodeURIComponent(JSON.stringify(report)));
+
+    if (outputType === "html") {
+      return sendHtmlDownload(res, { folderAbs, fileBase, setSpecs, htmlFiles, files, clickUrl });
+    }
 
     if (downloadSet === "newsgrid") {
       const spec = setSpecs[0];
-      res.setHeader("Content-Type", format === "jpeg" ? "image/jpeg" : "image/png");
+      res.setHeader("Content-Type", rendered[spec.key].image.mime);
       res.setHeader("Content-Disposition", `attachment; filename="${files[spec.key]}"`);
-      return res.send(buffers[spec.key]);
+      return res.send(rendered[spec.key].image.buffer);
     }
 
     res.setHeader("Content-Type", "application/zip");
@@ -582,7 +932,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     });
     archive.pipe(res);
     for (const spec of setSpecs) {
-      archive.append(buffers[spec.key], { name: files[spec.key] });
+      archive.append(rendered[spec.key].image.buffer, { name: files[spec.key] });
     }
     await archive.finalize();
   } catch (err) {
@@ -617,6 +967,19 @@ app.get("/api/history/:id/download", async (req, res) => {
   const set = ["core", "newsgrid", "all"].includes(req.query.set) ? req.query.set : "all";
   const setSpecs = specsForSet(set);
   const files = entry.files || {};
+
+  // ?type=html — the Campaign Manager 360 packages, when this entry was
+  // generated as HTML5. Image entries simply have no htmlFiles and 404.
+  if (req.query.type === "html") {
+    return sendHtmlDownload(res, {
+      folderAbs,
+      fileBase: entry.fileBase || entry.filename,
+      setSpecs,
+      htmlFiles: entry.htmlFiles,
+      files,
+      clickUrl: entry.clickUrl,
+    });
+  }
 
   if (set === "newsgrid") {
     const spec = setSpecs[0];
@@ -663,8 +1026,25 @@ app.delete("/api/history/:id", async (req, res) => {
 });
 
 // ---- Settings -------------------------------------------------------------
+// The response carries two READ-ONLY extras next to the saved settings:
+// `ageIcon` (a custom mark, if one was uploaded) and `imageTools`, so the UI
+// can say out loud when the byte budget cannot be enforced. Both are ignored
+// on the way back in — see normalizeSettings().
 app.get("/api/settings", async (req, res) => {
-  res.json(await loadSettings());
+  const settings = await loadSettings();
+  const icon = await findAgeIcon();
+  let version = 0;
+  if (icon) {
+    version = await fsp
+      .stat(icon.abs)
+      .then((s) => Math.round(s.mtimeMs))
+      .catch(() => 0);
+  }
+  res.json({
+    ...settings,
+    ageIcon: icon ? { path: icon.rel, version } : null,
+    imageTools: { available: imageTools.isAvailable(), reason: imageTools.unavailableReason() },
+  });
 });
 
 app.post("/api/settings", async (req, res) => {
@@ -677,35 +1057,45 @@ app.post("/api/settings", async (req, res) => {
   }
 });
 
-app.post("/api/settings/logo", withMulter(uploadLogo), async (req, res) => {
+// Replace the Norsk Tipping mark in the 18+ badge. Optional — with no upload
+// the badge draws banner.js's built-in inline SVG, which is what everyone
+// should normally use.
+app.post("/api/settings/badge-icon", withMulter(uploadBadgeIcon), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Mangler logo-fil" });
+    if (!req.file) return res.status(400).json({ error: "Mangler ikon-fil" });
     await fsp.mkdir(ASSETS_DIR, { recursive: true });
-    await fsp.writeFile(LOGO_PATH, req.file.buffer);
-    res.json({ ok: true, logoUrl: "/assets/hjelpelinjen-logo.png?v=" + Date.now() });
+    // Trust the BYTES, not the declared Content-Type — the extension decides how
+    // this file is served back out of public/, so it has to match what it is.
+    const ext = { "image/png": "png", "image/jpeg": "jpg" }[sniffImageMime(req.file.buffer)];
+    if (!ext) return res.status(400).json({ error: "Ikonet må være PNG eller JPG" });
+    // Only one custom mark can be active, so clear the other extensions first.
+    for (const other of AGE_ICON_EXTS) {
+      if (other !== ext) await fsp.rm(ageIconPath(other), { force: true }).catch(() => {});
+    }
+    await fsp.writeFile(ageIconPath(ext), req.file.buffer);
+    res.json({ ok: true, ageIcon: { path: "assets/age-icon." + ext, version: Date.now() } });
   } catch (err) {
-    console.error("[logo] " + err.message);
-    res.status(500).json({ error: "Kunne ikke lagre logo" });
+    console.error("[badge-icon] " + err.message);
+    res.status(500).json({ error: "Kunne ikke lagre ikonet" });
+  }
+});
+
+app.delete("/api/settings/badge-icon", async (req, res) => {
+  try {
+    for (const ext of AGE_ICON_EXTS) await fsp.rm(ageIconPath(ext), { force: true }).catch(() => {});
+    res.json({ ok: true, ageIcon: null });
+  } catch (err) {
+    console.error("[badge-icon] " + err.message);
+    res.status(500).json({ error: "Kunne ikke fjerne ikonet" });
   }
 });
 
 // ---- Fetch image from URL (proxy) ----------------------------------------
 // Lets a user paste a Norsk Tipping image link (often AVIF) instead of
-// downloading + converting. Server-side fetch avoids browser CORS, and a basic
-// SSRF guard blocks private/loopback targets.
-function isPrivateHost(host) {
-  const h = (host || "").toLowerCase();
-  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".internal")) return true;
-  if (["0.0.0.0", "127.0.0.1", "::1", "[::1]"].includes(h)) return true;
-  if (/^127\./.test(h)) return true;
-  if (/^10\./.test(h)) return true;
-  if (/^192\.168\./.test(h)) return true;
-  if (/^169\.254\./.test(h)) return true; // link-local / cloud metadata
-  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
-  if (h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80")) return true; // ULA / link-local IPv6
-  return false;
-}
-
+// downloading + converting. Fetching server-side avoids browser CORS — and
+// means the server opens a socket to a URL a user typed, so every request goes
+// through lib/safe-fetch.js, which refuses anything resolving inside the
+// network and re-checks each redirect hop.
 function sniffImageMime(buf) {
   if (!buf || buf.length < 12) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
@@ -725,48 +1115,34 @@ app.post("/api/fetch-image", async (req, res) => {
   try {
     const url = String((req.body && req.body.url) || "").trim();
     if (!url) return res.status(400).json({ error: "Mangler lenke (URL)" });
-    let u;
-    try {
-      u = new URL(url);
-    } catch {
-      return res.status(400).json({ error: "Ugyldig URL" });
-    }
-    if (!/^https?:$/.test(u.protocol)) return res.status(400).json({ error: "Bare http(s)-lenker er tillatt" });
-    if (isPrivateHost(u.hostname)) return res.status(400).json({ error: "Lenken peker til en privat/lokal adresse" });
 
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 12000);
-    let r;
-    try {
-      r = await fetch(url, {
-        signal: ctrl.signal,
-        redirect: "follow",
-        headers: {
-          // Browser-like UA: some image CDNs reject non-browser agents.
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-          Accept: "image/avif,image/webp,image/png,image/*,*/*;q=0.8",
-        },
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-    if (!r.ok) return res.status(400).json({ error: "Kunne ikke hente bildet (HTTP " + r.status + ")" });
+    const fetched = await safeFetch.fetchImage(url, {
+      maxBytes: MAX_UPLOAD_BYTES,
+      timeoutMs: 12000,
+      headers: {
+        // Browser-like UA: some image CDNs reject non-browser agents.
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        Accept: "image/avif,image/webp,image/png,image/*,*/*;q=0.8",
+      },
+    });
 
-    const declared = (r.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-    const buf = Buffer.from(await r.arrayBuffer());
+    const buf = fetched.buffer;
     if (buf.length === 0) return res.status(400).json({ error: "Lenken returnerte et tomt svar" });
-    if (buf.length > MAX_UPLOAD_BYTES) return res.status(400).json({ error: "Bildet er for stort (maks 10 MB)" });
 
-    let mime = ACCEPTED_IMAGE_MIMES.includes(declared) ? declared : null;
-    if (!mime) mime = sniffImageMime(buf); // some CDNs send octet-stream
-    if (!mime || !["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"].includes(mime)) {
+    // Trust the bytes first — a server claiming "image/png" while sending
+    // something else must not get through. The declared type is only a
+    // fallback for formats the sniffer does not know (and many CDNs send
+    // application/octet-stream anyway).
+    const declared = fetched.contentType.split(";")[0].trim().toLowerCase();
+    const mime = sniffImageMime(buf) || (ACCEPTED_IMAGE_MIMES.includes(declared) ? declared : null);
+    if (!mime || !ACCEPTED_IMAGE_MIMES.includes(mime)) {
       return res.status(400).json({ error: "Lenken er ikke et støttet bilde (JPG/PNG/WEBP/AVIF/GIF)" });
     }
 
     let name = "bilde";
     try {
-      const last = decodeURIComponent(u.pathname.split("/").pop() || "");
+      const last = decodeURIComponent(new URL(fetched.finalUrl).pathname.split("/").pop() || "");
       if (last) name = last.replace(/\.[a-z0-9]+$/i, "") || "bilde";
     } catch {}
 
@@ -777,9 +1153,11 @@ app.post("/api/fetch-image", async (req, res) => {
       name,
     });
   } catch (err) {
-    const aborted = err && err.name === "AbortError";
     console.warn("[fetch-image] " + (err && err.message ? err.message : err));
-    res.status(400).json({ error: aborted ? "Tidsavbrudd – lenken svarte ikke" : "Kunne ikke hente bildet fra lenken" });
+    // Only messages this module raised on purpose are shown; anything else
+    // (DNS errors, TLS failures) could describe the internal network.
+    const message = err && err.safe ? err.message : "Kunne ikke hente bildet fra lenken";
+    res.status(400).json({ error: message });
   }
 });
 
@@ -803,6 +1181,15 @@ async function start() {
   ensureDirsSync();
   await loadSettings(); // creates settings.json if missing
   if (!(await pathExists(HISTORY_JSON))) await writeHistory([]);
+
+  if (!imageTools.isAvailable()) {
+    console.warn(
+      "\n[bilde] sharp er ikke tilgjengelig – supersampling og størrelsesgrensen " +
+        "er slått av for denne økten.\n        Kjør `npm install` på nytt for å få den tilbake. (" +
+        imageTools.unavailableReason() +
+        ")"
+    );
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`\n  Banner Generator kjører på  http://localhost:${PORT}\n`);
