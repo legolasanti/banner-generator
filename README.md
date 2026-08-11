@@ -380,7 +380,8 @@ banner-generator/
 ├── settings.json          Created automatically on first run
 ├── lib/
 │   ├── image.js           Downscaling + the per-file byte budget (sharp)
-│   └── html5.js           Campaign Manager 360 package builder
+│   ├── html5.js           Campaign Manager 360 package builder
+│   └── safe-fetch.js      "Fetch from link" without reaching inside the network
 ├── templates/             Puppeteer templates → produce the final banners
 │   ├── readpeak.html
 │   ├── desktop.html
@@ -417,7 +418,7 @@ look in one place and both change — the preview is a faithful copy of the resu
 | Method + path                    | Description                                          |
 | -------------------------------- | ---------------------------------------------------- |
 | `POST /api/generate`             | Multipart: image + fields → streams the download      |
-| `POST /api/fetch-image`          | `{url}` → fetches an image from a link (SSRF-guarded)|
+| `POST /api/fetch-image`          | `{url}` → fetches an image from a link                |
 | `GET  /api/history`              | List of the last 30 packages                         |
 | `GET  /api/history/:id/download` | Re-download a package — `?set=core\|newsgrid\|all`, `&type=html` |
 | `DELETE /api/history/:id`        | Delete a package                                     |
@@ -430,6 +431,15 @@ look in one place and both change — the preview is a faithful copy of the resu
 All four formats are rendered and saved on every generate; `downloadSet` only
 picks what the response streams. Writes are rejected when they arrive with a
 foreign `Origin`.
+
+`POST /api/fetch-image` opens a socket to a URL somebody typed, so
+[lib/safe-fetch.js](lib/safe-fetch.js) checks **every address the hostname
+resolves to** — not just the text of the hostname — against the loopback,
+private, carrier-NAT, link-local (cloud metadata) and multicast ranges,
+including IPv4-mapped IPv6 forms like `::ffff:127.0.0.1`. The check runs inside
+the DNS lookup the socket itself uses, so the answer cannot change between the
+check and the connection, and redirects are followed one hop at a time with the
+whole check repeated. The body is capped while streaming, not after.
 
 `POST /api/generate` fields: `image` (file, max 10 MB, JPG/PNG/WEBP/AVIF/GIF),
 `headline`, `subtitle`, `brandLabel`, `vinnersjanse` (empty = badge hidden),

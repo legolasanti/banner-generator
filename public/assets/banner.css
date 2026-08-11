@@ -204,11 +204,16 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   padding: 3px 8px;
   white-space: nowrap;
 }
-/* Reset the floating-pill positioning so the age badge sits inline in the bar. */
+/* Reset the floating-pill positioning so the age badge sits inline in the bar.
+   It hugs its own text — like the white pill on the other three formats — and
+   is pushed to the right edge, so the photo shows through between it and the
+   Annonse box instead of a wide empty white slab. It may still SHRINK (0 1) if
+   someone sets a very long wording; it just never grows. */
 .bn--newsgrid .bn__age.bn__topbar-age {
   --age-h: 13px;
   position: static;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  margin-left: auto;
   justify-content: flex-end;
   background: #ffffff;
   border-radius: 0;

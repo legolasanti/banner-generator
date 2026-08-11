@@ -30,6 +30,7 @@ const puppeteer = require("puppeteer");
 
 const imageTools = require("./lib/image");
 const html5 = require("./lib/html5");
+const safeFetch = require("./lib/safe-fetch");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -1091,21 +1092,10 @@ app.delete("/api/settings/badge-icon", async (req, res) => {
 
 // ---- Fetch image from URL (proxy) ----------------------------------------
 // Lets a user paste a Norsk Tipping image link (often AVIF) instead of
-// downloading + converting. Server-side fetch avoids browser CORS, and a basic
-// SSRF guard blocks private/loopback targets.
-function isPrivateHost(host) {
-  const h = (host || "").toLowerCase();
-  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".internal")) return true;
-  if (["0.0.0.0", "127.0.0.1", "::1", "[::1]"].includes(h)) return true;
-  if (/^127\./.test(h)) return true;
-  if (/^10\./.test(h)) return true;
-  if (/^192\.168\./.test(h)) return true;
-  if (/^169\.254\./.test(h)) return true; // link-local / cloud metadata
-  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
-  if (h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80")) return true; // ULA / link-local IPv6
-  return false;
-}
-
+// downloading + converting. Fetching server-side avoids browser CORS — and
+// means the server opens a socket to a URL a user typed, so every request goes
+// through lib/safe-fetch.js, which refuses anything resolving inside the
+// network and re-checks each redirect hop.
 function sniffImageMime(buf) {
   if (!buf || buf.length < 12) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
@@ -1125,48 +1115,34 @@ app.post("/api/fetch-image", async (req, res) => {
   try {
     const url = String((req.body && req.body.url) || "").trim();
     if (!url) return res.status(400).json({ error: "Mangler lenke (URL)" });
-    let u;
-    try {
-      u = new URL(url);
-    } catch {
-      return res.status(400).json({ error: "Ugyldig URL" });
-    }
-    if (!/^https?:$/.test(u.protocol)) return res.status(400).json({ error: "Bare http(s)-lenker er tillatt" });
-    if (isPrivateHost(u.hostname)) return res.status(400).json({ error: "Lenken peker til en privat/lokal adresse" });
 
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 12000);
-    let r;
-    try {
-      r = await fetch(url, {
-        signal: ctrl.signal,
-        redirect: "follow",
-        headers: {
-          // Browser-like UA: some image CDNs reject non-browser agents.
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-          Accept: "image/avif,image/webp,image/png,image/*,*/*;q=0.8",
-        },
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-    if (!r.ok) return res.status(400).json({ error: "Kunne ikke hente bildet (HTTP " + r.status + ")" });
+    const fetched = await safeFetch.fetchImage(url, {
+      maxBytes: MAX_UPLOAD_BYTES,
+      timeoutMs: 12000,
+      headers: {
+        // Browser-like UA: some image CDNs reject non-browser agents.
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        Accept: "image/avif,image/webp,image/png,image/*,*/*;q=0.8",
+      },
+    });
 
-    const declared = (r.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-    const buf = Buffer.from(await r.arrayBuffer());
+    const buf = fetched.buffer;
     if (buf.length === 0) return res.status(400).json({ error: "Lenken returnerte et tomt svar" });
-    if (buf.length > MAX_UPLOAD_BYTES) return res.status(400).json({ error: "Bildet er for stort (maks 10 MB)" });
 
-    let mime = ACCEPTED_IMAGE_MIMES.includes(declared) ? declared : null;
-    if (!mime) mime = sniffImageMime(buf); // some CDNs send octet-stream
-    if (!mime || !["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"].includes(mime)) {
+    // Trust the bytes first — a server claiming "image/png" while sending
+    // something else must not get through. The declared type is only a
+    // fallback for formats the sniffer does not know (and many CDNs send
+    // application/octet-stream anyway).
+    const declared = fetched.contentType.split(";")[0].trim().toLowerCase();
+    const mime = sniffImageMime(buf) || (ACCEPTED_IMAGE_MIMES.includes(declared) ? declared : null);
+    if (!mime || !ACCEPTED_IMAGE_MIMES.includes(mime)) {
       return res.status(400).json({ error: "Lenken er ikke et støttet bilde (JPG/PNG/WEBP/AVIF/GIF)" });
     }
 
     let name = "bilde";
     try {
-      const last = decodeURIComponent(u.pathname.split("/").pop() || "");
+      const last = decodeURIComponent(new URL(fetched.finalUrl).pathname.split("/").pop() || "");
       if (last) name = last.replace(/\.[a-z0-9]+$/i, "") || "bilde";
     } catch {}
 
@@ -1177,9 +1153,11 @@ app.post("/api/fetch-image", async (req, res) => {
       name,
     });
   } catch (err) {
-    const aborted = err && err.name === "AbortError";
     console.warn("[fetch-image] " + (err && err.message ? err.message : err));
-    res.status(400).json({ error: aborted ? "Tidsavbrudd – lenken svarte ikke" : "Kunne ikke hente bildet fra lenken" });
+    // Only messages this module raised on purpose are shown; anything else
+    // (DNS errors, TLS failures) could describe the internal network.
+    const message = err && err.safe ? err.message : "Kunne ikke hente bildet fra lenken";
+    res.status(400).json({ error: message });
   }
 });
 
