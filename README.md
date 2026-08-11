@@ -49,8 +49,15 @@ Canva workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
   it through to the end. You only need to do this **once** — it stays available.
 - **Git** (only needed to clone from GitHub) — <https://git-scm.com>
 
-`npm install` also downloads a copy of Chromium for Puppeteer (~150 MB), so the
-first install needs an internet connection and a few minutes.
+`npm install` also makes sure a browser is available for Puppeteer. If Google
+Chrome is already on the machine it is used as-is; otherwise a copy of Chromium
+(~150 MB) is downloaded once. Either way the first install needs an internet
+connection and a few minutes.
+
+> npm 11 no longer runs dependencies' install scripts by default, which is
+> exactly how Puppeteer used to fetch that browser — so this project fetches it
+> itself from `scripts/ensure-browser.js`. The `npm warn allow-scripts` lines
+> you may see during install are harmless.
 
 It also installs **sharp**, which does the resampling and the size budgeting.
 sharp ships as a prebuilt binary, so it normally installs without any build
@@ -81,6 +88,38 @@ For development with auto-restart on file changes:
 ```bash
 npm run dev
 ```
+
+---
+
+## Updating a copy you already have
+
+Anyone who cloned this earlier gets the new version with two commands. Run them
+inside the `banner-generator` folder, with the server stopped (`Ctrl + C`):
+
+```bash
+git pull
+npm install
+npm start
+```
+
+**`npm install` is not optional here** — it is what brings in `sharp`, which the
+200 KB size limit and the extra-sharpness pass are built on. Skip it and the app
+still starts, but it says on startup and in Settings that both are switched off.
+
+Your own things are left alone: `settings.json`, the `history/` folder and any
+uploaded badge mark are all outside version control, so `git pull` never touches
+them. New settings simply appear with sensible defaults.
+
+Two things you may notice, both expected: `public/assets/hjelpelinjen-logo.png`
+disappears (the 18+ badge is drawn as text plus an SVG mark now), and the first
+`npm install` after updating takes a bit longer while `sharp` downloads.
+
+If `git pull` complains that you have local changes you did not make on purpose,
+`git stash` puts them aside, and `git stash drop` throws them away for good.
+
+Downloaded a ZIP instead of cloning? Then there is nothing to pull — download the
+ZIP again from GitHub, or clone it properly once with the command in
+[Quick start](#quick-start) so future updates are a single `git pull`.
 
 ---
 
@@ -398,6 +437,7 @@ banner-generator/
 │       ├── fonts/         Bundled Arimo (Arial-compatible)
 │       ├── norsktipping-icon.svg   The mark in the 18+ badge
 │       └── placeholder.svg
+├── scripts/               ensure-browser.js — guarantees Puppeteer has a browser
 ├── test/                  node --test suites (npm test)
 ├── references/            Source artwork + real ads to compare against
 ├── history/               Saved packages (max 30)

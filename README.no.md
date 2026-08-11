@@ -51,8 +51,15 @@ Tipping-formatet.
   helt ferdig. Dette gjør du bare **én gang** — det blir værende.
 - **Git** (kun for å klone fra GitHub) — <https://git-scm.com>
 
-`npm install` laster også ned en Chromium-kopi til Puppeteer (~150 MB), så første
-installasjon krever internett og noen minutter.
+`npm install` sørger også for at Puppeteer har en nettleser å bruke. Er Google
+Chrome allerede installert på maskinen, brukes den som den er; hvis ikke lastes
+en Chromium-kopi (~150 MB) ned én gang. Uansett krever første installasjon
+internett og noen minutter.
+
+> npm 11 kjører ikke lenger avhengigheters installasjonsskript automatisk, og
+> det var nettopp slik Puppeteer hentet den nettleseren — derfor henter dette
+> prosjektet den selv, fra `scripts/ensure-browser.js`. Linjene
+> `npm warn allow-scripts` du kanskje ser under installasjonen, er ufarlige.
 
 Den installerer også **sharp**, som står for nedskaleringen og
 størrelsesgrensen. sharp kommer som ferdigbygd binærfil og trenger normalt ingen
@@ -84,6 +91,41 @@ For utvikling med automatisk omstart:
 ```bash
 npm run dev
 ```
+
+---
+
+## Oppdatere en kopi du allerede har
+
+Har du klonet dette fra før, henter du den nye versjonen med to kommandoer. Kjør
+dem inne i `banner-generator`-mappen, med serveren stoppet (`Ctrl + C`):
+
+```bash
+git pull
+npm install
+npm start
+```
+
+**`npm install` er ikke valgfritt her** — det er den som henter inn `sharp`, som
+både 200 KB-grensen og ekstra skarphet bygger på. Hopper du over den, starter
+appen fortsatt, men den sier fra ved oppstart og i Innstillinger om at begge er
+slått av.
+
+Dine egne ting røres ikke: `settings.json`, `history/`-mappen og et eventuelt
+opplastet merke ligger utenfor versjonskontroll, så `git pull` tar aldri på dem.
+Nye innstillinger dukker bare opp med fornuftige standardverdier.
+
+To ting du kanskje legger merke til, begge som forventet:
+`public/assets/hjelpelinjen-logo.png` forsvinner (18+-merket tegnes nå som tekst
+pluss et SVG-symbol), og den første `npm install` etter oppdateringen tar litt
+lengre tid mens `sharp` lastes ned.
+
+Sier `git pull` at du har lokale endringer du ikke har gjort med vilje, legger
+`git stash` dem til side, og `git stash drop` kaster dem for godt.
+
+Lastet du ned en ZIP i stedet for å klone? Da er det ingenting å hente — last ned
+ZIP-en på nytt fra GitHub, eller klon prosjektet ordentlig én gang med kommandoen
+under [Kom raskt i gang](#kom-raskt-i-gang), så er framtidige oppdateringer bare
+én `git pull`.
 
 ---
 
