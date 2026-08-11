@@ -239,8 +239,11 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   flex-direction: column;
 }
 
+/* One headline colour for all four formats. Softer than the near-black used
+   elsewhere in the banner, and set here rather than per format so it cannot
+   drift apart again. */
 .bn__headline {
-  color: #111111;
+  color: #2f2f2f;
   font-weight: 800;
   letter-spacing: -0.012em;
   overflow: hidden;
