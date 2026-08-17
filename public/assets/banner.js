@@ -122,6 +122,26 @@
     return '<span class="bn__cta bn__cta--text" style="color:' + accent + ";font-size:" + size + 'px">Les mer</span>';
   }
 
+  // Merkevare label. The default only applies when the field was never set at
+  // all — clearing it in the form must actually clear it in the banner, so an
+  // empty (or whitespace-only) value drops the element entirely instead of
+  // falling back to "NORSK TIPPING" or leaving a blank line behind.
+  function brandLabelMarkup(data) {
+    var raw = data.brandLabel == null ? "NORSK TIPPING" : String(data.brandLabel);
+    var text = raw.trim();
+    if (!text) return "";
+    return '<span class="bn__brandlabel">' + escapeHtml(text) + "</span>";
+  }
+
+  // "Les mer" now follows the Ingress directly (see .bn__cta in banner.css), so
+  // an empty Ingress must not leave an empty flex child behind — its row gap
+  // would show up as an unexplained extra step above "Les mer".
+  function subtitleMarkup(data) {
+    var text = String(data.subtitle == null ? "" : data.subtitle).trim();
+    if (!text) return "";
+    return '<p class="bn__subtitle">' + escapeHtml(text) + "</p>";
+  }
+
   function renderReadpeak(data) {
     var annonse = escapeHtml(data.annonseText || "Annonse");
     return (
@@ -136,15 +156,11 @@
       vinnerBadge(data) +
       "</div>" +
       '<div class="bn__body">' +
-      '<span class="bn__brandlabel">' +
-      escapeHtml(data.brandLabel || "NORSK TIPPING") +
-      "</span>" +
+      brandLabelMarkup(data) +
       '<h2 class="bn__headline">' +
       escapeHtml(data.headline || "Overskrift kommer her") +
       "</h2>" +
-      '<p class="bn__subtitle">' +
-      escapeHtml(data.subtitle || "") +
-      "</p>" +
+      subtitleMarkup(data) +
       ctaMarkup(data) +
       "</div>"
     );

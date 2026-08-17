@@ -729,7 +729,10 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
 
     const headline = String(b.headline || "").slice(0, 200);
     const subtitle = String(b.subtitle || "").slice(0, 80);
-    const brandLabel = String(b.brandLabel || "NORSK TIPPING").slice(0, 60);
+    // An empty Merkevare field means "no label", not "use the default" — the
+    // default belongs to the form, so only a request that omits the field
+    // entirely falls back to it (kept for older clients / direct API calls).
+    const brandLabel = (b.brandLabel == null ? "NORSK TIPPING" : String(b.brandLabel)).slice(0, 60);
     const vinnersjanse = String(b.vinnersjanse || "").slice(0, 120);
     // Vinnersjanse defaults OFF on the 190×190 Nyhetsgrid (image too small to
     // read it well) — only switched on explicitly when fronting a jackpot.

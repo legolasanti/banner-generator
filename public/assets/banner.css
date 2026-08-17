@@ -269,13 +269,17 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   line-height: 1.08;
   -webkit-line-clamp: 3;
 }
+/* 24.8px = the previous 31px −20%; the old default was too heavy for the
+   320×400 and cost real headlines a line. */
 .bn--mobile .bn__headline {
-  font-size: calc(31px * var(--hl-scale, 1));
+  font-size: calc(24.8px * var(--hl-scale, 1));
   line-height: 1.1;
   -webkit-line-clamp: 3;
 }
+/* 17px ≈ the previous 15.5px +10% — the 190×190 sits in a busy news grid and
+   needed the extra weight to read at a glance. */
 .bn--newsgrid .bn__headline {
-  font-size: calc(15.5px * var(--hl-scale, 1));
+  font-size: calc(17px * var(--hl-scale, 1));
   line-height: 1.18;
   -webkit-line-clamp: 3;
   letter-spacing: -0.006em;
@@ -312,14 +316,17 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   letter-spacing: 0.7px;
   text-transform: uppercase;
 }
+/* 24.2px = the previous 22px +10%. */
 .bn--readpeak .bn__headline {
-  font-size: calc(22px * var(--hl-scale, 1));
+  font-size: calc(24.2px * var(--hl-scale, 1));
   line-height: 1.14;
   -webkit-line-clamp: 3;
   letter-spacing: -0.008em;
 }
-/* When there is no Ingress, let the headline use the freed-up space. */
-.bn--readpeak.bn--no-ingress .bn__headline { -webkit-line-clamp: 5; }
+/* When there is no Ingress, let the headline use the freed-up space — 4 lines
+   is what fits underneath now that "Les mer" follows the text instead of
+   sitting on the floor of the card. */
+.bn--readpeak.bn--no-ingress .bn__headline { -webkit-line-clamp: 4; }
 .bn__subtitle {
   color: #555555;
   font-size: calc(17.5px * var(--st-scale, 1));
@@ -329,8 +336,20 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2; /* wrap to a 2nd line when needed (body has room) */
 }
+/* "Les mer" belongs to the copy, not to the floor of the card: it follows the
+   Ingress (or the headline, when there is no Ingress) at a fixed step, exactly
+   like the Canva creatives this replaces — see
+   references/"ABCN - ReadPeak widget - Desktop - Vikinglotto- Uke26mandag.png",
+   where it sits a clear gap under the Ingress with the rest of the card left
+   empty. It used to be `margin-top:auto`, which shoved it to the bottom edge
+   and left a random hole in the middle whenever the copy was short.
+   20px is on top of .bn__body's 6px row gap, and is the largest step that still
+   clears the worst case (3-line headline + 2-line Ingress) inside the 220px
+   body. flex:none keeps it at full height if that case ever gets tighter — the
+   line-clamped headline is the right thing to give way, not the call to action. */
 .bn__cta {
-  margin-top: auto;
+  margin-top: 20px;
+  flex: none;
   display: block;
   width: 100%;
   background: #1a6b1a;
@@ -343,12 +362,13 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   letter-spacing: 0.2px;
 }
 /* Plain-text variant (like the native ReadPeak example): no pill, left-aligned,
-   coloured in the accent colour (set inline). */
+   coloured in the accent colour (set inline). Padding stays at 0 so both
+   variants sit the same distance below the Ingress. */
 .bn__cta--text {
   background: transparent;
   width: auto;
   text-align: left;
-  padding: 6px 0 0;
+  padding: 0;
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0;

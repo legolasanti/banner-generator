@@ -538,7 +538,7 @@
     });
     const custom = document.createElement("option");
     custom.value = CUSTOM;
-    custom.textContent = "Custom / Egendefinert";
+    custom.textContent = "Tom / egendefinert";
     el.gameType.appendChild(custom);
 
     if (prev && $$("option", el.gameType).some((o) => o.value === prev)) {
@@ -547,13 +547,13 @@
     onGameChange();
   }
 
+  // "Tom / egendefinert" starts blank on purpose: it is both the free-text
+  // option AND the way to get no Vinnersjanse badge at all. Prefilling an
+  // example would put a wrong odds claim in the banner for anyone who picked it
+  // to write their own text — or to write nothing.
   function onGameChange() {
     const isCustom = el.gameType.value === CUSTOM;
     el.customVinnerField.hidden = !isCustom;
-    // Prefill the custom field with a realistic example to edit from.
-    if (isCustom && !el.customVinner.value.trim()) {
-      el.customVinner.value = "Vinnersjanse 1.premie 1:61 mill. per rekke";
-    }
     renderPreviews();
   }
 

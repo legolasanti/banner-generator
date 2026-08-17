@@ -236,23 +236,29 @@ button { font-family: inherit; }
 .inputicon input { padding-left: 36px; }
 .inputicon:focus-within .inputicon__icon { color: var(--green); }
 
-/* Two-up choice cards for a decision that changes the whole download. */
+/* Two-up choice cards for a decision that changes the whole download.
+   Every rule here is qualified with .choice on purpose: the cards also carry
+   .seg (so the shared segmented() handler drives them), and the generic
+   .seg.is-active further down this file has the same specificity but comes
+   later — it was overriding the selected card back to a plain white surface,
+   which left the two options looking identical once you had picked one. */
 .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.choice__opt {
+.choice .choice__opt {
   display: flex; flex-direction: column; gap: 3px; text-align: left;
   padding: 11px 13px; border-radius: var(--r-sm); cursor: pointer;
   border: 1px solid var(--border-strong); background: var(--surface);
   transition: border-color 0.16s var(--ease), background 0.16s var(--ease), box-shadow 0.16s var(--ease);
 }
-.choice__opt:hover { border-color: var(--border-strong); background: var(--surface-2); }
-.choice__opt.is-active {
+.choice .choice__opt:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.choice .choice__opt.is-active {
   border-color: var(--green);
   background: var(--green-soft);
-  box-shadow: 0 0 0 1px var(--green);
+  box-shadow: 0 0 0 1px var(--green), var(--shadow-xs);
 }
 .choice__title { font-size: 13.5px; font-weight: 700; color: var(--ink); }
-.choice__opt.is-active .choice__title { color: var(--green-deep); }
+.choice .choice__opt.is-active .choice__title { color: var(--green-deep); }
 .choice__desc { font-size: 11.5px; font-weight: 500; line-height: 1.35; color: var(--ink-3); }
+.choice .choice__opt.is-active .choice__desc { color: var(--ink-2); }
 
 .field { margin-bottom: 18px; animation: fieldIn 0.5s var(--ease) both; }
 .field:nth-child(1) { animation-delay: 0.02s; }
