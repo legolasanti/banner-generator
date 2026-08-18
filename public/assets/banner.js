@@ -161,6 +161,9 @@
       escapeHtml(data.headline || "Overskrift kommer her") +
       "</h2>" +
       subtitleMarkup(data) +
+      // The step above "Les mer" is an element rather than a margin so it can
+      // shrink when the copy is long — see .bn__cta-gap in banner.css.
+      '<span class="bn__cta-gap" aria-hidden="true"></span>' +
       ctaMarkup(data) +
       "</div>"
     );

@@ -728,7 +728,9 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const b = req.body || {};
 
     const headline = String(b.headline || "").slice(0, 200);
-    const subtitle = String(b.subtitle || "").slice(0, 80);
+    // 120, same as the headline: the Ingress is allowed 3 rendered lines, and
+    // the old 80-char cap ran out after two.
+    const subtitle = String(b.subtitle || "").slice(0, 120);
     // An empty Merkevare field means "no label", not "use the default" — the
     // default belongs to the form, so only a request that omits the field
     // entirely falls back to it (kept for older clients / direct API calls).

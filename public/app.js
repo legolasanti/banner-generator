@@ -492,7 +492,7 @@
   // -------- form fields -----------------------------------------------------
   function updateCounters() {
     el.headlineCount.textContent = el.headline.value.length + " / 120";
-    el.subtitleCount.textContent = el.subtitle.value.length + " / 80";
+    el.subtitleCount.textContent = el.subtitle.value.length + " / 120";
   }
   function updateFilenamePreview() {
     const v = el.filename.value.trim();

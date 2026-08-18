@@ -264,9 +264,12 @@ img.bn__age-icon { width: auto; object-fit: contain; }
 
 /* Base sizes are +35% vs the original (per request) and scale with the
    per-banner --hl-scale variable set by the "Tekststørrelse" control. */
+/* line-height 1.05 (was 1.08) so a 3-line headline actually fits the 145px
+   body. At 1.08 the third line ran 14px past it and was sliced through the
+   middle — the clamp said 3 lines, the box only ever showed 2½. */
 .bn--desktop .bn__headline {
   font-size: calc(40.5px * var(--hl-scale, 1));
-  line-height: 1.08;
+  line-height: 1.05;
   -webkit-line-clamp: 3;
 }
 /* 24.8px = the previous 31px −20%; the old default was too heavy for the
@@ -303,19 +306,48 @@ img.bn__age-icon { width: auto; object-fit: contain; }
 }
 .bn--readpeak .bn__annonse-top { position: absolute; top: 9px; left: 9px; }
 
+/* Two deliberate choices, both there to let a 3-line headline and a 3-line
+   Ingress coexist inside 220px:
+   • No row `gap`. Spacing is carried by the elements themselves (below) so the
+     one gap allowed to give way — the step above "Les mer" — can be a real flex
+     item. A container gap cannot shrink.
+   • Bottom padding 10 rather than 14. The copy is top-aligned and "Les mer"
+     floats well clear of the bottom in every normal case, so those 4px are only
+     ever noticed by the fullest possible card, where they are the difference
+     between whole text and a clipped line. */
 .bn--readpeak .bn__body {
   height: 220px;
-  padding: 14px 14px 14px;
-  gap: 6px;
+  padding: 14px 14px 10px;
   background: #edf5ed;
 }
+/* What gives way, in order, when the copy outgrows the body: first the step
+   above "Les mer" (.bn__cta-gap, which carries a big shrink factor so it goes
+   first), then — only on ReadPeak, and only once that step is at its minimum —
+   the headline. Everything else holds its size: a squeezed flex item clips its
+   own text, and losing the label, the Ingress or the call to action is worse
+   than losing a few pixels off a third headline line.
+   The other three formats keep flex:none on the headline too, so a full 3-line
+   headline spills into the body's own padding instead of being sliced. */
+.bn__brandlabel,
+.bn__subtitle,
+.bn__cta,
+.bn--desktop .bn__headline,
+.bn--mobile .bn__headline,
+.bn--newsgrid .bn__headline {
+  flex: none;
+}
+.bn--readpeak .bn__headline { flex: 0 1 auto; }
 .bn__brandlabel {
   color: #29741d;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.7px;
   text-transform: uppercase;
+  margin-bottom: 6px;
 }
+/* On the element rather than the container, so an emptied Merkevare / Ingress
+   takes its spacing with it instead of leaving a gap behind. */
+.bn__subtitle { margin-top: 6px; }
 /* 24.2px = the previous 22px +10%. */
 .bn--readpeak .bn__headline {
   font-size: calc(24.2px * var(--hl-scale, 1));
@@ -330,26 +362,32 @@ img.bn__age-icon { width: auto; object-fit: contain; }
 .bn__subtitle {
   color: #555555;
   font-size: calc(17.5px * var(--st-scale, 1));
-  line-height: 1.25;
+  line-height: 1.2;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2; /* wrap to a 2nd line when needed (body has room) */
+  -webkit-line-clamp: 3; /* same allowance as the headline */
 }
-/* "Les mer" belongs to the copy, not to the floor of the card: it follows the
-   Ingress (or the headline, when there is no Ingress) at a fixed step, exactly
-   like the Canva creatives this replaces — see
+/* The step between the copy and "Les mer", as its own flex item so it can give
+   way. At 26px it reproduces the Canva creatives this replaces — see
    references/"ABCN - ReadPeak widget - Desktop - Vikinglotto- Uke26mandag.png",
-   where it sits a clear gap under the Ingress with the rest of the card left
-   empty. It used to be `margin-top:auto`, which shoved it to the bottom edge
-   and left a random hole in the middle whenever the copy was short.
-   20px is on top of .bn__body's 6px row gap, and is the largest step that still
-   clears the worst case (3-line headline + 2-line Ingress) inside the 220px
-   body. flex:none keeps it at full height if that case ever gets tighter — the
-   line-clamped headline is the right thing to give way, not the call to action. */
+   where "Les mer" sits a clear gap under the Ingress with the rest of the card
+   left empty. ("Les mer" used to be `margin-top:auto`, which shoved it onto the
+   floor of the card and left a random hole in the middle whenever the copy was
+   short.) Since every other child is flex:none, this is what absorbs a long
+   headline plus a long Ingress: it holds 26px through 3 headline lines + 2
+   Ingress lines, and only bottoms out at 8px on the fullest card (3 + 3), which
+   costs the headline ~2px — a sliver of descender space, not a line. The filled
+   "Les mer" button is 18px taller than the plain-text one, so that variant does
+   lose part of a third headline line at 3 + 3; the call to action stays on the
+   card either way. */
+.bn__cta-gap {
+  /* shrink factor 200 so this collapses essentially on its own before the
+     headline is asked to give up anything */
+  flex: 0 200 26px;
+  min-height: 8px;
+}
 .bn__cta {
-  margin-top: 20px;
-  flex: none;
   display: block;
   width: 100%;
   background: #1a6b1a;
