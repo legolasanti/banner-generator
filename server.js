@@ -86,6 +86,27 @@ function setIdFor(product, value) {
   return cfg.sets.some((s) => s.id === value) ? value : cfg.defaultSet;
 }
 
+// Every distinct format label in the build. Labels are the size's identity —
+// the ReadPeak 308×380 is the same placement whether it is sold to Norsk
+// Tipping or to a florist, so both share one entry.
+const KNOWN_FORMAT_LABELS = Array.from(
+  new Set(formats.ORDER.flatMap((id) => formats.getProduct(id).specs.map((spec) => spec.label)))
+);
+
+/**
+ * The byte ceiling for one format: its own limit when it has one, otherwise the
+ * global default. 0 means no ceiling.
+ *
+ * @returns {number} bytes
+ */
+function budgetFor(settings, spec) {
+  const limits = (settings.export && settings.export.formatLimits) || {};
+  const kb = Object.prototype.hasOwnProperty.call(limits, spec.label)
+    ? limits[spec.label]
+    : settings.export.maxFileSizeKb;
+  return kb > 0 ? kb * 1024 : 0;
+}
+
 const DEFAULT_SETTINGS = {
   gamePresets: [
     { id: "vikinglotto", label: "Vikinglotto", vinnersjanse: "Vinnersjanse 1.premie 1:61 mill. per rekke" },
@@ -105,8 +126,16 @@ const DEFAULT_SETTINGS = {
     // over the limit. "auto" simply says "whatever is smallest that fits".
     format: "png", // "png" | "jpeg" | "auto"
     // Per-file ceiling in KB. 200 is the ad-server limit these banners are
-    // traded under; 0 turns the budget off entirely.
+    // traded under; 0 turns the budget off entirely. This is the DEFAULT — a
+    // format with its own limit in formatLimits below overrides it.
     maxFileSizeKb: 200,
+    // Per-format ceilings, keyed by the format's label ("desktop-580x500",
+    // "house-980x300", …). A 190×190 thumbnail and a 980×300 toppbanner are
+    // not traded under the same weight limit, so one global number is a
+    // fiction: it is either too tight for the big formats or meaningless for
+    // the small ones. A missing key means "use maxFileSizeKb"; 0 means "no
+    // limit for this format".
+    formatLimits: {},
     // Render at ~2× and resample down with Lanczos-3 instead of rasterising
     // straight at final size. Costs a little time, removes the softness in the
     // photo. Requires sharp; ignored when it is unavailable.
@@ -262,6 +291,22 @@ function normalizeSettings(raw) {
           : Math.round(clampNumber(raw.export.maxFileSizeKb, 10, 5000, DEFAULT_SETTINGS.export.maxFileSizeKb));
       out.export.superSample =
         raw.export.superSample === undefined ? true : !!raw.export.superSample;
+      // Only formats this build actually has, so a stale settings.json cannot
+      // grow keys forever. Same 0 = off / 10–5000 rule as the global value;
+      // anything else drops the key, which means "use the default".
+      out.export.formatLimits = {};
+      if (raw.export.formatLimits && typeof raw.export.formatLimits === "object") {
+        for (const label of KNOWN_FORMAT_LABELS) {
+          const value = raw.export.formatLimits[label];
+          if (value === "" || value === null || value === undefined) continue;
+          if (value === 0 || value === "0") {
+            out.export.formatLimits[label] = 0;
+            continue;
+          }
+          const kb = Number(value);
+          if (isFinite(kb)) out.export.formatLimits[label] = Math.round(clampNumber(kb, 10, 5000, 200));
+        }
+      }
     }
   }
   return out;
@@ -485,7 +530,11 @@ async function generateAll(specs, data, opts) {
       const browser = await getBrowser();
       const out = {};
       for (const spec of specs) {
-        out[spec.key] = await renderSpec(spec, data, browser, opts);
+        // The byte ceiling belongs to the format, not to the batch: see
+        // budgetFor(). opts.maxBytes stays as the fallback for callers that
+        // do not care (none today, but it keeps renderSpec self-contained).
+        const maxBytes = opts.budgetFor ? opts.budgetFor(spec) : opts.maxBytes;
+        out[spec.key] = await renderSpec(spec, data, browser, { ...opts, maxBytes });
       }
       return out;
     } catch (err) {
@@ -550,7 +599,7 @@ async function buildHtmlPackages(params) {
     zoom,
     clickUrl,
     ageIcon,
-    maxBytes,
+    budgetFor: budgetForSpec,
     photoName,
     title,
     report,
@@ -581,6 +630,9 @@ async function buildHtmlPackages(params) {
     const result = rendered[spec.key];
     if (!result.markup) throw new Error("Mangler markup for " + spec.key + " – kunne ikke bygge HTML5-pakken");
 
+    // The ceiling applies to the finished ZIP, so the photo only gets what is
+    // left after the fonts and the markup.
+    const maxBytes = budgetForSpec(spec);
     let photoBudget = maxBytes ? Math.max(50 * 1024, maxBytes - overhead) : 0;
     let zip = null;
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -607,6 +659,18 @@ async function buildHtmlPackages(params) {
     if (row) {
       row.htmlFile = zipName;
       row.htmlBytes = zip.length;
+      // An HTML5 creative has a floor the image export does not: two woff2
+      // faces plus the markup are ~40 KB before the photo is even in. A very
+      // small per-format limit is simply unreachable here, and saying so beats
+      // handing over a package that quietly misses the ad server's limit.
+      if (maxBytes && zip.length > maxBytes) {
+        row.htmlNote =
+          "over " +
+          Math.round(maxBytes / 1024) +
+          " KB – skriftene og markupen alene veier ~" +
+          Math.round(overhead / 1024) +
+          " KB, så pakken kan ikke bli mindre";
+      }
     }
   }
   return out;
@@ -825,7 +889,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // and for reuse outside the placement.
     const resolution = clampNumber(b.resolution, 1, 2, 1);
     const format = ["png", "jpeg", "auto"].includes(b.format) ? b.format : settings.export.format || "png";
-    const maxBytes = settings.export.maxFileSizeKb > 0 ? settings.export.maxFileSizeKb * 1024 : 0;
+    const specBudget = (spec) => budgetFor(settings, spec);
     const baseName = sanitizeFilename(b.filename);
 
     // "image" = flattened PNG/JPEG. "html" = a Campaign Manager 360 HTML5
@@ -888,10 +952,10 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // Serialize the heavy Puppeteer work.
     const rendered = await enqueue(() =>
       generateAll(productSpecs, data, {
+        budgetFor: specBudget,
         scale: renderScale,
         superSample: settings.export.superSample,
         format,
-        maxBytes,
         jpegQuality: settings.export.jpegQuality,
         // Only pay for the markup capture when an HTML5 package needs it.
         assetNames:
@@ -930,6 +994,9 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         width: result.width,
         height: result.height,
         bytes: result.image.bytes,
+        // What this format was actually held to, so the UI flags an oversized
+        // file against ITS ceiling rather than against a global one.
+        limitBytes: specBudget(spec),
         note: result.image.note,
       });
     }
@@ -946,7 +1013,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         zoom: imageZoom,
         clickUrl,
         ageIcon,
-        maxBytes,
+        budgetFor: specBudget,
         photoName: photoAsset.name,
         title: headline || baseName,
         report,

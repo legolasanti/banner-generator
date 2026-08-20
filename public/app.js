@@ -24,6 +24,7 @@
       includeTimestampInFilename: false,
       format: "png",
       maxFileSizeKb: 200,
+      formatLimits: {},
       superSample: true,
     },
   };
@@ -200,6 +201,7 @@
     qualityOut: $("#qualityOut"),
     setMaxSize: $("#setMaxSize"),
     maxSizeOut: $("#maxSizeOut"),
+    formatLimits: $("#formatLimits"),
     setSuperSample: $("#setSuperSample"),
     setTimestamp: $("#setTimestamp"),
     imageToolsWarning: $("#imageToolsWarning"),
@@ -495,6 +497,7 @@
     }
 
     applyCropFrame();
+    updateBudgetNote();
     buildPreviewCards();
     buildSizeSliders();
     buildDownloadSets();
@@ -746,9 +749,21 @@
     el.filenamePreview.textContent = "→ " + base + "." + ext;
   }
 
+  /** The KB ceiling one format is held to: its own, or the default. 0 = off. */
+  function limitKbFor(spec) {
+    const limits = state.settings.export.formatLimits || {};
+    return Object.prototype.hasOwnProperty.call(limits, spec.label)
+      ? limits[spec.label]
+      : state.settings.export.maxFileSizeKb;
+  }
+
+  /**
+   * What the current product's formats are actually held to. Says one number
+   * when they share it and lists them when they do not — a note claiming "every
+   * file under 200 KB" while the toppbanner is allowed 300 is worse than none.
+   */
   function updateBudgetNote() {
     if (!el.budgetNote) return;
-    const kb = state.settings.export.maxFileSizeKb;
     const tools = state.settings.imageTools;
     // Never promise a limit the server cannot actually enforce.
     if (tools && tools.available === false) {
@@ -756,9 +771,23 @@
         "Størrelsesgrensen er av: bildebiblioteket «sharp» mangler. Kjør «npm install» på nytt.";
       return;
     }
-    el.budgetNote.textContent = kb
-      ? "Hver fil holdes under " + kb + " KB. Kommer en PNG over, lagres den som JPEG."
-      : "Ingen størrelsesgrense er satt (skrus på i Innstillinger).";
+    const specs = productSpecs();
+    const perFormat = specs.map((spec) => ({ spec, kb: limitKbFor(spec) }));
+    const distinct = new Set(perFormat.map((row) => row.kb));
+
+    if (distinct.size === 1) {
+      const kb = perFormat[0].kb;
+      el.budgetNote.textContent = kb
+        ? "Hver fil holdes under " + kb + " KB. Kommer en PNG over, lagres den som JPEG."
+        : "Ingen størrelsesgrense er satt (skrus på i Innstillinger).";
+      return;
+    }
+    el.budgetNote.textContent =
+      "Egne grenser per format: " +
+      perFormat
+        .map((row) => row.spec.width + "×" + row.spec.height + " " + (row.kb ? row.kb + " KB" : "uten grense"))
+        .join(", ") +
+      ".";
   }
 
   function rebuildGameSelect(keepValue) {
@@ -960,9 +989,10 @@
       : "Generer bannere · " + setLabels(currentSet()).count;
   }
 
-  function isOverBudget(bytes) {
-    const kb = state.settings.export.maxFileSizeKb;
-    return kb > 0 && bytes > kb * 1024;
+  // The server reports the ceiling it actually applied to each file, so the
+  // flag cannot disagree with the limit the file was rendered against.
+  function isOverBudget(bytes, limitBytes) {
+    return limitBytes > 0 && bytes > limitBytes;
   }
 
   // What actually came out: name, size, and any compromise the encoder had to
@@ -990,15 +1020,17 @@
       name.textContent = (asHtml ? row.htmlFile : row.file) || row.label;
 
       const size = document.createElement("span");
-      size.className = "result__file-size" + (isOverBudget(bytes) ? " is-over" : "");
+      size.className = "result__file-size" + (isOverBudget(bytes, row.limitBytes) ? " is-over" : "");
       size.textContent = formatBytes(bytes);
 
       li.appendChild(name);
       li.appendChild(size);
-      if (!asHtml && row.note) {
+      // Whatever the encoder (or the packager) had to compromise on.
+      const noteText = asHtml ? row.htmlNote : row.note;
+      if (noteText) {
         const note = document.createElement("span");
         note.className = "result__file-note";
-        note.textContent = row.note;
+        note.textContent = noteText;
         li.appendChild(note);
       }
       el.resultFiles.appendChild(li);
@@ -1314,6 +1346,84 @@
     return row;
   }
 
+  /**
+   * Every distinct format in the build, in product order. Keyed by the format's
+   * label, which is the SIZE's identity — the ReadPeak 308×380 is one placement
+   * whether Norsk Tipping or a florist bought it, so both share a row.
+   */
+  function limitRows() {
+    const seen = new Set();
+    const rows = [];
+    F.ORDER.forEach((id) => {
+      F.getProduct(id).specs.forEach((spec) => {
+        if (seen.has(spec.label)) return;
+        seen.add(spec.label);
+        const house = spec.label.indexOf("house-") === 0;
+        rows.push({
+          label: spec.label,
+          name: (house ? "Houseads " : "") + spec.name,
+          size: spec.width + "×" + spec.height,
+        });
+      });
+    });
+    return rows;
+  }
+
+  function renderLimitRows(limits) {
+    el.formatLimits.innerHTML = "";
+    limitRows().forEach((row) => {
+      const line = document.createElement("div");
+      line.className = "limit-row";
+
+      const name = document.createElement("span");
+      name.className = "limit-row__name";
+      name.textContent = row.name;
+      const size = document.createElement("span");
+      size.className = "limit-row__size";
+      size.textContent = row.size;
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = 0;
+      input.max = 5000;
+      input.step = 10;
+      input.inputMode = "numeric";
+      input.dataset.label = row.label;
+      input.setAttribute("aria-label", "Maks KB for " + row.name + " " + row.size);
+      const value = limits && Object.prototype.hasOwnProperty.call(limits, row.label) ? limits[row.label] : "";
+      input.value = value === "" ? "" : String(value);
+
+      const unit = document.createElement("span");
+      unit.className = "limit-row__unit";
+      unit.textContent = "KB";
+
+      line.appendChild(name);
+      line.appendChild(size);
+      line.appendChild(input);
+      line.appendChild(unit);
+      el.formatLimits.appendChild(line);
+    });
+    syncLimitPlaceholders();
+  }
+
+  /** Blank inputs advertise the default they will actually inherit. */
+  function syncLimitPlaceholders() {
+    const fallback = +el.setMaxSize.value;
+    const text = fallback > 0 ? String(fallback) : "av";
+    $$("input", el.formatLimits).forEach((input) => (input.placeholder = text));
+  }
+
+  function collectFormatLimits() {
+    const out = {};
+    $$("input", el.formatLimits).forEach((input) => {
+      const raw = input.value.trim();
+      if (raw === "") return; // inherit the default
+      const kb = Number(raw);
+      if (isFinite(kb) && kb >= 0) out[input.dataset.label] = Math.round(kb);
+    });
+    return out;
+  }
+
   function activeSeg(container) {
     const b = container.querySelector(".seg.is-active");
     return b ? b.dataset.val : null;
@@ -1335,6 +1445,7 @@
       export: {
         jpegQuality: +el.setQuality.value,
         maxFileSizeKb: +el.setMaxSize.value,
+        formatLimits: collectFormatLimits(),
         superSample: el.setSuperSample.checked,
         includeTimestampInFilename: el.setTimestamp.checked,
         format: activeSeg(el.setFormat) || "png",
@@ -1354,6 +1465,7 @@
     el.qualityOut.textContent = s.export.jpegQuality;
     el.setMaxSize.value = s.export.maxFileSizeKb;
     el.maxSizeOut.textContent = maxSizeLabel(s.export.maxFileSizeKb);
+    renderLimitRows(s.export.formatLimits || {});
     el.setSuperSample.checked = s.export.superSample !== false;
     el.setTimestamp.checked = s.export.includeTimestampInFilename;
     segmentedSet(el.setFormat, s.export.format || "png");
@@ -1457,7 +1569,10 @@
       el.presetsList.appendChild(presetRow({ label: "", vinnersjanse: "" }))
     );
     el.setQuality.addEventListener("input", () => (el.qualityOut.textContent = el.setQuality.value));
-    el.setMaxSize.addEventListener("input", () => (el.maxSizeOut.textContent = maxSizeLabel(+el.setMaxSize.value)));
+    el.setMaxSize.addEventListener("input", () => {
+      el.maxSizeOut.textContent = maxSizeLabel(+el.setMaxSize.value);
+      syncLimitPlaceholders();
+    });
     segmented(el.setFormat, () => {});
     el.saveSettings.addEventListener("click", saveSettings);
     el.resetSettings.addEventListener("click", () => {

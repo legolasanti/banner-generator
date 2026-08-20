@@ -398,7 +398,19 @@ Tipping mark.
 is both smaller and sharper, JPEG on a photo, where lossless costs several times
 the bytes for no visible gain.
 
-Change the limit (or switch it off with `0`) under **Innstillinger → Eksport**.
+Change the default limit (or switch it off with `0`) under **Innstillinger →
+Eksport**, and give an individual placement its own ceiling under **Egne grenser
+per format** right below it — a 190×190 thumbnail and a 980×300 toppbanner are
+not traded under the same weight limit, so one global number is either too tight
+for the big formats or meaningless for the small ones. A blank row inherits the
+default; `0` means no limit for that format. The limit belongs to the *size*, so
+the ReadPeak 308×380 shares one ceiling across the Norsk Tipping and ReadPeak
+products.
+
+An HTML5 package has a floor the image export does not: two woff2 faces plus the
+markup weigh ~40 KB before the photo is in. A per-format limit below that cannot
+be met, and the app says so on the file rather than quietly handing over an
+over-budget package.
 
 **Extra sharpness** renders each banner at 2× and resamples it down with a
 Lanczos-3 kernel. Chrome scales a large source photo into the small banner frame

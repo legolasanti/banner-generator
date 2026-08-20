@@ -402,7 +402,18 @@ tekst og Norsk Tipping-merket.
 både mindre og skarpere, og JPEG på foto, der tapsfritt koster flere ganger så
 mange byte uten at du ser forskjell.
 
-Grensen endres (eller slås av med `0`) under **Innstillinger → Eksport**.
+Standardgrensen endres (eller slås av med `0`) under **Innstillinger →
+Eksport**, og et enkelt format kan få sin egen grense under **Egne grenser per
+format** rett under — et 190×190-bilde og et 980×300-toppbanner handles ikke
+under samme vektgrense, så ett globalt tall er enten for stramt for de store
+formatene eller meningsløst for de små. En tom rad arver standarden; `0` betyr
+ingen grense for det formatet. Grensen følger *størrelsen*, så ReadPeak 308×380
+deler én grense mellom Norsk Tipping- og ReadPeak-produktet.
+
+En HTML5-pakke har et gulv bildeeksporten ikke har: to woff2-skrifter pluss
+markupen veier ~40 KB før bildet er med. En grense under det kan ikke innfris,
+og appen sier fra på filen i stedet for å levere en pakke som stille bryter
+grensen.
 
 **Ekstra skarphet** rendrer hvert banner i 2× og skalerer det ned med en
 Lanczos-3-kjerne. Chrome skalerer et stort kildefoto inn i den lille

@@ -423,7 +423,22 @@
             <input type="range" id="setMaxSize" min="0" max="500" step="10" value="200" list="maxSizeTicks" />
             <datalist id="maxSizeTicks"><option value="0"></option><option value="150"></option><option value="200"></option><option value="300"></option></datalist>
             <span class="field__preview">
+              Standardgrensen, brukt av alle formater som ikke har sin egen under.
               0 = ingen grense. Kommer en PNG over grensen, lagres den som JPEG i stedet.
+            </span>
+          </div>
+
+          <!-- A 190×190 thumbnail and a 980×300 toppbanner are not traded under
+               the same weight limit, so the one number above is only a default.
+               Rows are built in app.js from formats.js. -->
+          <div class="field">
+            <label class="field__label">
+              Egne grenser per format <span class="field__hint">tom = bruk standarden over</span>
+            </label>
+            <div class="limits" id="formatLimits"></div>
+            <span class="field__preview">
+              Skriv KB, eller 0 for ingen grense på det formatet. Størrelsen gjelder
+              plasseringen, så ReadPeak 308×380 deler grense mellom Norsk Tipping og ReadPeak.
             </span>
           </div>
           <div class="field">

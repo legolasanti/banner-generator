@@ -238,7 +238,10 @@
      toppbanner (headline beside it) — the direction is the only difference, so
      CSS decides it and the markup never forks. */
   function renderHouse(data) {
-    var annonse = escapeHtml(data.houseAnnonseText || "ANNONSE");
+    // The same «Annonse»-tekst setting as every other format — the house
+    // formats only differ in that they set it in caps, which is CSS's job
+    // (.bn__house-annonse), not a second copy of the text.
+    var annonse = escapeHtml(data.annonseText || "Annonse");
     // Absolute file:// URL from the server, page-relative in the live preview.
     var logo = data.houseLogoUrl || "assets/abc-shopping.png";
     return (

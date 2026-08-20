@@ -118,6 +118,30 @@ test("only Norsk Tipping carries the regulated furniture", () => {
   assert.equal(formats.getProduct("readpeak").brandLabelDefault, "");
 });
 
+test("a format label identifies exactly one size", () => {
+  // Labels are the filename suffix AND the key for the per-format size limits
+  // in settings.json. Two different sizes sharing a label would silently make
+  // one of them inherit the other's byte ceiling — and name its file wrong.
+  const sizeByLabel = new Map();
+  for (const { product, spec } of allSpecs()) {
+    const size = spec.width + "x" + spec.height;
+    const seen = sizeByLabel.get(spec.label);
+    if (seen) {
+      assert.equal(
+        seen.size,
+        size,
+        "label " + spec.label + " means " + seen.size + " in " + seen.product + " but " + size + " in " + product
+      );
+    } else {
+      sizeByLabel.set(spec.label, { size, product });
+    }
+  }
+  // …and a label must survive being used as a settings key.
+  for (const label of sizeByLabel.keys()) {
+    assert.match(label, /^[a-z0-9-]+$/, label + " is not safe as a settings key");
+  }
+});
+
 test("each product ships the font family its banners are set in", () => {
   const fontsDir = path.join(__dirname, "..", "public", "assets", "fonts");
   const available = fs.readdirSync(fontsDir).filter((n) => n.endsWith(".woff2"));
