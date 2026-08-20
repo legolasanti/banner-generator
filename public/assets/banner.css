@@ -25,6 +25,25 @@
   src: url("fonts/arimo-latin-700-normal.woff2") format("woff2");
 }
 
+/* Bundled Noto Serif — the Houseads typeface. Same reason as Arimo above: the
+   live preview, the PNG export and the Campaign Manager 360 package all have to
+   render identical glyph metrics, including on a Linux host with no system
+   serif worth the name. */
+@font-face {
+  font-family: "Noto Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/noto-serif-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/noto-serif-latin-700-normal.woff2") format("woff2");
+}
+
 .bn,
 .bn * {
   box-sizing: border-box;
@@ -54,6 +73,11 @@
 .bn--desktop  { width: 580px; height: 500px; }
 .bn--mobile   { width: 320px; height: 400px; }
 .bn--newsgrid { width: 190px; height: 190px; }
+/* Houseads */
+.bn--house-mobile     { width: 320px; height: 400px; }
+.bn--house-panorama   { width: 980px; height: 300px; }
+.bn--house-desktop    { width: 580px; height: 500px; }
+.bn--house-skyscraper { width: 300px; height: 600px; }
 
 /* ----------------------------- Image area -------------------------------- */
 .bn__media {
@@ -411,3 +435,163 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   font-weight: 800;
   letter-spacing: 0;
 }
+
+/* =========================================================================
+   ReadPeak — generic advertiser
+   Same two placements as Norsk Tipping's, sold to anyone. The regulated
+   furniture (18+/Hjelpelinjen mark, Vinnersjanse strip) is dropped in
+   banner.js; the only visual difference left is the Ingress allowance, which
+   the approved creatives set at two lines rather than three.
+   ========================================================================= */
+.bn--p-readpeak .bn__subtitle { -webkit-line-clamp: 2; }
+
+/* =========================================================================
+   HOUSEADS — abc shopping's own formats
+   Four sizes, one system: ANNONSE upper-left and the abc shopping mark
+   upper-right across a fixed header, the photo below it, and a Noto Serif
+   headline under the photo (beside it on the 980×300 toppbanner). Everything
+   that varies per format is a custom property, set in the four blocks at the
+   bottom of this section:
+
+     --house-pad       side margin
+     --house-head-h    height of the ANNONSE / logo header
+     --house-ink       header type size (the logo scales with it)
+     --house-logo-h    height of the abc shopping mark
+     --house-media-h   photo height  (MUST match `media` in formats.js)
+     --house-hl        headline size — the approved Noto Serif pt sizes
+     --house-text-top  gap between photo and headline
+
+   Photo areas are the measured proportions of the approved Canva creatives
+   scaled to the real ad size, e.g. the 320×400 was drawn 298×377 with a
+   298×228 photo → 228 × (400/377) ≈ 242px here.
+   ========================================================================= */
+.bn--house {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #111111;
+  font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+}
+
+/* ---- Fixed header ------------------------------------------------------- */
+.bn__house-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  height: var(--house-head-h);
+  padding: 0 var(--house-pad);
+}
+.bn__house-annonse {
+  flex: none;
+  font-size: var(--house-ink);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #111111;
+}
+/* The mark is supplied as artwork (transparent PNG), so only its height is
+   pinned — the width follows its own 206/31 ratio. */
+.bn__house-logo {
+  flex: none;
+  height: var(--house-logo-h);
+  width: auto;
+}
+
+/* ---- Photo + headline --------------------------------------------------- */
+/* Column on the three upright formats, switched to a row on the toppbanner. */
+.bn__house-row {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.bn--house .bn__media {
+  flex: none;
+  height: var(--house-media-h);
+}
+.bn--house .bn__body {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  background: transparent;
+  padding: var(--house-text-top) var(--house-pad) var(--house-pad);
+}
+.bn--house .bn__headline {
+  flex: none;
+  color: #111111;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.004em;
+  font-size: calc(var(--house-hl) * var(--hl-scale, 1));
+}
+
+/* ---- 320×400 · Mobil ---------------------------------------------------- */
+.bn--house-mobile {
+  --house-pad: 14px;
+  --house-head-h: 46px;
+  --house-ink: 13px;
+  --house-logo-h: 15px;
+  --house-media-h: 242px;
+  --house-hl: 22px;
+  --house-text-top: 12px;
+}
+.bn--house-mobile .bn__headline { -webkit-line-clamp: 3; }
+
+/* ---- 980×300 · Toppbanner ----------------------------------------------- */
+/* The one format where the headline sits beside the photo rather than under
+   it, so the row runs horizontally and the copy is centred against the photo.
+   The photo keeps a fixed width here (514px) instead of filling the row. */
+.bn--house-panorama {
+  --house-pad: 22px;
+  --house-head-h: 46px;
+  --house-ink: 17px;
+  --house-logo-h: 21px;
+  --house-media-h: 243px;
+  --house-hl: 31px;
+  --house-text-top: 0px;
+}
+.bn--house-panorama .bn__house-row {
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0 var(--house-pad) 11px;
+  gap: 30px;
+}
+.bn--house-panorama .bn__media { width: 514px; }
+.bn--house-panorama .bn__body {
+  padding: 0;
+  height: var(--house-media-h);
+  justify-content: center;
+}
+.bn--house-panorama .bn__headline { -webkit-line-clamp: 3; }
+
+/* ---- 580×500 · Desktop -------------------------------------------------- */
+.bn--house-desktop {
+  --house-pad: 20px;
+  --house-head-h: 56px;
+  --house-ink: 17px;
+  --house-logo-h: 20px;
+  --house-media-h: 314px;
+  --house-hl: 26.5px;
+  --house-text-top: 16px;
+}
+.bn--house-desktop .bn__headline { -webkit-line-clamp: 2; }
+
+/* ---- 300×600 · Skyskraper ----------------------------------------------- */
+.bn--house-skyscraper {
+  --house-pad: 16px;
+  --house-head-h: 46px;
+  --house-ink: 13.5px;
+  --house-logo-h: 16px;
+  --house-media-h: 323px;
+  --house-hl: 25.7px;
+  --house-text-top: 18px;
+}
+.bn--house-skyscraper .bn__headline { -webkit-line-clamp: 4; }
+
+/* Regular-weight variant of the house headline. Both weights appear in the
+   approved creatives, so this is a campaign choice, not a format rule. */
+.bn--house.bn--house-regular .bn__headline { font-weight: 400; }

@@ -420,10 +420,10 @@ select { cursor: pointer; padding-right: 34px; }
 .crop { display: flex; justify-content: center; }
 .crop__frame {
   position: relative;
-  /* Matches the Desktop IMAGE-AREA ratio that the photo is actually cropped
-     into, so what gets framed here is what gets cropped. Must stay in sync
-     with .bn--desktop .bn__media in banner.css (580×355) — it said 580×330 for
-     a while and quietly framed a wider crop than the banner really uses. */
+  /* Framed to the IMAGE AREA the photo is actually cropped into, so what is
+     framed here is what gets cropped. Set from formats.js per product (see
+     applyCropFrame in app.js) — the ratio below is only the Norsk Tipping
+     Desktop starting value. */
   width: 100%;
   aspect-ratio: 580 / 355;
   border-radius: var(--r);
@@ -584,6 +584,10 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
   display: grid; gap: 20px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start; justify-items: center;
+  /* A full-width card (the 980×300 toppbanner) would otherwise leave a hole
+     beside the card before it; dense packing pulls the next narrow format up
+     into that gap instead. */
+  grid-auto-flow: row dense;
 }
 @container previews (max-width: 660px) {
   .previews__list { grid-template-columns: minmax(0, 1fr); }
@@ -775,4 +779,29 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ------------------------- Product-scoped fields ------------------------- */
+/* The builder panel is shared by three products; a field tagged with
+   data-when only belongs to some of them. Kept separate from [hidden] so a
+   field can be product-gated AND conditionally hidden by its own logic (the
+   custom Vinnersjanse row is both). */
+[data-when].is-off { display: none !important; }
+
+/* A banner too wide for the two-up preview grid (the 980×300 toppbanner) takes
+   a row to itself rather than being shrunk into a column. */
+.pcard--wide { grid-column: 1 / -1; }
+
+/* Which product a history entry came from. */
+.hcard__tag {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  vertical-align: 1px;
+  white-space: nowrap;
 }

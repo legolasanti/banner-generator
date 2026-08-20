@@ -29,8 +29,13 @@
         <span class="brand__text"><strong>Banner</strong> Generator</span>
       </div>
 
+      <!-- Three products share the builder panel; the fourth tab is the log.
+           Which product is selected decides the formats, the form fields and
+           the furniture on the banner itself (see public/assets/formats.js). -->
       <nav class="tabs" role="tablist" aria-label="Visning">
-        <button class="tab is-active" data-tab="new" id="tab-new" role="tab" aria-selected="true" aria-controls="view-new">Ny banner</button>
+        <button class="tab is-active" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="true" aria-controls="view-new">Norsk Tipping</button>
+        <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">ReadPeak</button>
+        <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">Houseads</button>
         <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1">
           Historikk <span class="tab__count" id="historyCount" hidden>0</span>
         </button>
@@ -125,32 +130,44 @@
                 <h3 class="fgroup__title"><span class="fgroup__step">2</span>Tekst</h3>
               <div class="field">
                 <label class="field__label" for="headline">
-                  Overskrift <span class="counter" id="headlineCount">0 / 120</span>
+                  Overskrift <span class="field__hint" id="headlineHint"></span>
+                  <span class="counter" id="headlineCount">0 / 120</span>
                 </label>
                 <textarea id="headline" rows="3" maxlength="120" placeholder="F.eks. Jonny vant 42 millioner – slik har han brukt pengene"></textarea>
               </div>
 
-              <div class="field">
+              <div class="field" data-when="norsktipping readpeak">
                 <label class="field__label" for="subtitle">
-                  Ingress <span class="field__hint">vises kun på ReadPeak</span>
+                  Ingress <span class="field__hint" id="subtitleHint">vises kun på ReadPeak</span>
                   <span class="counter" id="subtitleCount">0 / 120</span>
                 </label>
                 <textarea id="subtitle" rows="2" maxlength="120" placeholder="F.eks. Slik har han brukt pengene"></textarea>
               </div>
 
-              <div class="field">
-                <label class="field__label" for="brandLabel">Merkevare <span class="field__hint">ReadPeak-etikett</span></label>
-                <input type="text" id="brandLabel" maxlength="40" value="NORSK TIPPING" />
+              <div class="field" data-when="norsktipping readpeak">
+                <label class="field__label" for="brandLabel">
+                  Merkevare <span class="field__hint" id="brandLabelHint">ReadPeak-etikett</span>
+                </label>
+                <input type="text" id="brandLabel" maxlength="40" />
               </div>
 
-              <div class="field">
+              <!-- ReadPeak only: the placement is sold to any advertiser, and
+                   their call to action is rarely the literal words "Les mer". -->
+              <div class="field" data-when="readpeak">
+                <label class="field__label" for="ctaText">
+                  «Les mer»-tekst <span class="field__hint">tom = ingen oppfordring</span>
+                </label>
+                <input type="text" id="ctaText" maxlength="40" placeholder="Les mer" />
+              </div>
+
+              <div class="field" data-when="norsktipping">
                 <label class="field__label" for="gameType">Spilltype</label>
                 <div class="select-wrap">
                   <select id="gameType"></select>
                 </div>
               </div>
 
-              <div class="field" id="customVinnerField" hidden>
+              <div class="field" data-when="norsktipping" id="customVinnerField" hidden>
                 <label class="field__label" for="customVinner">
                   Egendefinert vinnersjanse <span class="field__hint">tom = ingen merke i banneret</span>
                 </label>
@@ -161,7 +178,7 @@
               <!-- 3 · Utseende --------------------------------------------- -->
               <section class="fgroup">
                 <h3 class="fgroup__title"><span class="fgroup__step">3</span>Utseende</h3>
-              <div class="field">
+              <div class="field" data-when="norsktipping readpeak">
                 <label class="field__label">Les mer-stil &amp; farge <span class="field__hint">ReadPeak</span></label>
                 <div class="appearance">
                   <div class="segmented" id="lesMerStyle" role="group" aria-label="Les mer-stil">
@@ -175,6 +192,17 @@
                 </div>
               </div>
 
+              <!-- Houseads only: both weights appear in the approved house
+                   creatives, so it is a campaign choice rather than a format
+                   rule. -->
+              <div class="field" data-when="houseads">
+                <label class="field__label">Skrifttykkelse <span class="field__hint">Noto Serif</span></label>
+                <div class="segmented" id="houseWeight" role="group" aria-label="Skrifttykkelse">
+                  <button type="button" class="seg is-active" data-val="bold">Halvfet</button>
+                  <button type="button" class="seg" data-val="regular">Normal</button>
+                </div>
+              </div>
+
               <!-- Advanced (collapsible) -->
               <div class="field">
                 <button type="button" class="adv-toggle" id="advToggle" aria-expanded="false" aria-controls="advPanel">
@@ -182,38 +210,15 @@
                   <span>Avanserte innstillinger</span>
                 </button>
                 <div class="adv" id="advPanel" hidden>
+                  <!-- One slider per format of the selected product, built by
+                       app.js from formats.js — the format list is not the same
+                       for Norsk Tipping, ReadPeak and Houseads. -->
                   <div class="adv__group">
                     <span class="adv__label">Tekststørrelse <span class="field__hint">per format</span></span>
-                    <div class="sizectrls">
-                      <div class="slider">
-                        <span class="slider__name">ReadPeak</span>
-                        <input type="range" id="hlReadpeak" min="70" max="160" step="5" value="100" aria-label="ReadPeak overskrift-størrelse" />
-                        <output id="hlReadpeakOut">100%</output>
-                      </div>
-                      <div class="slider">
-                        <span class="slider__name">Desktop</span>
-                        <input type="range" id="hlDesktop" min="70" max="160" step="5" value="100" aria-label="Desktop overskrift-størrelse" />
-                        <output id="hlDesktopOut">100%</output>
-                      </div>
-                      <div class="slider">
-                        <span class="slider__name">Mobil</span>
-                        <input type="range" id="hlMobile" min="70" max="160" step="5" value="100" aria-label="Mobil overskrift-størrelse" />
-                        <output id="hlMobileOut">100%</output>
-                      </div>
-                      <div class="slider">
-                        <span class="slider__name">Ingress</span>
-                        <input type="range" id="subtitleScale" min="70" max="160" step="5" value="100" aria-label="Ingress-størrelse" />
-                        <output id="subtitleScaleOut">100%</output>
-                      </div>
-                      <div class="slider">
-                        <span class="slider__name">Nyhetsgrid</span>
-                        <input type="range" id="hlNewsgrid" min="70" max="160" step="5" value="100" aria-label="Nyhetsgrid overskrift-størrelse" />
-                        <output id="hlNewsgridOut">100%</output>
-                      </div>
-                    </div>
+                    <div class="sizectrls" id="sizeCtrls"></div>
                   </div>
 
-                  <div class="adv__group">
+                  <div class="adv__group" data-when="norsktipping readpeak">
                     <span class="adv__label">Les mer-størrelse</span>
                     <div class="slider">
                       <span class="slider__name">Punkt</span>
@@ -297,11 +302,9 @@
             <div class="form__footer">
               <div class="field">
                 <label class="field__label">Pakke <span class="field__hint">hva skal genereres/lastes ned</span></label>
-                <div class="segmented segmented--wide" id="downloadSet" role="group" aria-label="Pakke">
-                  <button type="button" class="seg is-active" data-val="all">Alle 4</button>
-                  <button type="button" class="seg" data-val="core">Kun de 3 første</button>
-                  <button type="button" class="seg" data-val="newsgrid">Kun Nyhetsgrid 190×190</button>
-                </div>
+                <!-- Filled from formats.js: each product trades a different
+                     combination of its formats. -->
+                <div class="segmented segmented--wide" id="downloadSet" role="group" aria-label="Pakke"></div>
               </div>
               <button type="submit" class="btn-generate" id="generateBtn">
                 <span class="btn-generate__spinner" aria-hidden="true"></span>
@@ -314,11 +317,11 @@
                   <a class="btn-download" id="downloadLink" download>Last ned</a>
                 </div>
                 <ul class="result__files" id="resultFiles"></ul>
+                <!-- Every generation renders the product's whole format set, so
+                     the packages that were NOT downloaded are already on disk.
+                     Links built in app.js from the same set list. -->
                 <div class="result__alt" id="resultAlt">
                   <span class="result__alt-label">eller last ned i stedet:</span>
-                  <a class="result__alt-link" id="downloadNewsgrid" download>Kun Nyhetsgrid 190×190</a>
-                  <a class="result__alt-link" id="downloadAll" download>Alle 4 (ZIP)</a>
-                  <a class="result__alt-link" id="downloadCore" download>Kun de 3 første (ZIP)</a>
                 </div>
               </div>
             </div>
@@ -331,54 +334,9 @@
               <span class="previews__note">Oppdateres mens du skriver — likt sluttresultatet</span>
             </div>
             <div class="previews__body">
-              <div class="previews__list">
-                <article class="pcard">
-                  <header class="pcard__head"><span class="pcard__name">ReadPeak</span><span class="pcard__dim">308 × 380</span></header>
-                  <div class="pcard__stage">
-                    <div class="preview-stage" style="--w:308;--h:380;--scale:0.8">
-                      <div class="preview-scaler"><div id="preview-readpeak" class="bn"></div></div>
-                    </div>
-                  </div>
-                </article>
-
-                <article class="pcard">
-                  <header class="pcard__head"><span class="pcard__name">Desktop</span><span class="pcard__dim">580 × 500</span></header>
-                  <div class="pcard__stage">
-                    <div class="preview-stage" style="--w:580;--h:500;--scale:0.58">
-                      <div class="preview-scaler"><div id="preview-desktop" class="bn"></div></div>
-                    </div>
-                  </div>
-                </article>
-
-                <article class="pcard">
-                  <header class="pcard__head"><span class="pcard__name">Mobil</span><span class="pcard__dim">320 × 400</span></header>
-                  <div class="pcard__stage">
-                    <div class="preview-stage" style="--w:320;--h:400;--scale:0.8">
-                      <div class="preview-scaler"><div id="preview-mobile" class="bn"></div></div>
-                    </div>
-                  </div>
-                </article>
-
-                <!-- Nyhetsgrid is a different placement with its own crop, so it
-                     is pinned to column 1 (see .pcard--newsgrid in style.css) —
-                     it always starts a new row instead of sharing one with the
-                     core three, while keeping the exact same card width. -->
-                <article class="pcard pcard--newsgrid">
-                  <header class="pcard__head">
-                    <span class="pcard__name">Nyhetsgrid <span class="field__hint">forsiden</span></span>
-                    <span class="pcard__dim">190 × 190</span>
-                  </header>
-                  <div class="pcard__stage">
-                    <div class="preview-stage" style="--w:190;--h:190;--scale:1.8">
-                      <div class="preview-scaler"><div id="preview-newsgrid" class="bn"></div></div>
-                    </div>
-                  </div>
-                  <label class="checkbox pcard__toggle">
-                    <input type="checkbox" id="newsgridVinner" />
-                    <span>Vis vinnersjanse her <span class="field__hint">kun ved vinnerpott — av som standard</span></span>
-                  </label>
-                </article>
-              </div>
+              <!-- One card per format of the selected product, built in app.js
+                   from formats.js. -->
+              <div class="previews__list" id="previewsList"></div>
             </div>
           </div>
         </div>
@@ -502,6 +460,7 @@
       </span>
     </footer>
 
+    <script src="assets/formats.js"></script>
     <script src="assets/banner.js"></script>
     <script src="app.js"></script>
   </body>

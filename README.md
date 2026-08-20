@@ -2,10 +2,17 @@
 
 🇬🇧 English · [🇳🇴 Norsk](README.no.md)
 
-An internal tool that turns **one photo + a few text fields into four ad banners
-at once**, then downloads them as a ZIP — either as images or as
+An internal tool that turns **one photo + a few text fields into a whole set of
+ad banners at once**, then downloads them as a ZIP — either as images or as
 upload-ready **Campaign Manager 360 HTML5 packages**. It replaces the manual
-Canva workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
+Canva workflow.
+
+Three products, picked with the tabs at the top. Each has its own formats, its
+own form fields and its own furniture on the banner:
+
+### Norsk Tipping
+
+The regulated placements: 18+/Hjelpelinjen mark and a Vinnersjanse strip.
 
 | Format        | Size       | Use                  |
 | ------------- | ---------- | -------------------- |
@@ -13,6 +20,31 @@ Canva workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
 | **Desktop**   | 580 × 500  | Desktop ad           |
 | **Mobile**    | 320 × 400  | Mobile ad            |
 | **Nyhetsgrid**| 190 × 190  | Front-page news grid |
+
+### ReadPeak
+
+The same two ReadPeak placements sold to any advertiser — so **without** the
+18+/Hjelpelinjen mark and **without** the Vinnersjanse strip. The green label
+carries the advertiser's own name, and the call to action is editable ("Les mer
+her", "Sjekk utvalget her", …).
+
+| Format        | Size       | Use                  |
+| ------------- | ---------- | -------------------- |
+| **ReadPeak**  | 308 × 380  | ReadPeak widget      |
+| **Nyhetsgrid**| 190 × 190  | Front-page news grid |
+
+### Houseads
+
+abc shopping's own formats: ANNONSE upper-left, the abc shopping mark
+upper-right, white ground and a Noto Serif headline. Photo areas and type sizes
+come from the approved Canva creatives.
+
+| Format          | Size       | Headline                   |
+| --------------- | ---------- | -------------------------- |
+| **Mobil**       | 320 × 400  | Noto Serif 22 — 3 lines    |
+| **Toppbanner**  | 980 × 300  | Noto Serif 31 — 3 lines, beside the photo |
+| **Desktop**     | 580 × 500  | Noto Serif 26.5 — 2 lines  |
+| **Skyskraper**  | 300 × 600  | Noto Serif 25.7 — 4 lines  |
 
 ## Features
 
@@ -22,8 +54,9 @@ Canva workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
   break the size limit.
 - ✂️ **Drag-to-reframe + zoom** — position the photo and zoom in up to 30 %; the
   crop preview matches the real cropped image area.
-- ⚡ **Live preview** — the three banners update as you type and are rendered by
-  the *same* code that produces the final PNG, so the preview is faithful.
+- ⚡ **Live preview** — every format of the selected product updates as you type,
+  rendered by the *same* code that produces the final PNG, so the preview is
+  faithful.
 - 🔠 **Adjustable text size** for headline & subtitle, plus **Les mer as a button
   or plain text**, and a **colour picker** for "Les mer" + "NORSK TIPPING".
 - 📦 **HTML5 export for Campaign Manager 360** — one upload-ready ZIP per format,
@@ -37,8 +70,9 @@ Canva workflow. Built for the ABC Nyheter / Norsk Tipping banner format.
 - 🕘 **History** of the last 30 packages (re-download / delete).
 - ⚙️ **Settings** — editable game-type presets, badge text and mark, size limit
   and export options.
-- 🔤 **Bundled font (Arimo)** so the preview and the downloaded PNG look identical
-  on every platform, including Linux servers.
+- 🔤 **Bundled fonts (Arimo, Noto Serif)** so the preview and the downloaded PNG
+  look identical on every platform, including Linux servers. An HTML5 package
+  only carries the family its own product uses.
 
 ---
 
@@ -421,21 +455,21 @@ banner-generator/
 │   ├── image.js           Downscaling + the per-file byte budget (sharp)
 │   ├── html5.js           Campaign Manager 360 package builder
 │   └── safe-fetch.js      "Fetch from link" without reaching inside the network
-├── templates/             Puppeteer templates → produce the final banners
-│   ├── readpeak.html
-│   ├── desktop.html
-│   ├── mobile.html
-│   ├── newsgrid.html
+├── templates/             Puppeteer pages → produce the final banners
+│   ├── banner.html        One generic template; the format arrives in the data
 │   └── _render.js         Shared init (signals "ready to screenshot")
 ├── public/
 │   ├── index.html         App UI
 │   ├── style.css          App styling (chrome only)
 │   ├── app.js             Frontend logic
 │   └── assets/
+│       ├── formats.js     ONE source of truth for the products and their
+│       │                  formats — loaded by the server AND the browser
 │       ├── banner.css     ┐ ONE source of truth for the banner look —
 │       ├── banner.js      ┘ used by BOTH the templates and the live preview
-│       ├── fonts/         Bundled Arimo (Arial-compatible)
+│       ├── fonts/         Bundled Arimo (Arial-compatible) + Noto Serif
 │       ├── norsktipping-icon.svg   The mark in the 18+ badge
+│       ├── abc-shopping.png        The Houseads mark
 │       └── placeholder.svg
 ├── scripts/               ensure-browser.js — guarantees Puppeteer has a browser
 ├── test/                  node --test suites (npm test)
@@ -482,14 +516,21 @@ check and the connection, and redirects are followed one hop at a time with the
 whole check repeated. The body is capped while streaming, not after.
 
 `POST /api/generate` fields: `image` (file, max 10 MB, JPG/PNG/WEBP/AVIF/GIF),
-`headline`, `subtitle`, `brandLabel`, `vinnersjanse` (empty = badge hidden),
-`showVinnerOnNewsgrid`, `imagePositionX`/`imagePositionY` (0–100), `imageZoom`
-(0–30), `headlineScaleReadpeak`/`Desktop`/`Mobile`/`Newsgrid` &
-`subtitleScale` (0.5–2), `lesMerStyle` (`button` | `text`), `lesMerSize`,
-`accentColor` (hex), `resolution` (1 | 1.5 | 2), `format`
-(`png` | `jpeg` | `auto`), `filename`, `downloadSet`
-(`all` | `core` | `newsgrid`), `outputType` (`image` | `html`) and — required
-for `html` — `clickUrl`.
+`product` (`norsktipping` | `readpeak` | `houseads`, default `norsktipping`),
+`headline`, `subtitle`, `brandLabel`, `ctaText` (the "Les mer" wording; empty =
+no call to action), `vinnersjanse` (empty = badge hidden; ignored unless the
+product is `norsktipping`), `showVinnerOnNewsgrid`,
+`imagePositionX`/`imagePositionY` (0–100), `imageZoom` (0–30), `headlineScales`
+(JSON, format type → 0.5–2) & `subtitleScale` (0.5–2), `lesMerStyle`
+(`button` | `text`), `lesMerSize`, `accentColor` (hex), `houseWeight`
+(`bold` | `regular`), `resolution` (1 | 1.5 | 2), `format`
+(`png` | `jpeg` | `auto`), `filename`, `downloadSet` (a set id from the
+product's own list in `formats.js`), `outputType` (`image` | `html`) and —
+required for `html` — `clickUrl`.
+
+The 18+/Hjelpelinjen mark and the Vinnersjanse strip are decided by `product` on
+the server, not by the client: they are Norsk Tipping obligations and must never
+end up on another advertiser's creative.
 
 The response carries `X-Entry-Id` and `X-Banner-Report`: a URI-encoded JSON
 array with each format's filename, pixel size, byte size and any note (for

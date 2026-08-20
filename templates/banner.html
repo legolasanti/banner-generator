@@ -2,8 +2,7 @@
 <html lang="nb">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=308, initial-scale=1" />
-    <title>ReadPeak 308×380</title>
+    <title>Banner</title>
     <link rel="stylesheet" href="../public/assets/banner.css" />
     <style>
       html,
@@ -20,7 +19,11 @@
     <script src="../public/assets/banner.js"></script>
     <script src="./_render.js"></script>
     <script>
-      __initBanner("readpeak");
+      /* One template for every format. The server injects window.__DATA__
+         before any script runs (Puppeteer evaluateOnNewDocument), so the banner
+         type travels with the data instead of needing a file per format — the
+         page size comes from setViewport either way, never from this markup. */
+      __initBanner((window.__DATA__ && window.__DATA__.__type) || "readpeak");
     </script>
   </body>
 </html>

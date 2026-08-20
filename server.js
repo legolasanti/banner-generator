@@ -60,26 +60,30 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 // the two fonts (~25 KB) still fit inside the same limit as the image export.
 const HTML_PHOTO_RESERVE_BYTES = 40 * 1024;
 
-// The three original banner formats. `key` is used in the API/UI, `file` is
-// the Puppeteer template, width/height are the exact output pixel dimensions,
-// and `media` is the photo area inside the banner — it must stay in sync with
-// the .bn__media heights in public/assets/banner.css, because the HTML5 export
-// sizes the shipped photo from it.
-const CORE_SPECS = [
-  { key: "readpeak", file: "readpeak.html", width: 308, height: 380, label: "readpeak-308x380", media: { width: 308, height: 160 } },
-  { key: "desktop", file: "desktop.html", width: 580, height: 500, label: "desktop-580x500", media: { width: 580, height: 355 } },
-  { key: "mobile", file: "mobile.html", width: 320, height: 400, label: "mobile-320x400", media: { width: 320, height: 275 } },
-];
-// Fourth format: the 190×190 front-page news-grid placement. Kept out of
-// CORE_SPECS so it can be downloaded on its own or bundled with the core
-// three, per how the placement is actually traded (see /api/generate).
-const NEWSGRID_SPEC = { key: "newsgrid", file: "newsgrid.html", width: 190, height: 190, label: "newsgrid-190x190", media: { width: 190, height: 107 } };
-const SPECS = CORE_SPECS.concat(NEWSGRID_SPEC);
+// What this tool can produce — three products, each with its own formats and
+// download packages. Shared verbatim with the browser (public/assets/app.js
+// loads the same file), so the format list can never drift between the two.
+const formats = require("./public/assets/formats.js");
 
-function specsForSet(set) {
-  if (set === "newsgrid") return [NEWSGRID_SPEC];
-  if (set === "core") return CORE_SPECS;
-  return SPECS; // "all" / anything else
+// The abc shopping mark used by the Houseads header. Travels inside every
+// house HTML5 package under this name, so the markup rewrite and the ZIP agree.
+const ABC_LOGO = path.join(ASSETS_DIR, "abc-shopping.png");
+const ABC_LOGO_ASSET = "abc-shopping.png";
+
+/** Resolve the product id from a request, falling back to Norsk Tipping. */
+function productId(value) {
+  return formats.PRODUCTS[value] ? value : formats.DEFAULT_PRODUCT;
+}
+
+/** Specs of a product, optionally narrowed to one named download set. */
+function specsForSet(product, set) {
+  return formats.specsFor(productId(product), set);
+}
+
+/** The set id a request asked for, or the product's default. */
+function setIdFor(product, value) {
+  const cfg = formats.getProduct(productId(product));
+  return cfg.sets.some((s) => s.id === value) ? value : cfg.defaultSet;
 }
 
 const DEFAULT_SETTINGS = {
@@ -414,10 +418,14 @@ async function renderSpec(spec, data, browser, opts) {
     // deviceScaleFactor > 1 renders at higher resolution; the screenshot pixel
     // size becomes logical size × dpr.
     await page.setViewport({ width: spec.width, height: spec.height, deviceScaleFactor: dpr });
-    // Inject data BEFORE any script in the template runs.
-    await page.evaluateOnNewDocument((d) => {
-      window.__DATA__ = d;
-    }, data);
+    // Inject data BEFORE any script in the template runs. `__type` is what
+    // tells the one generic template which format it is rendering.
+    await page.evaluateOnNewDocument(
+      (d) => {
+        window.__DATA__ = d;
+      },
+      { ...data, __type: spec.type }
+    );
     const fileUrl = pathToFileURL(path.join(TEMPLATES_DIR, spec.file)).href;
     await page.goto(fileUrl, { waitUntil: "load", timeout: 20000 });
     await page.waitForFunction("window.__BANNER_READY__ === true", { timeout: 12000 });
@@ -457,6 +465,8 @@ async function renderSpec(spec, data, browser, opts) {
         if (photo) photo.setAttribute("src", names.photo);
         const icon = root.querySelector("img.bn__age-icon");
         if (icon && names.icon) icon.setAttribute("src", names.icon);
+        const logo = root.querySelector(".bn__house-logo");
+        if (logo && names.logo) logo.setAttribute("src", names.logo);
         return root.outerHTML;
       }, o.assetNames);
     }
@@ -467,14 +477,14 @@ async function renderSpec(spec, data, browser, opts) {
   }
 }
 
-async function generateAll(data, opts) {
+async function generateAll(specs, data, opts) {
   // One retry for the whole batch if the browser died mid-render.
   let lastErr;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const browser = await getBrowser();
       const out = {};
-      for (const spec of SPECS) {
+      for (const spec of specs) {
         out[spec.key] = await renderSpec(spec, data, browser, opts);
       }
       return out;
@@ -505,11 +515,16 @@ function enqueue(task) {
 // --------------------------------------------------------------------------
 // HTML5 (Campaign Manager 360) packaging
 // --------------------------------------------------------------------------
-async function loadFontFiles() {
+/**
+ * The woff2 faces one product needs. Shipping all of them would put Noto Serif
+ * inside every Norsk Tipping package (and Arimo inside every house one) — ~26 KB
+ * of dead weight against a 200 KB per-creative budget.
+ */
+async function loadFontFiles(prefix) {
   const names = await fsp.readdir(FONTS_DIR).catch(() => []);
   return Promise.all(
     names
-      .filter((name) => name.endsWith(".woff2"))
+      .filter((name) => name.endsWith(".woff2") && (!prefix || name.startsWith(prefix)))
       .map(async (name) => ({ name, buffer: await fsp.readFile(path.join(FONTS_DIR, name)) }))
   );
 }
@@ -525,21 +540,44 @@ async function loadFontFiles() {
  * @returns {Promise<Object<string,string>>} spec key → path relative to the entry folder
  */
 async function buildHtmlPackages(params) {
-  const { folderAbs, fileBase, rendered, photoBuffer, zoom, clickUrl, ageIcon, maxBytes, photoName, title, report } =
-    params;
+  const {
+    specs,
+    product,
+    folderAbs,
+    fileBase,
+    rendered,
+    photoBuffer,
+    zoom,
+    clickUrl,
+    ageIcon,
+    maxBytes,
+    photoName,
+    title,
+    report,
+  } = params;
 
+  const cfg = formats.getProduct(product);
   const css = await fsp.readFile(BANNER_CSS, "utf8");
-  const fonts = await loadFontFiles();
+  const fonts = await loadFontFiles(cfg.fontPrefix);
   const icon = ageIcon ? { name: "age-icon." + ageIcon.ext, buffer: await fsp.readFile(ageIcon.abs) } : null;
+  // The house formats carry the abc shopping mark as artwork, so it travels in
+  // the ZIP the same way the 18+ mark does for Norsk Tipping.
+  const logo =
+    product === "houseads" && (await pathExists(ABC_LOGO))
+      ? { name: ABC_LOGO_ASSET, buffer: await fsp.readFile(ABC_LOGO) }
+      : null;
+  const extras = [icon, logo].filter(Boolean);
   const fixedBytes =
-    fonts.reduce((sum, font) => sum + font.buffer.length, 0) + (icon ? icon.buffer.length : 0) + 8 * 1024;
+    fonts.reduce((sum, font) => sum + font.buffer.length, 0) +
+    extras.reduce((sum, file) => sum + file.buffer.length, 0) +
+    8 * 1024;
   const overhead = Math.max(HTML_PHOTO_RESERVE_BYTES, fixedBytes);
 
   const htmlDir = path.join(folderAbs, "html");
   await fsp.mkdir(htmlDir, { recursive: true });
 
   const out = {};
-  for (const spec of SPECS) {
+  for (const spec of specs) {
     const result = rendered[spec.key];
     if (!result.markup) throw new Error("Mangler markup for " + spec.key + " – kunne ikke bygge HTML5-pakken");
 
@@ -552,7 +590,7 @@ async function buildHtmlPackages(params) {
         markup: result.markup,
         css,
         fonts,
-        icon,
+        extras,
         clickUrl,
         title,
         photo: { name: photoName, buffer: photo.buffer },
@@ -727,6 +765,14 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const settings = await loadSettings();
     const b = req.body || {};
 
+    // Which product this generation belongs to. It decides the format list, the
+    // typeface shipped with an HTML5 package, and — the part that must not be
+    // left to the client — whether the regulated Norsk Tipping furniture (the
+    // 18+/Hjelpelinjen mark, the Vinnersjanse strip) is drawn at all.
+    const product = productId(b.product);
+    const productCfg = formats.getProduct(product);
+    const productSpecs = formats.specsFor(product);
+
     const headline = String(b.headline || "").slice(0, 200);
     // 120, same as the headline: the Ingress is allowed 3 rendered lines, and
     // the old 80-char cap ran out after two.
@@ -734,20 +780,43 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // An empty Merkevare field means "no label", not "use the default" — the
     // default belongs to the form, so only a request that omits the field
     // entirely falls back to it (kept for older clients / direct API calls).
-    const brandLabel = (b.brandLabel == null ? "NORSK TIPPING" : String(b.brandLabel)).slice(0, 60);
-    const vinnersjanse = String(b.vinnersjanse || "").slice(0, 120);
+    // ReadPeak carries the advertiser's own name, so it has no default at all.
+    const brandLabel = (b.brandLabel == null ? productCfg.brandLabelDefault : String(b.brandLabel)).slice(0, 60);
+    // "Les mer" is only the default wording; real creatives run "Les mer her",
+    // "Sjekk utvalget her" and so on.
+    const ctaText = (b.ctaText == null ? "Les mer" : String(b.ctaText)).slice(0, 40);
+    const houseWeight = b.houseWeight === "regular" ? "regular" : "bold";
+    // Only Norsk Tipping's own placements carry an odds claim.
+    const vinnersjanse = productCfg.vinnersjanse ? String(b.vinnersjanse || "").slice(0, 120) : "";
     // Vinnersjanse defaults OFF on the 190×190 Nyhetsgrid (image too small to
     // read it well) — only switched on explicitly when fronting a jackpot.
     const showVinnerOnNewsgrid = b.showVinnerOnNewsgrid === "1" || b.showVinnerOnNewsgrid === "true";
     const imagePositionX = clampNumber(b.imagePositionX, 0, 100, 50);
     const imagePositionY = clampNumber(b.imagePositionY, 0, 100, 50);
     const imageZoom = clampNumber(b.imageZoom, 0, 30, 0);
-    // Per-format headline scales (+ fallback to a legacy global headlineScale)
+    // Per-format headline scales, keyed by format type. Sent as JSON because the
+    // set of formats now depends on the product. A legacy global headlineScale
+    // (and the four old per-format fields) still work as a fallback.
     const legacyHl = clampNumber(b.headlineScale, 0.5, 2, 1);
-    const hlReadpeak = clampNumber(b.headlineScaleReadpeak, 0.5, 2, legacyHl);
-    const hlDesktop = clampNumber(b.headlineScaleDesktop, 0.5, 2, legacyHl);
-    const hlMobile = clampNumber(b.headlineScaleMobile, 0.5, 2, legacyHl);
-    const hlNewsgrid = clampNumber(b.headlineScaleNewsgrid, 0.5, 2, legacyHl);
+    const LEGACY_HL_FIELDS = {
+      readpeak: "headlineScaleReadpeak",
+      desktop: "headlineScaleDesktop",
+      mobile: "headlineScaleMobile",
+      newsgrid: "headlineScaleNewsgrid",
+    };
+    let sentScales = {};
+    try {
+      const parsed = JSON.parse(b.headlineScales || "{}");
+      if (parsed && typeof parsed === "object") sentScales = parsed;
+    } catch {
+      /* malformed → every format falls back to 1 */
+    }
+    const headlineScales = {};
+    for (const spec of productSpecs) {
+      const legacyField = LEGACY_HL_FIELDS[spec.type];
+      const fallback = legacyField ? clampNumber(b[legacyField], 0.5, 2, legacyHl) : legacyHl;
+      headlineScales[spec.type] = clampNumber(sentScales[spec.type], 0.5, 2, fallback);
+    }
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
@@ -790,31 +859,35 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     const data = {
+      product,
       imageDataUrl,
       imagePositionX,
       imagePositionY,
       imageZoom,
-      headlineScaleReadpeak: hlReadpeak,
-      headlineScaleDesktop: hlDesktop,
-      headlineScaleMobile: hlMobile,
-      headlineScaleNewsgrid: hlNewsgrid,
+      headlineScales,
       subtitleScale,
       lesMerSize,
       headline,
       subtitle,
       brandLabel,
+      ctaText,
       vinnersjanse,
       showVinnerOnNewsgrid,
       lesMerStyle,
       accentColor,
+      houseWeight,
+      // Not client-controlled: the 18+/Hjelpelinjen lockup is a Norsk Tipping
+      // obligation and must never appear on another advertiser's creative.
+      hideAgeBadge: !productCfg.ageBadge,
       ageIconUrl: ageIcon ? pathToFileURL(ageIcon.abs).href : "",
+      houseLogoUrl: pathToFileURL(ABC_LOGO).href,
       annonseText: settings.staticBadges.annonseText,
       ageBadgeText: settings.staticBadges.ageBadgeText,
     };
 
     // Serialize the heavy Puppeteer work.
     const rendered = await enqueue(() =>
-      generateAll(data, {
+      generateAll(productSpecs, data, {
         scale: renderScale,
         superSample: settings.export.superSample,
         format,
@@ -823,7 +896,11 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         // Only pay for the markup capture when an HTML5 package needs it.
         assetNames:
           outputType === "html"
-            ? { photo: photoAsset.name, icon: ageIcon ? "age-icon." + ageIcon.ext : "" }
+            ? {
+                photo: photoAsset.name,
+                icon: ageIcon ? "age-icon." + ageIcon.ext : "",
+                logo: ABC_LOGO_ASSET,
+              }
             : null,
       })
     );
@@ -841,7 +918,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     // the file it is written to has to say so.
     const files = {};
     const report = [];
-    for (const spec of SPECS) {
+    for (const spec of productSpecs) {
       const result = rendered[spec.key];
       const fname = `${fileBase}-${spec.label}.${result.image.ext}`;
       await fsp.writeFile(path.join(folderAbs, fname), result.image.buffer);
@@ -860,6 +937,8 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     let htmlFiles = null;
     if (outputType === "html") {
       htmlFiles = await buildHtmlPackages({
+        specs: productSpecs,
+        product,
         folderAbs,
         fileBase,
         rendered,
@@ -874,8 +953,12 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       });
     }
 
+    // The thumbnail is just "the first format this product renders" — there is
+    // no `desktop` to lean on once a product can be ReadPeak or Houseads.
+    const thumbKey = productSpecs[0].key;
     const entry = {
       id,
+      product,
       filename: baseName,
       fileBase,
       timestamp: now.toISOString(),
@@ -885,7 +968,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       outputType,
       clickUrl,
       folderPath: folderRel + "/",
-      thumbnailPath: `${folderRel}/${files.desktop}`,
+      thumbnailPath: `${folderRel}/${files[thumbKey]}`,
       files,
       htmlFiles,
       report,
@@ -906,8 +989,8 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     //   "core"     → the original 3 (ReadPeak/Desktop/Mobil) — default
     //   "newsgrid" → just the 190×190 news-grid placement, as a single file
     //   "all"      → all 4, zipped together
-    const downloadSet = ["core", "newsgrid", "all"].includes(b.downloadSet) ? b.downloadSet : "core";
-    const setSpecs = specsForSet(downloadSet);
+    const downloadSet = setIdFor(product, b.downloadSet);
+    const setSpecs = specsForSet(product, downloadSet);
     res.setHeader("X-Entry-Id", id);
     // Per-file sizes + any note ("saved as JPEG because PNG missed 200 KB"),
     // so the UI can show what actually came out instead of leaving the user to
@@ -918,7 +1001,9 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       return sendHtmlDownload(res, { folderAbs, fileBase, setSpecs, htmlFiles, files, clickUrl });
     }
 
-    if (downloadSet === "newsgrid") {
+    // A package of exactly one image goes out as that image — zipping a single
+    // PNG only adds a step for whoever has to upload it.
+    if (setSpecs.length === 1) {
       const spec = setSpecs[0];
       res.setHeader("Content-Type", rendered[spec.key].image.mime);
       res.setHeader("Content-Disposition", `attachment; filename="${files[spec.key]}"`);
@@ -969,8 +1054,10 @@ app.get("/api/history/:id/download", async (req, res) => {
   // the plain history "Last ned" link keeps giving everything that was
   // generated for that entry (older entries simply lack a "newsgrid" file,
   // and are skipped below, same as any other missing/removed file).
-  const set = ["core", "newsgrid", "all"].includes(req.query.set) ? req.query.set : "all";
-  const setSpecs = specsForSet(set);
+  // Entries written before products existed are Norsk Tipping by definition.
+  const entryProduct = productId(entry.product);
+  const set = setIdFor(entryProduct, req.query.set);
+  const setSpecs = specsForSet(entryProduct, set);
   const files = entry.files || {};
 
   // ?type=html — the Campaign Manager 360 packages, when this entry was
@@ -986,12 +1073,12 @@ app.get("/api/history/:id/download", async (req, res) => {
     });
   }
 
-  if (set === "newsgrid") {
+  if (setSpecs.length === 1) {
     const spec = setSpecs[0];
     const fname = files[spec.key];
     const fpath = fname && path.join(folderAbs, fname);
     if (!fname || !(await pathExists(fpath))) {
-      return res.status(404).json({ error: "Nyhetsgrid-filen finnes ikke for denne oppføringen" });
+      return res.status(404).json({ error: "Denne størrelsen finnes ikke for oppføringen" });
     }
     return res.download(fpath, fname);
   }

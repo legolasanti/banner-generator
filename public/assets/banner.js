@@ -74,6 +74,10 @@
   // live text is rendered at the output resolution and stays legible. The part
   // before "|" is bold ("18+"), the rest regular, matching the official lockup.
   function ageBadge(data, extraClass) {
+    // Only Norsk Tipping's own placements carry the mark. The ReadPeak and
+    // Houseads products sell the same slots to other advertisers, where the
+    // 18+/Hjelpelinjen lockup would be both wrong and misleading.
+    if (data.hideAgeBadge) return "";
     var raw = String(data.ageBadgeText || "18+ | Hjelpelinjen.no").trim();
     var pipe = raw.indexOf("|");
     var text =
@@ -110,16 +114,23 @@
   }
 
   // "Les mer" — either a filled button or plain bold text, in the accent colour.
-  // Default is plain text (button only when explicitly requested).
+  // Default is plain text (button only when explicitly requested). The wording
+  // is editable: real ReadPeak creatives run "Les mer her", "Sjekk utvalget
+  // her" and so on, so only the default is "Les mer".
   function ctaMarkup(data) {
     var accent = safeColor(data.accentColor, "#2f2f2f");
     var size = Number(data.lesMerSize);
     if (!isFinite(size)) size = 17;
     size = Math.max(12, Math.min(28, size));
+    var label = String(data.ctaText == null ? "Les mer" : data.ctaText).trim();
+    if (!label) return ""; // cleared on purpose → no call to action at all
+    var text = escapeHtml(label);
     if (data.lesMerStyle === "button") {
-      return '<span class="bn__cta" style="background:' + accent + ";font-size:" + size + 'px">Les mer</span>';
+      return '<span class="bn__cta" style="background:' + accent + ";font-size:" + size + 'px">' + text + "</span>";
     }
-    return '<span class="bn__cta bn__cta--text" style="color:' + accent + ";font-size:" + size + 'px">Les mer</span>';
+    return (
+      '<span class="bn__cta bn__cta--text" style="color:' + accent + ";font-size:" + size + 'px">' + text + "</span>"
+    );
   }
 
   // Merkevare label. The default only applies when the field was never set at
@@ -144,6 +155,11 @@
 
   function renderReadpeak(data) {
     var annonse = escapeHtml(data.annonseText || "Annonse");
+    // The step above "Les mer" is an element rather than a margin so it can
+    // shrink when the copy is long (see .bn__cta-gap in banner.css) — and it
+    // only exists when there is a call to action to stand above.
+    var ctaHtml = ctaMarkup(data);
+    var cta = ctaHtml ? '<span class="bn__cta-gap" aria-hidden="true"></span>' + ctaHtml : "";
     return (
       // Image flush at the very top; Annonse + 18+ overlay the image (like
       // Desktop/Mobile), no separate top bar.
@@ -161,10 +177,7 @@
       escapeHtml(data.headline || "Overskrift kommer her") +
       "</h2>" +
       subtitleMarkup(data) +
-      // The step above "Les mer" is an element rather than a margin so it can
-      // shrink when the copy is long — see .bn__cta-gap in banner.css.
-      '<span class="bn__cta-gap" aria-hidden="true"></span>' +
-      ctaMarkup(data) +
+      cta +
       "</div>"
     );
   }
@@ -214,6 +227,44 @@
     );
   }
 
+  /* --------------------------- Houseads ---------------------------------
+     abc shopping's own formats. The furniture is fixed on all four sizes:
+     ANNONSE upper-left, the abc shopping mark upper-right, white ground. The
+     only editable parts are the photo and the headline, set in Noto Serif at a
+     size and line count fixed per format (see formats.js / banner.css).
+
+     One markup shape for all four: .bn__house-row is a column on the three
+     upright formats (headline under the photo) and a row on the 980x300
+     toppbanner (headline beside it) — the direction is the only difference, so
+     CSS decides it and the markup never forks. */
+  function renderHouse(data) {
+    var annonse = escapeHtml(data.houseAnnonseText || "ANNONSE");
+    // Absolute file:// URL from the server, page-relative in the live preview.
+    var logo = data.houseLogoUrl || "assets/abc-shopping.png";
+    return (
+      '<div class="bn__house-head">' +
+      '<span class="bn__house-annonse">' +
+      annonse +
+      "</span>" +
+      '<img class="bn__house-logo" src="' +
+      escapeHtml(logo) +
+      '" alt="abc shopping">' +
+      "</div>" +
+      '<div class="bn__house-row">' +
+      '<div class="bn__media">' +
+      mediaImg(data) +
+      "</div>" +
+      '<div class="bn__body">' +
+      '<h2 class="bn__headline">' +
+      escapeHtml(data.headline || "Overskrift kommer her") +
+      "</h2>" +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Legacy per-format scale field names, kept so an older client (or a saved
+  // request) still lands on the right format.
   var HL_SCALE_KEYS = {
     readpeak: "headlineScaleReadpeak",
     desktop: "headlineScaleDesktop",
@@ -221,36 +272,60 @@
     newsgrid: "headlineScaleNewsgrid",
   };
 
+  function headlineScale(data, type) {
+    var scales = data.headlineScales;
+    var value = scales && typeof scales === "object" ? Number(scales[type]) : NaN;
+    if (!isFinite(value)) value = Number(data[HL_SCALE_KEYS[type]]);
+    if (!isFinite(value)) value = Number(data.headlineScale);
+    if (!isFinite(value)) value = 1;
+    return value;
+  }
+
+  var RENDERERS = {
+    readpeak: renderReadpeak,
+    newsgrid: renderNewsgrid,
+    desktop: renderDesktopOrMobile,
+    mobile: renderDesktopOrMobile,
+    "house-mobile": renderHouse,
+    "house-panorama": renderHouse,
+    "house-desktop": renderHouse,
+    "house-skyscraper": renderHouse,
+  };
+
   /**
    * Render a banner into a root element.
    * @param {HTMLElement} root
-   * @param {"readpeak"|"desktop"|"mobile"|"newsgrid"} type
+   * @param {string} type  a format type from formats.js (e.g. "readpeak",
+   *                       "newsgrid", "house-panorama")
    * @param {Object} data
    */
   function renderBanner(root, type, data) {
     if (!root) return;
     data = data || {};
+    var render = RENDERERS[type] || renderDesktopOrMobile;
     var cls = "bn bn--" + type;
-    // Per-format headline scale (falls back to a legacy global, then 1).
-    var key = HL_SCALE_KEYS[type] || "headlineScaleDesktop";
-    var hl = Number(data[key]);
-    if (!isFinite(hl)) hl = Number(data.headlineScale);
-    if (!isFinite(hl)) hl = 1;
+    // The four Houseads formats share a whole layout system (serif type, fixed
+    // header, white ground); only the numbers differ, so they get one class to
+    // hang the shared rules on.
+    if (type.indexOf("house-") === 0) {
+      cls += " bn--house";
+      // The approved house creatives use both weights — "Spar opptil 50 %" is
+      // set bold, "Gran Canarias 12 mest spektakulære designhotell" regular —
+      // so it is a per-campaign choice rather than a property of the format.
+      if (data.houseWeight === "regular") cls += " bn--house-regular";
+    }
+    // The product scopes the few rules that differ between them (a ReadPeak
+    // Ingress is allowed two lines, Norsk Tipping's three).
+    if (data.product) cls += " bn--p-" + String(data.product).replace(/[^a-z0-9-]/gi, "");
     var st = Number(data.subtitleScale);
     if (!isFinite(st)) st = 1;
     if (type === "readpeak" && !(data.subtitle && String(data.subtitle).trim())) {
       cls += " bn--no-ingress";
     }
     root.className = cls;
-    root.style.setProperty("--hl-scale", Math.max(0.5, Math.min(2, hl)));
+    root.style.setProperty("--hl-scale", Math.max(0.5, Math.min(2, headlineScale(data, type))));
     root.style.setProperty("--st-scale", Math.max(0.5, Math.min(2, st)));
-    if (type === "readpeak") {
-      root.innerHTML = renderReadpeak(data);
-    } else if (type === "newsgrid") {
-      root.innerHTML = renderNewsgrid(data);
-    } else {
-      root.innerHTML = renderDesktopOrMobile(data);
-    }
+    root.innerHTML = render(data);
   }
 
   global.renderBanner = renderBanner;

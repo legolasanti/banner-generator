@@ -28,7 +28,13 @@
     },
   };
 
+  // The product registry, shared verbatim with the server (assets/formats.js).
+  const F = window.BannerFormats;
+
   const state = {
+    // Which product tab is open. Decides the formats, the visible fields and
+    // the furniture drawn on the banner itself.
+    product: F.DEFAULT_PRODUCT,
     settings: JSON.parse(JSON.stringify(DEFAULTS)),
     imageDataUrl: null,
     imageBlob: null,
@@ -36,34 +42,59 @@
     posX: 50,
     posY: 50,
     zoom: 0,
-    hl: { readpeak: 1, desktop: 1, mobile: 1, newsgrid: 1 },
+    // Headline scale per "<product>:<format type>" — ReadPeak's 308×380 and
+    // Norsk Tipping's are the same box but different campaigns, so they keep
+    // their own setting.
+    hl: {},
+    // Kept per product: Norsk Tipping's label is always the same, ReadPeak
+    // carries whichever advertiser bought the placement.
+    brandLabels: {},
+    downloadSets: {},
     subtitleScale: 1,
     lesMerSize: 17,
     resolution: 1,
     format: "png",
     lesMerStyle: "text",
     accentColor: "#2f2f2f",
+    ctaText: "Les mer",
+    houseWeight: "bold",
     ageIcon: null, // { path, version } when a custom mark has been uploaded
     lastBlobUrl: null,
-    downloadSet: "all", // "all" | "core" | "newsgrid" — what Generer actually produces
     outputType: "image", // "image" (PNG/JPEG) | "html" (Campaign Manager 360)
     showVinnerOnNewsgrid: false, // off by default — only turned on when fronting a jackpot
   };
 
-  const DOWNLOAD_SET_LABELS = {
-    image: {
-      all: { count: "4 størrelser", primary: "Last ned alle 4 (ZIP)" },
-      core: { count: "3 størrelser", primary: "Last ned ZIP" },
-      newsgrid: { count: "1 størrelse (190×190)", primary: "Last ned 190×190" },
-    },
-    // One CM360 creative per format, so several formats arrive as an outer ZIP
-    // of ready-to-upload ZIPs rather than as one merged package.
-    html: {
-      all: { count: "4 HTML5-pakker", primary: "Last ned alle 4 HTML5-pakker" },
-      core: { count: "3 HTML5-pakker", primary: "Last ned 3 HTML5-pakker" },
-      newsgrid: { count: "1 HTML5-pakke (190×190)", primary: "Last ned HTML5-pakke" },
-    },
+  // ---- product helpers -----------------------------------------------------
+  const productCfg = () => F.getProduct(state.product);
+  const productSpecs = () => F.specsFor(state.product);
+  const hlKey = (type) => state.product + ":" + type;
+  const getHl = (type) => {
+    const v = state.hl[hlKey(type)];
+    return typeof v === "number" ? v : 1;
   };
+  const currentSet = () => state.downloadSets[state.product] || productCfg().defaultSet;
+
+  /**
+   * Wording for the Generer button and the download links. Derived from the
+   * product's own set list rather than hardcoded, so adding a format or a
+   * package needs no change here.
+   */
+  function setLabels(setId) {
+    const set = F.findSet(state.product, setId);
+    const n = set.keys.length;
+    if (state.outputType === "html") {
+      return {
+        count: n === 1 ? "1 HTML5-pakke (" + set.label + ")" : n + " HTML5-pakker",
+        primary: n === 1 ? "Last ned HTML5-pakke" : "Last ned " + n + " HTML5-pakker",
+        alt: set.label + " (HTML5)",
+      };
+    }
+    return {
+      count: set.count || n + " størrelser",
+      primary: n === 1 ? "Last ned " + set.label : "Last ned " + set.label.toLowerCase() + " (ZIP)",
+      alt: set.label,
+    };
+  }
 
   // The choice cards already say what each option is; this only adds what they
   // have no room for. Empty for "image", where there is nothing more to say.
@@ -108,18 +139,12 @@
     headlineCount: $("#headlineCount"),
     subtitle: $("#subtitle"),
     subtitleCount: $("#subtitleCount"),
+    headlineHint: $("#headlineHint"),
+    subtitleHint: $("#subtitleHint"),
+    brandLabelHint: $("#brandLabelHint"),
     advToggle: $("#advToggle"),
     advPanel: $("#advPanel"),
-    hlReadpeak: $("#hlReadpeak"),
-    hlReadpeakOut: $("#hlReadpeakOut"),
-    hlDesktop: $("#hlDesktop"),
-    hlDesktopOut: $("#hlDesktopOut"),
-    hlMobile: $("#hlMobile"),
-    hlMobileOut: $("#hlMobileOut"),
-    hlNewsgrid: $("#hlNewsgrid"),
-    hlNewsgridOut: $("#hlNewsgridOut"),
-    subtitleScale: $("#subtitleScale"),
-    subtitleScaleOut: $("#subtitleScaleOut"),
+    sizeCtrls: $("#sizeCtrls"),
     lesMerSize: $("#lesMerSize"),
     lesMerSizeOut: $("#lesMerSizeOut"),
     resolution: $("#resolution"),
@@ -132,10 +157,11 @@
     clickUrlField: $("#clickUrlField"),
     clickUrl: $("#clickUrl"),
     brandLabel: $("#brandLabel"),
+    ctaText: $("#ctaText"),
+    houseWeight: $("#houseWeight"),
     gameType: $("#gameType"),
     customVinnerField: $("#customVinnerField"),
     customVinner: $("#customVinner"),
-    newsgridVinner: $("#newsgridVinner"),
     lesMerStyle: $("#lesMerStyle"),
     accentColor: $("#accentColor"),
     accentHex: $("#accentHex"),
@@ -149,16 +175,12 @@
     downloadLink: $("#downloadLink"),
     resultFiles: $("#resultFiles"),
     resultAlt: $("#resultAlt"),
-    downloadNewsgrid: $("#downloadNewsgrid"),
-    downloadAll: $("#downloadAll"),
-    downloadCore: $("#downloadCore"),
 
-    previews: {
-      readpeak: $("#preview-readpeak"),
-      desktop: $("#preview-desktop"),
-      mobile: $("#preview-mobile"),
-      newsgrid: $("#preview-newsgrid"),
-    },
+    previewsList: $("#previewsList"),
+    // Format type → the .bn element inside its preview card. Rebuilt whenever
+    // the product changes (see buildPreviewCards).
+    previews: {},
+    newsgridVinner: null, // the "Vis vinnersjanse her" checkbox, Norsk Tipping only
 
     historyGrid: $("#historyGrid"),
     historyEmpty: $("#historyEmpty"),
@@ -238,26 +260,36 @@
     return preset ? preset.vinnersjanse : "";
   }
 
+  /** Everything the shared renderer needs, for whichever product is open. */
   function buildData() {
+    const cfg = productCfg();
+    const headlineScales = {};
+    productSpecs().forEach((spec) => {
+      headlineScales[spec.type] = getHl(spec.type);
+    });
     return {
+      product: state.product,
+      // The 18+/Hjelpelinjen mark and the Vinnersjanse strip are Norsk Tipping
+      // obligations; the server enforces the same rule on the real render.
+      hideAgeBadge: !cfg.ageBadge,
       imageDataUrl: state.imageDataUrl,
       placeholderUrl: "assets/placeholder.svg",
       imagePositionX: state.posX,
       imagePositionY: state.posY,
       headline: el.headline.value,
-      subtitle: el.subtitle.value,
-      brandLabel: el.brandLabel.value,
-      vinnersjanse: currentVinnersjanse(),
+      subtitle: F.hasField(state.product, "subtitle") ? el.subtitle.value : "",
+      brandLabel: F.hasField(state.product, "brandLabel") ? el.brandLabel.value : "",
+      ctaText: F.hasField(state.product, "ctaText") ? el.ctaText.value : "Les mer",
+      vinnersjanse: cfg.vinnersjanse ? currentVinnersjanse() : "",
       showVinnerOnNewsgrid: state.showVinnerOnNewsgrid,
       imageZoom: state.zoom,
-      headlineScaleReadpeak: state.hl.readpeak,
-      headlineScaleDesktop: state.hl.desktop,
-      headlineScaleMobile: state.hl.mobile,
-      headlineScaleNewsgrid: state.hl.newsgrid,
+      headlineScales,
       subtitleScale: state.subtitleScale,
       lesMerSize: state.lesMerSize,
       lesMerStyle: state.lesMerStyle,
       accentColor: state.accentColor,
+      houseWeight: state.houseWeight,
+      houseLogoUrl: "assets/abc-shopping.png",
       ageIconUrl: ageIconUrl(),
       annonseText: state.settings.staticBadges.annonseText,
       ageBadgeText: state.settings.staticBadges.ageBadgeText,
@@ -266,10 +298,210 @@
 
   function renderPreviews() {
     const data = buildData();
-    window.renderBanner(el.previews.readpeak, "readpeak", data);
-    window.renderBanner(el.previews.desktop, "desktop", data);
-    window.renderBanner(el.previews.mobile, "mobile", data);
-    window.renderBanner(el.previews.newsgrid, "newsgrid", data);
+    productSpecs().forEach((spec) => {
+      window.renderBanner(el.previews[spec.type], spec.type, data);
+    });
+  }
+
+  // -------- product-driven UI ----------------------------------------------
+  /**
+   * Build one preview card per format of the current product. Cards are made
+   * here rather than written into index.html because the format list is not the
+   * same for the three products — and the 980×300 toppbanner needs a full row
+   * to itself where the others sit two-up.
+   */
+  function buildPreviewCards() {
+    const specs = productSpecs();
+    el.previewsList.innerHTML = "";
+    el.previews = {};
+    el.newsgridVinner = null;
+
+    specs.forEach((spec) => {
+      const card = document.createElement("article");
+      card.className = "pcard";
+      // A banner wider than the panel's own column has to span both.
+      if (spec.width >= 700) card.classList.add("pcard--wide");
+
+      const head = document.createElement("header");
+      head.className = "pcard__head";
+      const name = document.createElement("span");
+      name.className = "pcard__name";
+      name.textContent = spec.name;
+      if (spec.hint) {
+        const hint = document.createElement("span");
+        hint.className = "field__hint";
+        hint.textContent = " " + spec.hint;
+        name.appendChild(hint);
+      }
+      const dim = document.createElement("span");
+      dim.className = "pcard__dim";
+      dim.textContent = spec.width + " × " + spec.height;
+      head.appendChild(name);
+      head.appendChild(dim);
+
+      const stageWrap = document.createElement("div");
+      stageWrap.className = "pcard__stage";
+      const stage = document.createElement("div");
+      stage.className = "preview-stage";
+      stage.style.setProperty("--w", spec.width);
+      stage.style.setProperty("--h", spec.height);
+      stage.style.setProperty("--scale", 1);
+      const scaler = document.createElement("div");
+      scaler.className = "preview-scaler";
+      const bn = document.createElement("div");
+      bn.className = "bn";
+      scaler.appendChild(bn);
+      stage.appendChild(scaler);
+      stageWrap.appendChild(stage);
+
+      card.appendChild(head);
+      card.appendChild(stageWrap);
+
+      // The 190×190 is too small to read an odds claim on, so it is opt-in and
+      // the switch belongs on the card it affects.
+      if (spec.type === "newsgrid" && productCfg().vinnersjanse) {
+        const label = document.createElement("label");
+        label.className = "checkbox pcard__toggle";
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = state.showVinnerOnNewsgrid;
+        box.addEventListener("change", () => {
+          state.showVinnerOnNewsgrid = box.checked;
+          renderPreviews();
+        });
+        const text = document.createElement("span");
+        text.innerHTML =
+          'Vis vinnersjanse her <span class="field__hint">kun ved vinnerpott — av som standard</span>';
+        label.appendChild(box);
+        label.appendChild(text);
+        card.appendChild(label);
+        el.newsgridVinner = box;
+      }
+
+      el.previewsList.appendChild(card);
+      el.previews[spec.type] = bn;
+    });
+  }
+
+  /** One "Tekststørrelse" slider per format, plus the Ingress where it exists. */
+  function buildSizeSliders() {
+    el.sizeCtrls.innerHTML = "";
+    const addSlider = (name, value, onInput) => {
+      const row = document.createElement("div");
+      row.className = "slider";
+      const label = document.createElement("span");
+      label.className = "slider__name";
+      label.textContent = name;
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = 70;
+      input.max = 160;
+      input.step = 5;
+      input.value = Math.round(value * 100);
+      input.setAttribute("aria-label", name + " tekststørrelse");
+      const out = document.createElement("output");
+      out.textContent = input.value + "%";
+      input.addEventListener("input", () => {
+        out.textContent = input.value + "%";
+        onInput(+input.value / 100);
+        renderPreviews();
+      });
+      row.appendChild(label);
+      row.appendChild(input);
+      row.appendChild(out);
+      el.sizeCtrls.appendChild(row);
+    };
+
+    productSpecs().forEach((spec) => {
+      addSlider(spec.name + (spec.hint ? " " + spec.hint : ""), getHl(spec.type), (v) => {
+        state.hl[hlKey(spec.type)] = v;
+      });
+    });
+    if (F.hasField(state.product, "subtitle")) {
+      addSlider("Ingress", state.subtitleScale, (v) => (state.subtitleScale = v));
+    }
+  }
+
+  /** The "Pakke" chips — which combination of the product's formats to get. */
+  function buildDownloadSets() {
+    const active = currentSet();
+    el.downloadSet.innerHTML = "";
+    productCfg().sets.forEach((set) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "seg" + (set.id === active ? " is-active" : "");
+      btn.dataset.val = set.id;
+      btn.textContent = set.label;
+      btn.addEventListener("click", () => {
+        $$(".seg", el.downloadSet).forEach((x) => x.classList.toggle("is-active", x === btn));
+        state.downloadSets[state.product] = set.id;
+        setLoading(false); // refreshes the "Generer bannere · N størrelser" label
+      });
+      el.downloadSet.appendChild(btn);
+    });
+  }
+
+  /** Show only the fields this product actually uses. */
+  function applyFieldVisibility() {
+    $$("[data-when]").forEach((node) => {
+      const products = node.dataset.when.split(/\s+/);
+      node.classList.toggle("is-off", products.indexOf(state.product) === -1);
+    });
+  }
+
+  /**
+   * Frame the drag-to-crop box to the photo area the product's biggest format
+   * actually uses, so what is framed here is what gets cropped. Formats within
+   * a product differ, but the largest is the one worth getting right.
+   */
+  function applyCropFrame() {
+    const biggest = productSpecs().reduce((best, spec) =>
+      spec.media.width * spec.media.height > best.media.width * best.media.height ? spec : best
+    );
+    const box = biggest.media;
+    el.cropFrame.style.aspectRatio = box.width + " / " + box.height;
+    const label = $(".crop__ratio");
+    if (label) label.textContent = "Bildeområde · " + box.width + "×" + box.height;
+  }
+
+  // Per-product wording, so the limits in the form match what the banner does.
+  const HEADLINE_HINTS = {
+    norsktipping: "maks 3 linjer",
+    readpeak: "maks 3 linjer",
+    houseads: "2–4 linjer, avhengig av format",
+  };
+
+  /** Switch the whole builder over to another product. */
+  function applyProduct(product) {
+    state.product = F.PRODUCTS[product] ? product : F.DEFAULT_PRODUCT;
+    const cfg = productCfg();
+
+    applyFieldVisibility();
+
+    // Merkevare is remembered per product: Norsk Tipping's is fixed, ReadPeak's
+    // is whichever advertiser bought the slot.
+    if (!(state.product in state.brandLabels)) state.brandLabels[state.product] = cfg.brandLabelDefault;
+    el.brandLabel.value = state.brandLabels[state.product];
+    el.brandLabel.placeholder = cfg.brandLabelDefault || "F.eks. INTERFLORA";
+    if (el.brandLabelHint) {
+      el.brandLabelHint.textContent =
+        state.product === "readpeak" ? "annonsørnavn — vises i grønt" : "ReadPeak-etikett";
+    }
+    el.ctaText.value = state.ctaText;
+    if (el.headlineHint) el.headlineHint.textContent = HEADLINE_HINTS[state.product] || "";
+    if (el.subtitleHint) {
+      el.subtitleHint.textContent =
+        state.product === "readpeak" ? "vises kun på 308×380 — maks 2 linjer" : "vises kun på ReadPeak";
+    }
+
+    applyCropFrame();
+    buildPreviewCards();
+    buildSizeSliders();
+    buildDownloadSets();
+    updateFilenamePreview();
+    renderPreviews();
+    setLoading(false);
+    requestAnimationFrame(fitPreviews);
   }
 
   // -------- position / crop -------------------------------------------------
@@ -501,7 +733,9 @@
       return;
     }
     const ts = state.settings.export.includeTimestampInFilename ? "-{tidsstempel}" : "";
-    const base = sanitizeFilename(v) + ts + "-desktop-580x500";
+    // Shown against the product's first format — every file in the package is
+    // named the same way, only the format label differs.
+    const base = sanitizeFilename(v) + ts + "-" + productSpecs()[0].label;
     if (state.outputType === "html") {
       el.filenamePreview.textContent = "→ " + base + ".zip";
       return;
@@ -561,13 +795,20 @@
     ["input", "change"].forEach((ev) => {
       el.headline.addEventListener(ev, () => { updateCounters(); renderPreviews(); });
       el.subtitle.addEventListener(ev, () => { updateCounters(); renderPreviews(); });
-      el.brandLabel.addEventListener(ev, renderPreviews);
+      el.brandLabel.addEventListener(ev, () => {
+        state.brandLabels[state.product] = el.brandLabel.value;
+        renderPreviews();
+      });
+      el.ctaText.addEventListener(ev, () => {
+        state.ctaText = el.ctaText.value;
+        renderPreviews();
+      });
       el.customVinner.addEventListener(ev, renderPreviews);
     });
     el.filename.addEventListener("input", updateFilenamePreview);
     el.gameType.addEventListener("change", onGameChange);
-    el.newsgridVinner.addEventListener("change", () => {
-      state.showVinnerOnNewsgrid = el.newsgridVinner.checked;
+    segmented(el.houseWeight, (val) => {
+      state.houseWeight = val === "regular" ? "regular" : "bold";
       renderPreviews();
     });
     updateCounters();
@@ -593,18 +834,6 @@
       el.advToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
     });
 
-    const bindScale = (input, out, apply) =>
-      input.addEventListener("input", () => {
-        out.textContent = input.value + "%";
-        apply(+input.value / 100);
-        renderPreviews();
-      });
-    bindScale(el.hlReadpeak, el.hlReadpeakOut, (v) => (state.hl.readpeak = v));
-    bindScale(el.hlDesktop, el.hlDesktopOut, (v) => (state.hl.desktop = v));
-    bindScale(el.hlMobile, el.hlMobileOut, (v) => (state.hl.mobile = v));
-    bindScale(el.hlNewsgrid, el.hlNewsgridOut, (v) => (state.hl.newsgrid = v));
-    bindScale(el.subtitleScale, el.subtitleScaleOut, (v) => (state.subtitleScale = v));
-
     el.lesMerSize.addEventListener("input", () => {
       state.lesMerSize = +el.lesMerSize.value;
       el.lesMerSizeOut.textContent = el.lesMerSize.value;
@@ -615,13 +844,6 @@
     segmented(el.formatSel, (val) => {
       state.format = val;
       updateFilenamePreview();
-    });
-  }
-
-  function initDownloadSet() {
-    segmented(el.downloadSet, (val) => {
-      state.downloadSet = val;
-      setLoading(false); // refreshes the "Generer bannere · N størrelser" label
     });
   }
 
@@ -657,32 +879,47 @@
   const NEWSGRID_CHROME = 34; // plus its "Vis vinnersjanse" checkbox row
 
   /**
-   * Size every preview so all four are visible at once, at the largest scale
-   * that still fits.
+   * Size every preview so the whole product's format set is visible at once, at
+   * the largest scale that still fits.
    *
-   * Two constraints, whichever bites first: the width of the card, and half the
-   * panel's height — because the four banners sit in two rows and having to
-   * scroll to compare them defeats the point of a live preview.
+   * Two constraints, whichever bites first: the width of the card, and the
+   * height of one row — because having to scroll to compare the formats defeats
+   * the point of a live preview. How many rows there are depends on the
+   * product: two of the four Norsk Tipping / Houseads formats sit side by side,
+   * ReadPeak's two fill one row, and a banner wider than the column (the 980×300
+   * toppbanner) takes a row on its own.
    */
   function fitPreviews() {
     const body = $(".previews__body");
+    const list = $(".previews__list");
+    if (!body || !list) return;
+
+    const cards = $$(".pcard", list);
+    if (!cards.length) return;
+    const twoUp = getComputedStyle(list).gridTemplateColumns.split(" ").length > 1;
+    // A wide card always occupies a whole row; the rest pair up when there is
+    // room for two columns.
+    const wide = cards.filter((c) => c.classList.contains("pcard--wide")).length;
+    const narrow = cards.length - wide;
+    const rows = wide + (twoUp ? Math.ceil(narrow / 2) : narrow);
+
     let rowHeight = Infinity;
-    if (body && body.clientHeight) {
+    if (body.clientHeight && rows > 0) {
       const style = getComputedStyle(body);
       const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-      const gap = parseFloat(style.rowGap) || 20;
-      rowHeight = (body.clientHeight - padding - gap) / 2;
+      const gap = parseFloat(getComputedStyle(list).rowGap) || 20;
+      rowHeight = (body.clientHeight - padding - gap * (rows - 1)) / rows;
     }
 
-    $$(".preview-stage").forEach((stage) => {
+    $$(".preview-stage", list).forEach((stage) => {
       const card = stage.closest(".pcard");
       if (!card) return;
       const w = parseFloat(stage.style.getPropertyValue("--w")) || 320;
       const h = parseFloat(stage.style.getPropertyValue("--h")) || 400;
-      const isNewsgrid = card.classList.contains("pcard--newsgrid");
-      // Upper bounds: ReadPeak and Mobil stop at life-size, which is the most
-      // honest a preview can be; Desktop is too wide for that; the 190×190
-      // needs magnifying to be judged at all.
+      const isNewsgrid = w <= 200 && h <= 200;
+      // Upper bounds: the small formats stop at life-size, which is the most
+      // honest a preview can be; the big ones are too wide for that; the
+      // 190×190 needs magnifying to be judged at all.
       const max = isNewsgrid ? 2 : w >= 500 ? 0.85 : 1;
 
       // Measure the CARD, not the stage: the stage shrink-wraps its own
@@ -690,7 +927,7 @@
       // the banner never actually shrinks to fit a narrow column.
       const pad = parseFloat(getComputedStyle(card).paddingLeft) || 0;
       const availWidth = card.clientWidth - pad * 2;
-      const availHeight = rowHeight - CARD_CHROME - (isNewsgrid ? NEWSGRID_CHROME : 0);
+      const availHeight = rowHeight - CARD_CHROME - (card.querySelector(".pcard__toggle") ? NEWSGRID_CHROME : 0);
 
       let scale = max;
       if (availWidth > 0) scale = Math.min(scale, availWidth / w);
@@ -718,10 +955,9 @@
   function setLoading(on) {
     el.generateBtn.classList.toggle("is-loading", on);
     el.generateBtn.disabled = on || !state.imageDataUrl;
-    const labels = DOWNLOAD_SET_LABELS[state.outputType] || DOWNLOAD_SET_LABELS.image;
     el.generateBtn.querySelector(".btn-generate__label").textContent = on
       ? "Genererer …"
-      : "Generer bannere · " + labels[state.downloadSet].count;
+      : "Generer bannere · " + setLabels(currentSet()).count;
   }
 
   function isOverBudget(bytes) {
@@ -769,6 +1005,25 @@
     });
   }
 
+  /**
+   * Links to the packages this run did NOT stream. Every generation renders the
+   * product's whole format set and saves it, so the other combinations are
+   * already on disk — no re-render, just a different way of bundling them.
+   */
+  function renderAltLinks(entryId, product, currentSetId, isHtml) {
+    $$(".result__alt-link", el.resultAlt).forEach((node) => node.remove());
+    const suffix = isHtml ? "&type=html" : "";
+    F.getProduct(product).sets.forEach((set) => {
+      if (set.id === currentSetId) return;
+      const link = document.createElement("a");
+      link.className = "result__alt-link";
+      link.download = "";
+      link.href = "/api/history/" + encodeURIComponent(entryId) + "/download?set=" + set.id + suffix;
+      link.textContent = set.label + (isHtml ? " (HTML5)" : "");
+      el.resultAlt.appendChild(link);
+    });
+  }
+
   function filenameFromDisposition(header, fallback) {
     if (!header) return fallback;
     const m = /filename="?([^"]+)"?/.exec(header);
@@ -792,26 +1047,30 @@
     // server works, and the result has to describe the request that was sent,
     // not whatever the form says by the time it comes back.
     const outputType = state.outputType;
-    const downloadSet = state.downloadSet;
+    const downloadSet = currentSet();
+    const product = state.product;
+    // The renderer takes exactly what the previews were built from, so what
+    // comes back cannot differ from what was on screen.
+    const data = buildData();
 
     const fd = new FormData();
     fd.append("image", state.imageBlob, state.imageName);
-    fd.append("headline", el.headline.value);
-    fd.append("subtitle", el.subtitle.value);
-    fd.append("brandLabel", el.brandLabel.value);
-    fd.append("vinnersjanse", currentVinnersjanse());
+    fd.append("product", product);
+    fd.append("headline", data.headline);
+    fd.append("subtitle", data.subtitle);
+    fd.append("brandLabel", data.brandLabel);
+    fd.append("ctaText", data.ctaText);
+    fd.append("vinnersjanse", data.vinnersjanse);
     fd.append("showVinnerOnNewsgrid", state.showVinnerOnNewsgrid ? "1" : "0");
     fd.append("imagePositionX", state.posX);
     fd.append("imagePositionY", state.posY);
     fd.append("imageZoom", state.zoom);
-    fd.append("headlineScaleReadpeak", state.hl.readpeak);
-    fd.append("headlineScaleDesktop", state.hl.desktop);
-    fd.append("headlineScaleMobile", state.hl.mobile);
-    fd.append("headlineScaleNewsgrid", state.hl.newsgrid);
+    fd.append("headlineScales", JSON.stringify(data.headlineScales));
     fd.append("subtitleScale", state.subtitleScale);
     fd.append("lesMerSize", state.lesMerSize);
     fd.append("lesMerStyle", state.lesMerStyle);
     fd.append("accentColor", state.accentColor);
+    fd.append("houseWeight", state.houseWeight);
     fd.append("resolution", state.resolution);
     fd.append("format", state.format);
     fd.append("filename", el.filename.value);
@@ -835,7 +1094,8 @@
       // Only a single-image download can end in something other than .zip, and
       // the size limit may have turned that PNG into a JPEG — so trust the
       // server's Content-Disposition first and keep this purely as a fallback.
-      const fallbackExt = !isHtml && downloadSet === "newsgrid" ? "png" : "zip";
+      const singleImage = !isHtml && F.specsFor(product, downloadSet).length === 1;
+      const fallbackExt = singleImage ? "png" : "zip";
       const name = filenameFromDisposition(
         res.headers.get("content-disposition"),
         (sanitizeFilename(el.filename.value) || "banner") + "." + fallbackExt
@@ -843,7 +1103,7 @@
       state.lastBlobUrl = URL.createObjectURL(blob);
       el.downloadLink.href = state.lastBlobUrl;
       el.downloadLink.download = name;
-      el.downloadLink.textContent = DOWNLOAD_SET_LABELS[outputType][downloadSet].primary;
+      el.downloadLink.textContent = setLabels(downloadSet).primary;
       renderReport(res.headers.get("x-banner-report"), isHtml);
 
       // Every generation renders + saves all 4 formats regardless of Pakke —
@@ -851,14 +1111,7 @@
       // other two combinations are already on disk too, so offer them as
       // quick secondary links against that same history entry (no re-render).
       if (entryId) {
-        const suffix = isHtml ? "&type=html" : "";
-        const link = (set) => "/api/history/" + encodeURIComponent(entryId) + "/download?set=" + set + suffix;
-        el.downloadNewsgrid.href = link("newsgrid");
-        el.downloadAll.href = link("all");
-        el.downloadCore.href = link("core");
-        el.downloadNewsgrid.hidden = downloadSet === "newsgrid";
-        el.downloadAll.hidden = downloadSet === "all";
-        el.downloadCore.hidden = downloadSet === "core";
+        renderAltLinks(entryId, product, downloadSet, isHtml);
         el.resultAlt.hidden = false;
       } else {
         el.resultAlt.hidden = true;
@@ -919,6 +1172,11 @@
       const name = document.createElement("div");
       name.className = "hcard__name";
       name.textContent = entry.filename;
+      // Entries predating the three-product split are Norsk Tipping.
+      const tag = document.createElement("span");
+      tag.className = "hcard__tag";
+      tag.textContent = F.getProduct(entry.product).label;
+      name.appendChild(tag);
       const head = document.createElement("div");
       head.className = "hcard__head";
       head.textContent = entry.headline || "—";
@@ -931,6 +1189,7 @@
       const dl = document.createElement("a");
       dl.className = "btn-ghost btn-sm";
       dl.textContent = entry.htmlFiles ? "Bilder" : "Last ned";
+      dl.download = "";
       dl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download";
       // Entries generated as HTML5 keep both: the images (also the backup
       // images for CM360) and the ready-to-upload packages.
@@ -974,7 +1233,10 @@
   }
 
   // -------- tabs ------------------------------------------------------------
+  // Three of the four tabs open the builder on a different product; the fourth
+  // is the history log.
   function switchTab(tab, focusTab) {
+    const isHistory = tab === "history";
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -982,22 +1244,32 @@
       b.tabIndex = active ? 0 : -1; // roving tabindex
       if (active && focusTab) b.focus();
     });
-    el.viewNew.classList.toggle("is-hidden", tab !== "new");
-    el.viewHistory.classList.toggle("is-hidden", tab !== "history");
-    el.viewNew.tabIndex = tab === "new" ? 0 : -1;
-    el.viewHistory.tabIndex = tab === "history" ? 0 : -1;
-    if (tab === "history") loadHistory();
-    if (tab === "new") requestAnimationFrame(fitPreviews);
+    el.viewNew.classList.toggle("is-hidden", isHistory);
+    el.viewHistory.classList.toggle("is-hidden", !isHistory);
+    el.viewNew.tabIndex = isHistory ? -1 : 0;
+    el.viewHistory.tabIndex = isHistory ? 0 : -1;
+    if (isHistory) {
+      loadHistory();
+      return;
+    }
+    // The builder panel is shared, so say which tab it currently belongs to.
+    el.viewNew.setAttribute("aria-labelledby", "tab-" + tab);
+    if (tab !== state.product) {
+      hideResult();
+      applyProduct(tab);
+    } else {
+      requestAnimationFrame(fitPreviews);
+    }
   }
 
   function initTabs() {
     el.tabs.forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     // WAI-ARIA tablist keyboard support: Arrow / Home / End move + select.
-    const order = ["new", "history"];
+    const order = F.ORDER.concat("history");
     const tablist = document.querySelector(".tabs");
     tablist.addEventListener("keydown", (e) => {
       const activeBtn = document.querySelector(".tab.is-active");
-      const cur = order.indexOf(activeBtn ? activeBtn.dataset.tab : "new");
+      const cur = Math.max(0, order.indexOf(activeBtn ? activeBtn.dataset.tab : F.DEFAULT_PRODUCT));
       let next = null;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (cur + 1) % order.length;
       else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (cur - 1 + order.length) % order.length;
@@ -1226,7 +1498,6 @@
     initFields();
     initAppearance();
     initAdvanced();
-    initDownloadSet();
     initOutputType();
     initTabs();
     initSettings();
@@ -1238,10 +1509,10 @@
     state.format = state.settings.export.format || "png";
     segmentedSet(el.formatSel, state.format);
     rebuildGameSelect("vikinglotto");
-    updateFilenamePreview();
     updateBudgetNote();
-    renderPreviews();
-    fitPreviews();
+    // Builds the previews, the size sliders and the packages for the product
+    // whose tab is open, then renders everything.
+    applyProduct(state.product);
     loadHistory();
 
     let raf = 0;

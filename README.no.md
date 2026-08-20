@@ -2,11 +2,17 @@
 
 [🇬🇧 English](README.md) · 🇳🇴 Norsk
 
-Et internt verktøy som gjør **ett bilde + noen tekstfelt om til fire
+Et internt verktøy som gjør **ett bilde + noen tekstfelt om til et helt sett
 annonse­bannere på én gang**, og laster dem ned som en ZIP — enten som bilder
 eller som opplastingsklare **HTML5-pakker til Campaign Manager 360**. Det
-erstatter den manuelle Canva-flyten. Laget for ABC Nyheter / Norsk
-Tipping-formatet.
+erstatter den manuelle Canva-flyten.
+
+Tre produkter, valgt med fanene øverst. Hvert produkt har sine egne formater,
+sine egne felt og sitt eget faste innhold på banneret:
+
+### Norsk Tipping
+
+De regulerte plasseringene: 18+/Hjelpelinjen-merket og vinnersjanse-stripen.
 
 | Format         | Størrelse  | Bruk                |
 | -------------- | ---------- | ------------------- |
@@ -14,6 +20,31 @@ Tipping-formatet.
 | **Desktop**    | 580 × 500  | Desktop-annonse     |
 | **Mobil**      | 320 × 400  | Mobil-annonse       |
 | **Nyhetsgrid** | 190 × 190  | Nyhetsgrid på forsiden |
+
+### ReadPeak
+
+De samme to ReadPeak-plasseringene solgt til hvilken som helst annonsør — altså
+**uten** 18+/Hjelpelinjen-merket og **uten** vinnersannsynlighet. Den grønne
+etiketten er annonsørens eget navn, og «Les mer» kan endres («Les mer her»,
+«Sjekk utvalget her», …).
+
+| Format         | Størrelse  | Bruk                |
+| -------------- | ---------- | ------------------- |
+| **ReadPeak**   | 308 × 380  | ReadPeak-widget     |
+| **Nyhetsgrid** | 190 × 190  | Nyhetsgrid på forsiden |
+
+### Houseads
+
+abc shoppings egne formater: ANNONSE oppe til venstre, abc shopping-logoen oppe
+til høyre, hvit bakgrunn og overskrift i Noto Serif. Bildeområder og
+skriftstørrelser er hentet fra de godkjente Canva-malene.
+
+| Format          | Størrelse  | Overskrift                  |
+| --------------- | ---------- | --------------------------- |
+| **Mobil**       | 320 × 400  | Noto Serif 22 — 3 linjer    |
+| **Toppbanner**  | 980 × 300  | Noto Serif 31 — 3 linjer, ved siden av bildet |
+| **Desktop**     | 580 × 500  | Noto Serif 26,5 — 2 linjer  |
+| **Skyskraper**  | 300 × 600  | Noto Serif 25,7 — 4 linjer  |
 
 ## Funksjoner
 
@@ -39,8 +70,9 @@ Tipping-formatet.
 - 🕘 **Historikk** over de siste 30 pakkene (last ned på nytt / slett).
 - ⚙️ **Innstillinger** — redigerbare spilltyper, merketekst og merke,
   størrelsesgrense og eksport.
-- 🔤 **Innebygd skrift (Arimo)** slik at forhåndsvisning og nedlastet PNG ser helt
-  like ut på alle plattformer, også Linux-servere.
+- 🔤 **Innebygde skrifter (Arimo, Noto Serif)** slik at forhåndsvisning og
+  nedlastet PNG ser helt like ut på alle plattformer, også Linux-servere. En
+  HTML5-pakke får bare skriften produktet sitt faktisk bruker.
 
 ---
 
