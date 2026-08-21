@@ -54,9 +54,9 @@ skriftstørrelser er hentet fra de godkjente Canva-malene.
   sprengt størrelsesgrensen.
 - ✂️ **Dra for å beskjære + zoom** — plasser bildet og zoom inn opptil 30 %;
   beskjæringsvinduet matcher det faktiske bildeområdet.
-- ⚡ **Live forhåndsvisning** — de tre bannerne oppdateres mens du skriver og
-  rendres av *samme* kode som lager den endelige PNG-en, så forhåndsvisningen er
-  tro mot resultatet.
+- ⚡ **Live forhåndsvisning** — hvert format i det valgte produktet oppdateres
+  mens du skriver, rendret av *samme* kode som lager den endelige PNG-en, så
+  forhåndsvisningen er tro mot resultatet.
 - 🔠 **Justerbar tekststørrelse** for overskrift og ingress, **Les mer som knapp
   eller ren tekst**, og en **fargevelger** for «Les mer» + «NORSK TIPPING».
 - 📦 **HTML5-eksport til Campaign Manager 360** — én opplastingsklar ZIP per
@@ -128,8 +128,55 @@ npm run dev
 
 ## Oppdatere en kopi du allerede har
 
-Har du klonet dette fra før, henter du den nye versjonen med to kommandoer. Kjør
-dem inne i `banner-generator`-mappen, med serveren stoppet (`Ctrl + C`):
+Har du klonet dette fra før? Alt under skjer i **ett Terminal-vindu** og tar
+omtrent ett minutt. Følg de fire stegene i rekkefølge.
+
+### 1 · Stopp appen hvis den kjører
+
+Kjører appen, viser Terminal-vinduet den ble startet i noe slikt:
+
+```
+  Banner Generator kjører på  http://localhost:4050
+
+[puppeteer] browser ready (pid 10080)
+```
+
+Klikk på det vinduet og trykk **`Ctrl + C`** (hold `Ctrl`, trykk `C` — dette er
+`Ctrl` også på Mac, *ikke* `Cmd`). Appen stopper og du får ledeteksten tilbake.
+
+> Usikker på om den kjører? Åpne <http://localhost:4050> i en nettleser. Laster
+> siden, kjører den og du trenger dette steget. Sier nettleseren at den ikke får
+> kontakt, er den allerede stoppet — gå til steg 2.
+
+### 2 · Sjekk at du står i prosjektmappen
+
+Oppdatering virker bare inne i prosjektmappen. Ledeteksten må slutte på
+**`banner-generator`**:
+
+```
+abraham@MacBook banner-generator %
+```
+
+Gjør den ikke det, gå dit først (juster stien til der du har den):
+
+```bash
+cd ~/Desktop/banner-generator
+```
+
+For å være helt sikker: kjør `ls` — du skal se `server.js`, `package.json`,
+`public` og `templates` i lista:
+
+```
+LICENSE           history           package-lock.json scripts           test
+README.md         history.json      package.json      server.js         uploads
+README.no.md      lib               public            settings.json
+_smoke.sh         node_modules      references        templates
+```
+
+Viser `ls` noe annet, står du i feil mappe og `git pull` vil svare
+`not a git repository`.
+
+### 3 · Kjør de tre kommandoene, i denne rekkefølgen
 
 ```bash
 git pull
@@ -137,27 +184,62 @@ npm install
 npm start
 ```
 
+Hva hver av dem gjør, og hvordan «det gikk bra» ser ut:
+
+| Kommando | Hva den gjør | Du skal se |
+| -------- | ------------ | ---------- |
+| `git pull` | Henter den nye versjonen fra GitHub | En liste med endrede filer, som ender på noe slikt som `21 files changed` |
+| `npm install` | Installerer det den nye versjonen trenger | `added / changed N packages` (advarsler om `npm audit` er normalt) |
+| `npm start` | Starter appen | `Banner Generator kjører på  http://localhost:4050` |
+
+Kjør dem én om gangen, og vent til hver er ferdig før du skriver den neste.
+`npm install` er den trege — gi den et minutt.
+
+### 4 · Åpne appen
+
+Gå til <http://localhost:4050>. Fanene øverst skal nå si:
+
+```
+Norsk Tipping   ReadPeak   Houseads   Historikk
+```
+
+Ser du fortsatt den gamle **Ny banner**-fanen alene? Da viser nettleseren en
+mellomlagret side — det er ikke en mislykket oppdatering. Tving oppdatering med
+**`Cmd + Shift + R`** (macOS) eller **`Ctrl + F5`** (Windows).
+
+La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
+
+### Hva du får i denne versjonen
+
+- Tre produkter i fanene i stedet for ett: **Norsk Tipping** (uendret),
+  **ReadPeak** (de samme to plasseringene uten 18+-merket og uten
+  vinnersannsynlighet, med annonsørens eget navn og «Les mer» som kan endres) og
+  **Houseads** (abc shoppings 320×400, 980×300, 580×500 og 300×600).
+- **Egne grenser per format** under Innstillinger → Eksport, så et 190×190 og et
+  980×300 slipper å dele én størrelsesgrense.
+- Overskrift og Ingress får plass til tre linjer hver, og «Les mer» følger
+  Ingressen i stedet for å ligge nederst i kortet.
+
+### Merk
+
 **`npm install` er ikke valgfritt her** — det er den som henter inn `sharp`, som
-både 200 KB-grensen og ekstra skarphet bygger på. Hopper du over den, starter
+både størrelsesgrensen og ekstra skarphet bygger på. Hopper du over den, starter
 appen fortsatt, men den sier fra ved oppstart og i Innstillinger om at begge er
 slått av.
 
-Dine egne ting røres ikke: `settings.json`, `history/`-mappen og et eventuelt
+**Dine egne ting røres ikke.** `settings.json`, `history/`-mappen og et eventuelt
 opplastet merke ligger utenfor versjonskontroll, så `git pull` tar aldri på dem.
-Nye innstillinger dukker bare opp med fornuftige standardverdier.
+Gamle innstillingsfiler leses som de er: det den nye versjonen har lagt til
+(egne størrelsesgrenser per format) starter bare tomt, og gamle
+historikk-oppføringer fungerer videre som Norsk Tipping-pakker.
 
-To ting du kanskje legger merke til, begge som forventet:
-`public/assets/hjelpelinjen-logo.png` forsvinner (18+-merket tegnes nå som tekst
-pluss et SVG-symbol), og den første `npm install` etter oppdateringen tar litt
-lengre tid mens `sharp` lastes ned.
+**Sier `git pull` at du har lokale endringer** du ikke har gjort med vilje,
+legger `git stash` dem til side, og `git stash drop` kaster dem for godt.
 
-Sier `git pull` at du har lokale endringer du ikke har gjort med vilje, legger
-`git stash` dem til side, og `git stash drop` kaster dem for godt.
-
-Lastet du ned en ZIP i stedet for å klone? Da er det ingenting å hente — last ned
-ZIP-en på nytt fra GitHub, eller klon prosjektet ordentlig én gang med kommandoen
-under [Kom raskt i gang](#kom-raskt-i-gang), så er framtidige oppdateringer bare
-én `git pull`.
+**Lastet du ned en ZIP i stedet for å klone?** Da er det ingenting å hente — last
+ned ZIP-en på nytt fra GitHub, eller klon prosjektet ordentlig én gang med
+kommandoen under [Kom raskt i gang](#kom-raskt-i-gang), så er framtidige
+oppdateringer bare én `git pull`.
 
 ---
 

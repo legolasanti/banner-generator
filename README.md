@@ -127,8 +127,56 @@ npm run dev
 
 ## Updating a copy you already have
 
-Anyone who cloned this earlier gets the new version with two commands. Run them
-inside the `banner-generator` folder, with the server stopped (`Ctrl + C`):
+Cloned this before? Everything below happens in **one Terminal window**, and it
+takes about a minute. Follow the four steps in order.
+
+### 1 · Stop the app if it is running
+
+If the app is running, the Terminal window it was started in is showing
+something like this:
+
+```
+  Banner Generator kjører på  http://localhost:4050
+
+[puppeteer] browser ready (pid 10080)
+```
+
+Click that window and press **`Ctrl + C`** (hold `Ctrl`, press `C` — this is
+`Ctrl` on a Mac too, *not* `Cmd`). The app stops and you get your prompt back.
+
+> Not sure whether it is running? Open <http://localhost:4050> in a browser. If
+> the page loads, it is running and you need this step. If the browser says it
+> cannot connect, it is already stopped — go to step 2.
+
+### 2 · Check that you are in the project folder
+
+Updating only works from inside the project folder. Your prompt must end with
+**`banner-generator`**:
+
+```
+abraham@MacBook banner-generator %
+```
+
+If it does not, go there first (adjust the path to wherever you keep it):
+
+```bash
+cd ~/Desktop/banner-generator
+```
+
+To be certain you are in the right place, run `ls` — you should see
+`server.js`, `package.json`, `public` and `templates` in the listing:
+
+```
+LICENSE           history           package-lock.json scripts           test
+README.md         history.json      package.json      server.js         uploads
+README.no.md      lib               public            settings.json
+_smoke.sh         node_modules      references        templates
+```
+
+If `ls` shows something else, you are in the wrong folder and `git pull` will
+say `not a git repository`.
+
+### 3 · Run the three commands, in this order
 
 ```bash
 git pull
@@ -136,23 +184,59 @@ npm install
 npm start
 ```
 
+What each one does, and what "it worked" looks like:
+
+| Command | What it does | You should see |
+| ------- | ------------ | -------------- |
+| `git pull` | Downloads the new version from GitHub | A list of changed files, ending in something like `21 files changed` |
+| `npm install` | Installs anything the new version needs | `added / changed N packages` (warnings about `npm audit` are normal) |
+| `npm start` | Starts the app | `Banner Generator kjører på  http://localhost:4050` |
+
+Run them one at a time and wait for each to finish before typing the next.
+`npm install` is the slow one — give it a minute.
+
+### 4 · Open the app
+
+Go to <http://localhost:4050>. The tab bar at the top should now read:
+
+```
+Norsk Tipping   ReadPeak   Houseads   Historikk
+```
+
+Still seeing the old single **Ny banner** tab? That is the browser showing you a
+cached page, not a failed update — hard-refresh with **`Cmd + Shift + R`**
+(macOS) or **`Ctrl + F5`** (Windows).
+
+Leave the Terminal window open while you work. Closing it stops the app.
+
+### What you get in this version
+
+- Three products in the tab bar instead of one: **Norsk Tipping** (unchanged),
+  **ReadPeak** (same two placements without the 18+ mark and the Vinnersjanse
+  strip, with the advertiser's own name and an editable "Les mer") and
+  **Houseads** (abc shopping's 320×400, 980×300, 580×500 and 300×600).
+- **Egne grenser per format** under Innstillinger → Eksport, so a 190×190 and a
+  980×300 no longer have to share one size limit.
+- Overskrift and Ingress both fit three lines, and "Les mer" follows the Ingress
+  instead of sitting on the floor of the card.
+
+### Notes
+
 **`npm install` is not optional here** — it is what brings in `sharp`, which the
-200 KB size limit and the extra-sharpness pass are built on. Skip it and the app
-still starts, but it says on startup and in Settings that both are switched off.
+size limit and the extra-sharpness pass are built on. Skip it and the app still
+starts, but it says on startup and in Settings that both are switched off.
 
-Your own things are left alone: `settings.json`, the `history/` folder and any
-uploaded badge mark are all outside version control, so `git pull` never touches
-them. New settings simply appear with sensible defaults.
+**Your own things are left alone.** `settings.json`, the `history/` folder and
+any uploaded badge mark are all outside version control, so `git pull` never
+touches them. Old settings files are read as-is: anything the new version added
+(per-format size limits) simply starts empty, and old history entries keep
+working as Norsk Tipping packages.
 
-Two things you may notice, both expected: `public/assets/hjelpelinjen-logo.png`
-disappears (the 18+ badge is drawn as text plus an SVG mark now), and the first
-`npm install` after updating takes a bit longer while `sharp` downloads.
+**If `git pull` complains about local changes** you did not make on purpose,
+`git stash` puts them aside and `git stash drop` throws them away for good.
 
-If `git pull` complains that you have local changes you did not make on purpose,
-`git stash` puts them aside, and `git stash drop` throws them away for good.
-
-Downloaded a ZIP instead of cloning? Then there is nothing to pull — download the
-ZIP again from GitHub, or clone it properly once with the command in
+**Downloaded a ZIP instead of cloning?** Then there is nothing to pull — download
+the ZIP again from GitHub, or clone it properly once with the command in
 [Quick start](#quick-start) so future updates are a single `git pull`.
 
 ---
