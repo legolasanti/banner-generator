@@ -570,8 +570,72 @@
   }
 
   // -------- upload ----------------------------------------------------------
+  /**
+   * Put the form back the way a fresh page load leaves it.
+   *
+   * A new photo means a new banner, so everything the previous one left behind
+   * goes: the copy, the appearance and download choices, and the result panel
+   * with its download links — those links point at the PREVIOUS generation, and
+   * a stale "Last ned alle 4" sitting under a new photo is how the wrong file
+   * ends up at the ad server.
+   *
+   * Deliberately kept: the photo itself (the caller is mid-way through applying
+   * it), the open product tab, and everything in Innstillinger — those are saved
+   * preferences, not part of this banner.
+   */
+  function resetForm() {
+    // Copy
+    el.headline.value = "";
+    el.subtitle.value = "";
+    el.customVinner.value = "";
+    el.imageUrl.value = "";
+    updateCounters();
+    // Per-product values fall back to their own defaults when the map is empty.
+    state.brandLabels = {};
+    state.ctaText = "Les mer";
+    if (el.gameType.options.length) el.gameType.selectedIndex = 0;
+    onGameChange();
+
+    // Appearance
+    state.lesMerStyle = "text";
+    segmentedSet(el.lesMerStyle, "text");
+    state.accentColor = "#2f2f2f";
+    el.accentColor.value = "#2f2f2f";
+    if (el.accentHex) el.accentHex.textContent = "#2f2f2f";
+    state.houseWeight = "bold";
+    segmentedSet(el.houseWeight, "bold");
+
+    // Advanced — sizes are rebuilt from state.hl, so emptying it is the reset.
+    state.hl = {};
+    state.subtitleScale = 1;
+    state.lesMerSize = 17;
+    el.lesMerSize.value = 17;
+    el.lesMerSizeOut.textContent = "17";
+    state.resolution = 1;
+    segmentedSet(el.resolution, 1);
+    state.format = state.settings.export.format || "png";
+    segmentedSet(el.formatSel, state.format);
+    el.advPanel.hidden = true;
+    el.advToggle.setAttribute("aria-expanded", "false");
+
+    // Download
+    el.filename.value = "";
+    el.clickUrl.value = "";
+    state.downloadSets = {};
+    state.outputType = "image";
+    segmentedSet(el.outputType, "image");
+    state.showVinnerOnNewsgrid = false;
+
+    hideResult();
+    applyOutputType();
+    // Rebuilds the previews, the size sliders and the packages, and re-seeds
+    // Merkevare / «Les mer» from the product's defaults.
+    applyProduct(state.product);
+  }
+
   // Shared by both upload and URL-fetch: store the image (as a blob, so the
   // generate request works identically for both paths) and reveal the cropper.
+  // A new photo starts a new banner — see resetForm().
   function applyImage(blob, dataUrl, name, size) {
     state.imageBlob = blob;
     state.imageDataUrl = dataUrl;
@@ -585,7 +649,7 @@
     setZoom(0);
     setPosition(50, 50);
     el.generateBtn.disabled = false;
-    hideResult();
+    resetForm();
   }
 
   function handleFile(file) {
@@ -975,6 +1039,10 @@
   function hideResult() {
     el.result.hidden = true;
     el.resultFiles.innerHTML = "";
+    // The alternative packages point at one specific history entry, so they go
+    // out with the result they belong to rather than lingering behind it.
+    $$(".result__alt-link", el.resultAlt).forEach((node) => node.remove());
+    el.downloadLink.removeAttribute("href");
     if (state.lastBlobUrl) {
       URL.revokeObjectURL(state.lastBlobUrl);
       state.lastBlobUrl = null;
