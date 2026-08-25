@@ -227,8 +227,12 @@
     );
   }
 
+  function isHouse(type) {
+    return String(type).indexOf("house-") === 0;
+  }
+
   /* --------------------------- Houseads ---------------------------------
-     abc shopping's own formats. The furniture is fixed on all four sizes:
+     abc shopping's own formats. The furniture is fixed on every size:
      ANNONSE upper-left, the abc shopping mark upper-right, white ground. The
      only editable parts are the photo and the headline, set in Noto Serif at a
      size and line count fixed per format (see formats.js / banner.css).
@@ -289,11 +293,16 @@
     newsgrid: renderNewsgrid,
     desktop: renderDesktopOrMobile,
     mobile: renderDesktopOrMobile,
-    "house-mobile": renderHouse,
-    "house-panorama": renderHouse,
-    "house-desktop": renderHouse,
-    "house-skyscraper": renderHouse,
   };
+
+  // Every house format shares one markup shape, so they are matched by prefix
+  // rather than listed. Listing them meant a format added to formats.js and
+  // banner.css still rendered as a Desktop banner until someone remembered to
+  // name it here too — a third place to keep in sync, and a silent failure.
+  function rendererFor(type) {
+    if (isHouse(type)) return renderHouse;
+    return RENDERERS[type] || renderDesktopOrMobile;
+  }
 
   /**
    * Render a banner into a root element.
@@ -305,12 +314,12 @@
   function renderBanner(root, type, data) {
     if (!root) return;
     data = data || {};
-    var render = RENDERERS[type] || renderDesktopOrMobile;
+    var render = rendererFor(type);
     var cls = "bn bn--" + type;
-    // The four Houseads formats share a whole layout system (serif type, fixed
+    // The Houseads formats share a whole layout system (serif type, fixed
     // header, white ground); only the numbers differ, so they get one class to
     // hang the shared rules on.
-    if (type.indexOf("house-") === 0) {
+    if (isHouse(type)) {
       cls += " bn--house";
       // The approved house creatives use both weights — "Spar opptil 50 %" is
       // set bold, "Gran Canarias 12 mest spektakulære designhotell" regular —

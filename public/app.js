@@ -714,6 +714,8 @@
     }
   }
 
+  // Removing the photo ends the banner it belonged to, so the form goes back to
+  // its starting state — same as loading a new one (see resetForm).
   function clearImage() {
     state.imageBlob = null;
     state.imageDataUrl = null;
@@ -725,7 +727,7 @@
     el.generateBtn.disabled = true;
     setZoom(0);
     setPosition(50, 50);
-    hideResult();
+    resetForm();
   }
 
   function initUpload() {

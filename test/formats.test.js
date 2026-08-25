@@ -96,7 +96,10 @@ test("specsFor narrows to the named set and falls back safely", () => {
   assert.deepEqual(nt, ["readpeak", "desktop", "mobile"]);
 
   assert.equal(formats.specsFor("readpeak", "newsgrid").length, 1);
-  assert.equal(formats.specsFor("houseads").length, 4);
+  // No set id means the product's whole format list.
+  for (const id of formats.ORDER) {
+    assert.equal(formats.specsFor(id).length, formats.getProduct(id).specs.length, id);
+  }
 
   // An unknown product is Norsk Tipping — that is what entries written before
   // the three-product split are.

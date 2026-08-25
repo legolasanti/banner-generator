@@ -6,8 +6,8 @@
      • readpeak     — the same two ReadPeak placements sold to any advertiser,
                       so without the 18+/Hjelpelinjen mark and without the
                       Vinnersjanse strip (both are Norsk Tipping obligations)
-     • houseads     — abc shopping's own four house formats, Noto Serif on
-                      white, ANNONSE + logo across the top
+     • houseads     — abc shopping's own house formats, Noto Serif on white,
+                      ANNONSE + logo across the top
 
    Loaded by the server (require) AND by the browser (global BannerFormats), so
    the format list, the pixel dimensions and the download sets can never drift
@@ -103,6 +103,18 @@
     name: "Skyskraper", hint: "300×600",
     headline: { size: 25.7, lines: 4 },
   };
+  // The one house format with no Canva original to measure. Its proportions are
+  // derived from the other four instead: same 300px width — and so the same
+  // side padding and header type — as the skyscraper, a photo at ~47% of the
+  // height (the family sits at 48–63%), and the largest headline that still
+  // leaves three lines inside 250px.
+  var HA_RECTANGLE = {
+    key: "house-rectangle", type: "house-rectangle", file: TEMPLATE,
+    width: 300, height: 250, label: "house-300x250",
+    media: { width: 300, height: 122 },
+    name: "Rektangel", hint: "300×250",
+    headline: { size: 20, lines: 3 },
+  };
 
   var PRODUCTS = {
     norsktipping: {
@@ -148,7 +160,7 @@
       id: "houseads",
       label: "Houseads",
       fontPrefix: "noto-serif-",
-      specs: [HA_MOBILE, HA_PANORAMA, HA_DESKTOP, HA_SKYSCRAPER],
+      specs: [HA_MOBILE, HA_PANORAMA, HA_DESKTOP, HA_SKYSCRAPER, HA_RECTANGLE],
       ageBadge: false,
       vinnersjanse: false,
       // Headline and image only — the header (ANNONSE + abc shopping) is fixed
@@ -156,11 +168,17 @@
       fields: [],
       brandLabelDefault: "",
       sets: [
-        { id: "all", label: "Alle 4", keys: ["house-mobile", "house-panorama", "house-desktop", "house-skyscraper"], count: "4 størrelser" },
+        {
+          id: "all",
+          label: "Alle 5",
+          keys: ["house-mobile", "house-panorama", "house-desktop", "house-skyscraper", "house-rectangle"],
+          count: "5 størrelser",
+        },
         { id: "house-mobile", label: "320×400", keys: ["house-mobile"], count: "1 størrelse (320×400)" },
         { id: "house-panorama", label: "980×300", keys: ["house-panorama"], count: "1 størrelse (980×300)" },
         { id: "house-desktop", label: "580×500", keys: ["house-desktop"], count: "1 størrelse (580×500)" },
         { id: "house-skyscraper", label: "300×600", keys: ["house-skyscraper"], count: "1 størrelse (300×600)" },
+        { id: "house-rectangle", label: "300×250", keys: ["house-rectangle"], count: "1 størrelse (300×250)" },
       ],
       defaultSet: "all",
     },

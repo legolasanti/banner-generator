@@ -78,6 +78,7 @@
 .bn--house-panorama   { width: 980px; height: 300px; }
 .bn--house-desktop    { width: 580px; height: 500px; }
 .bn--house-skyscraper { width: 300px; height: 600px; }
+.bn--house-rectangle  { width: 300px; height: 250px; }
 
 /* ----------------------------- Image area -------------------------------- */
 .bn__media {
@@ -447,11 +448,11 @@ img.bn__age-icon { width: auto; object-fit: contain; }
 
 /* =========================================================================
    HOUSEADS — abc shopping's own formats
-   Four sizes, one system: ANNONSE upper-left and the abc shopping mark
+   One system across every size: ANNONSE upper-left and the abc shopping mark
    upper-right across a fixed header, the photo below it, and a Noto Serif
    headline under the photo (beside it on the 980×300 toppbanner). Everything
-   that varies per format is a custom property, set in the four blocks at the
-   bottom of this section:
+   that varies per format is a custom property, set in the per-format blocks at
+   the bottom of this section:
 
      --house-pad       side margin
      --house-head-h    height of the ANNONSE / logo header
@@ -460,6 +461,7 @@ img.bn__age-icon { width: auto; object-fit: contain; }
      --house-media-h   photo height  (MUST match `media` in formats.js)
      --house-hl        headline size — the approved Noto Serif pt sizes
      --house-text-top  gap between photo and headline
+     --house-bottom    space under the headline (defaults to --house-pad)
 
    Photo areas are the measured proportions of the approved Canva creatives
    scaled to the real ad size, e.g. the 320×400 was drawn 298×377 with a
@@ -518,7 +520,7 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   width: auto;
   min-width: 0;
   background: transparent;
-  padding: var(--house-text-top) var(--house-pad) var(--house-pad);
+  padding: var(--house-text-top) var(--house-pad) var(--house-bottom, var(--house-pad));
 }
 .bn--house .bn__headline {
   flex: none;
@@ -591,6 +593,29 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   --house-text-top: 18px;
 }
 .bn--house-skyscraper .bn__headline { -webkit-line-clamp: 4; }
+
+/* ---- 300×250 · Rektangel ------------------------------------------------ */
+/* The only house format without a Canva original, so the numbers are derived
+   rather than measured: 300px wide like the skyscraper, so it inherits that
+   format's side padding and header type, and 250px is short enough that the
+   header has to come down with it (38 rather than 46). What is left after a
+   three-line headline is the photo — a letterboxed strip at this size, which is
+   what a 300×250 gets once the copy has its room. */
+.bn--house-rectangle {
+  --house-pad: 16px;
+  --house-head-h: 36px;
+  --house-ink: 13.5px;
+  --house-logo-h: 16px;
+  --house-media-h: 122px;
+  --house-hl: 20px;
+  --house-text-top: 10px;
+  /* 36 header + 122 photo + 10 gap + 3 lines (72) + 10 = 250 exactly. The one
+     format short enough that the copy has to sit closer to the bottom edge than
+     the 16px side padding — at 16 the third line would push the body past the
+     banner. */
+  --house-bottom: 10px;
+}
+.bn--house-rectangle .bn__headline { -webkit-line-clamp: 3; }
 
 /* Regular-weight variant of the house headline. Both weights appear in the
    approved creatives, so this is a campaign choice, not a format rule. */

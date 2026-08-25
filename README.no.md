@@ -45,6 +45,13 @@ skriftstørrelser er hentet fra de godkjente Canva-malene.
 | **Toppbanner**  | 980 × 300  | Noto Serif 31 — 3 linjer, ved siden av bildet |
 | **Desktop**     | 580 × 500  | Noto Serif 26,5 — 2 linjer  |
 | **Skyskraper**  | 300 × 600  | Noto Serif 25,7 — 4 linjer  |
+| **Rektangel**   | 300 × 250  | Noto Serif 20 — 3 linjer    |
+
+300×250 kom til senere og har ingen Canva-original, så proporsjonene er avledet
+fra de fire andre i stedet — samme bredde og topptekst som skyskraperen, og den
+største overskriften som fortsatt gir plass til tre linjer innenfor 250px.
+Dukker det opp en Canva-versjon, ligger tallene i `public/assets/formats.js` og
+i `.bn--house-rectangle`-blokken i `public/assets/banner.css`.
 
 ## Funksjoner
 
@@ -214,7 +221,8 @@ La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
 - Tre produkter i fanene i stedet for ett: **Norsk Tipping** (uendret),
   **ReadPeak** (de samme to plasseringene uten 18+-merket og uten
   vinnersannsynlighet, med annonsørens eget navn og «Les mer» som kan endres) og
-  **Houseads** (abc shoppings 320×400, 980×300, 580×500 og 300×600).
+  **Houseads** (abc shoppings 320×400, 980×300, 580×500, 300×600 og
+  300×250).
 - **Egne grenser per format** under Innstillinger → Eksport, så et 190×190 og et
   980×300 slipper å dele én størrelsesgrense.
 - Overskrift og Ingress får plass til tre linjer hver, og «Les mer» følger
