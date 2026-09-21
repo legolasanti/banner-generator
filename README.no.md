@@ -445,7 +445,11 @@ test-desktop-580x500.zip
 Utgangen følger Googles dokumenterte mønster,
 `<a href="javascript:window.open(window.clickTag)">`, slik at Campaign Manager
 360 bytter ut URL-en med sin egen sporingslenke når annonsen kjører. Verdien du
-skriver inn i appen er standardverdien, og det forhåndsvisningen åpner.
+skriver inn i appen er standardverdien, og det forhåndsvisningen åpner. Et lite
+skript gjør deretter lenken om til den ekte clickTag-URL-en (`target="_blank"`),
+lest på nytt ved hver interaksjon, slik at høyreklikk → «Åpne link i ny fane» og
+midtklikk også fungerer — nettlesere blokkerer `javascript:`-lenker der, og
+Chrome viser `about:blank#blocked`.
 
 Velger du flere formater, får du en ytre ZIP med de opplastingsklare ZIP-ene, en
 mappe `reservebilder/` med ett reservebilde per format, og en `LES-MEG.txt`.

@@ -444,7 +444,10 @@ test-desktop-580x500.zip
 The exit is Google's documented pattern,
 `<a href="javascript:window.open(window.clickTag)">`, so CM360 replaces the URL
 with its own tracking link when the ad runs. The value you type in the app is
-the default and what the preview opens.
+the default and what the preview opens. A small script then turns that href into
+the real clickTag URL (`target="_blank"`), re-read on every interaction, so
+right-click → "Open link in new tab" and middle-click work too — browsers block
+`javascript:` links there and Chrome shows `about:blank#blocked`.
 
 Pick more than one format and you get an outer ZIP containing the ready-to-upload
 ZIPs, a `reservebilder/` folder with a backup image per format, and a Norwegian

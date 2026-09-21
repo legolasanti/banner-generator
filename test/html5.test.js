@@ -38,6 +38,18 @@ test("index.html carries the CM360 contract", async (t) => {
     assert.ok(!/href="https?:\/\//.test(html));
   });
 
+  await t.test("upgrades the exit to a real link so 'open in new tab' works", () => {
+    const html = buildDesktop();
+    // Browsers refuse javascript: URLs from the context menu and middle-click
+    // (Chrome shows about:blank#blocked), so the href must become clickTag
+    // itself — re-read on every interaction, never cached.
+    assert.match(html, /exit\.href = window\.clickTag/);
+    assert.match(html, /exit\.target = "_blank"/);
+    for (const type of ["mousedown", "contextmenu", "click"]) {
+      assert.ok(html.includes(`"${type}"`), `re-syncs href on ${type}`);
+    }
+  });
+
   await t.test("declares UTF-8", () => {
     assert.ok(buildDesktop().includes('http-equiv="Content-Type" content="text/html; charset=utf-8"'));
   });
