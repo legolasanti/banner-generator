@@ -159,6 +159,14 @@
       });
       dom.filters.appendChild(b);
     });
+    // A dead link may have been fixed at the source, or a server was briefly
+    // down: one click tries every failed photo again.
+    var failed = state.rows.filter(function (r) { return r.image && r.image.status === "error"; }).length;
+    if (failed) {
+      var retry = h("button.bk-link.bk-retry", { type: "button" }, "Hent " + failed + (failed === 1 ? " bilde" : " bilder") + " på nytt");
+      retry.addEventListener("click", function () { BULK.source.retryFailed(); });
+      dom.filters.appendChild(retry);
+    }
   }
 
   function applyFilter() {

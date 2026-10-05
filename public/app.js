@@ -47,6 +47,11 @@
     // Norsk Tipping's are the same box but different campaigns, so they keep
     // their own setting.
     hl: {},
+    // Formats on "Auto" text size, same keys as `hl`. Only formats with an
+    // autoFit rule (the house formats) can be; missing = on.
+    hlAuto: {},
+    // Last auto-fit result per format type, for the preview warnings.
+    fit: {},
     // Kept per product: Norsk Tipping's label is always the same, ReadPeak
     // carries whichever advertiser bought the placement.
     brandLabels: {},
@@ -74,6 +79,70 @@
     return typeof v === "number" ? v : 1;
   };
   const currentSet = () => state.downloadSets[state.product] || productCfg().defaultSet;
+  const isAuto = (spec) => !!spec.autoFit && state.hlAuto[hlKey(spec.type)] !== false;
+
+  /**
+   * Auto text size (Houseads): pick each format's size from the headline's
+   * length (the rules in formats.js / Innstillinger) and prove it fits — see
+   * assets/autofit.js. Formats switched to manual keep their slider value.
+   * Fonts must be loaded first, or the measuring would use a fallback face.
+   */
+  let fontsReady = null;
+  function applyAutoFit() {
+    const specs = productSpecs().filter((spec) => spec.autoFit);
+    if (!specs.length || !window.BannerAutofit) return;
+    if (!fontsReady) {
+      fontsReady = Promise.all([
+        document.fonts.load('700 30px "Noto Serif"'),
+        document.fonts.load('400 30px "Noto Serif"'),
+      ]).catch(() => {});
+      fontsReady.then(applyAutoFit);
+      return;
+    }
+    const A = window.BannerAutofit;
+    const data = { product: state.product, headline: el.headline.value, houseWeight: state.houseWeight };
+    const overrides = state.settings.autoFit || {};
+    state.fit = {};
+    specs.forEach((spec) => {
+      const rule = A.cleanRule(F.autoFitRule(spec, overrides), spec.autoFit);
+      if (isAuto(spec)) {
+        const result = A.fit(spec.type, data, rule);
+        state.fit[spec.type] = result;
+        if (result.chars) state.hl[hlKey(spec.type)] = result.scale;
+      } else {
+        // Manual: keep the size, but still say when it cuts the headline.
+        const scale = getHl(spec.type);
+        state.fit[spec.type] = A.fit(spec.type, data, { min: scale, max: scale, tiers: [[100000, scale]] });
+      }
+    });
+    syncSizeSliders();
+    renderPreviews();
+    renderFitNotes();
+  }
+
+  /** "For lang …" under a preview whose headline does not fit. */
+  function renderFitNotes() {
+    productSpecs().forEach((spec) => {
+      const bn = el.previews[spec.type];
+      const card = bn && bn.closest(".pcard");
+      if (!card) return;
+      let note = card.querySelector(".pcard__fit");
+      const result = state.fit[spec.type];
+      const text = result && result.chars && !result.fits ? window.BannerAutofit.describe(result) : "";
+      if (!text) {
+        if (note) note.remove();
+        card.classList.remove("is-bad");
+        return;
+      }
+      if (!note) {
+        note = document.createElement("p");
+        note.className = "pcard__fit";
+        card.appendChild(note);
+      }
+      note.textContent = text;
+      card.classList.add("is-bad");
+    });
+  }
 
   /**
    * Wording for the Generer button and the download links. Derived from the
@@ -390,7 +459,7 @@
   /** One "Tekststørrelse" slider per format, plus the Ingress where it exists. */
   function buildSizeSliders() {
     el.sizeCtrls.innerHTML = "";
-    const addSlider = (name, value, onInput) => {
+    const addSlider = (name, value, onInput, spec) => {
       const row = document.createElement("div");
       row.className = "slider";
       const label = document.createElement("span");
@@ -405,25 +474,64 @@
       input.setAttribute("aria-label", name + " tekststørrelse");
       const out = document.createElement("output");
       out.textContent = input.value + "%";
+      let auto = null;
       input.addEventListener("input", () => {
         out.textContent = input.value + "%";
+        // Dragging a slider takes that format off Auto.
+        if (auto && auto.checked) {
+          auto.checked = false;
+          state.hlAuto[hlKey(spec.type)] = false;
+        }
         onInput(+input.value / 100);
-        renderPreviews();
+        if (spec && spec.autoFit) applyAutoFit();
+        else renderPreviews();
       });
       row.appendChild(label);
       row.appendChild(input);
       row.appendChild(out);
+      if (spec && spec.autoFit) {
+        const wrap = document.createElement("label");
+        wrap.className = "slider__auto";
+        wrap.title = "Velg størrelsen ut fra antall tegn";
+        auto = document.createElement("input");
+        auto.type = "checkbox";
+        auto.checked = isAuto(spec);
+        auto.addEventListener("change", () => {
+          state.hlAuto[hlKey(spec.type)] = auto.checked;
+          applyAutoFit();
+        });
+        wrap.appendChild(auto);
+        wrap.appendChild(document.createTextNode("Auto"));
+        row.appendChild(wrap);
+        row.dataset.type = spec.type;
+      }
       el.sizeCtrls.appendChild(row);
     };
 
     productSpecs().forEach((spec) => {
-      addSlider(spec.name + (spec.hint ? " " + spec.hint : ""), getHl(spec.type), (v) => {
-        state.hl[hlKey(spec.type)] = v;
-      });
+      addSlider(
+        spec.name + (spec.hint ? " " + spec.hint : ""),
+        getHl(spec.type),
+        (v) => {
+          state.hl[hlKey(spec.type)] = v;
+        },
+        spec
+      );
     });
     if (F.hasField(state.product, "subtitle")) {
       addSlider("Ingress", state.subtitleScale, (v) => (state.subtitleScale = v));
     }
+  }
+
+  /** Move the sliders to the sizes Auto just chose (without rebuilding them). */
+  function syncSizeSliders() {
+    $$(".slider[data-type]", el.sizeCtrls).forEach((row) => {
+      const value = Math.round(getHl(row.dataset.type) * 100);
+      const input = $('input[type="range"]', row);
+      if (input && +input.value !== value) input.value = value;
+      const out = $("output", row);
+      if (out) out.textContent = value + "%";
+    });
   }
 
   /** The "Pakke" chips — which combination of the product's formats to get. */
@@ -472,7 +580,7 @@
   const HEADLINE_HINTS = {
     norsktipping: "maks 3 linjer",
     readpeak: "maks 3 linjer",
-    houseads: "2–4 linjer, avhengig av format",
+    houseads: "størrelsen følger lengden (Auto)",
   };
 
   /** Switch the whole builder over to another product. */
@@ -505,6 +613,7 @@
     buildDownloadSets();
     updateFilenamePreview();
     renderPreviews();
+    applyAutoFit();
     setLoading(false);
     requestAnimationFrame(fitPreviews);
   }
@@ -609,6 +718,7 @@
 
     // Advanced — sizes are rebuilt from state.hl, so emptying it is the reset.
     state.hl = {};
+    state.hlAuto = {};
     state.subtitleScale = 1;
     state.lesMerSize = 17;
     el.lesMerSize.value = 17;
@@ -792,6 +902,13 @@
     });
   }
 
+  // Measuring six formats per keystroke is cheap, but once per frame is plenty.
+  let autoFitRaf = 0;
+  function scheduleAutoFit() {
+    cancelAnimationFrame(autoFitRaf);
+    autoFitRaf = requestAnimationFrame(applyAutoFit);
+  }
+
   // -------- form fields -----------------------------------------------------
   function updateCounters() {
     el.headlineCount.textContent = el.headline.value.length + " / 120";
@@ -890,7 +1007,11 @@
 
   function initFields() {
     ["input", "change"].forEach((ev) => {
-      el.headline.addEventListener(ev, () => { updateCounters(); renderPreviews(); });
+      el.headline.addEventListener(ev, () => {
+        updateCounters();
+        renderPreviews();
+        scheduleAutoFit();
+      });
       el.subtitle.addEventListener(ev, () => { updateCounters(); renderPreviews(); });
       el.brandLabel.addEventListener(ev, () => {
         state.brandLabels[state.product] = el.brandLabel.value;
@@ -907,6 +1028,7 @@
     segmented(el.houseWeight, (val) => {
       state.houseWeight = val === "regular" ? "regular" : "bold";
       renderPreviews();
+      applyAutoFit();
     });
     updateCounters();
   }
@@ -1170,6 +1292,10 @@
     fd.append("imagePositionY", state.posY);
     fd.append("imageZoom", state.zoom);
     fd.append("headlineScales", JSON.stringify(data.headlineScales));
+    fd.append(
+      "autoFitTypes",
+      JSON.stringify(productSpecs().filter((spec) => isAuto(spec)).map((spec) => spec.type))
+    );
     fd.append("subtitleScale", state.subtitleScale);
     fd.append("lesMerSize", state.lesMerSize);
     fd.append("lesMerStyle", state.lesMerStyle);
@@ -1556,6 +1682,8 @@
         annonseText: el.setAnnonse.value.trim() || "Annonse",
         ageBadgeText: el.setAge.value.trim() || "18+ | Hjelpelinjen.no",
       },
+      // Not edited in this drawer; sent back as loaded so a save never drops it.
+      autoFit: state.settings.autoFit || {},
       export: {
         jpegQuality: +el.setQuality.value,
         maxFileSizeKb: +el.setMaxSize.value,
@@ -1746,6 +1874,11 @@
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);
     window.addEventListener("bulk:exported", loadHistory);
+    // Text-size rules saved from the Bulk tab apply here at once.
+    window.addEventListener("autofit:rules", (e) => {
+      state.settings.autoFit = e.detail || {};
+      applyAutoFit();
+    });
 
     let raf = 0;
     window.addEventListener("resize", () => {

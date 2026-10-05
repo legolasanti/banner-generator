@@ -457,6 +457,11 @@ select { cursor: pointer; padding-right: 34px; }
 .slider__icon { width: 16px; text-align: center; color: var(--ink-3); font-size: 14px; }
 .slider__name { width: 66px; flex: none; font-size: 12px; font-weight: 600; color: var(--ink-2); }
 .sizectrls { display: flex; flex-direction: column; gap: 11px; }
+.slider__auto { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 11px; font-weight: 600; color: var(--ink-3); cursor: pointer; }
+.slider__auto input { width: 13px; height: 13px; margin: 0; accent-color: var(--green); }
+.slider__auto:has(input:checked) { color: var(--green-deep); }
+.pcard.is-bad { border-color: #efb7b2; background: #fff8f7; }
+.pcard__fit { margin: -4px 0 0; width: 100%; font-size: 11.5px; color: var(--danger); text-align: center; }
 
 /* --------------------------- Advanced toggle ---------------------------- */
 .adv-toggle {

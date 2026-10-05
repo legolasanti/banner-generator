@@ -990,6 +990,15 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       const fallback = legacyField ? clampNumber(b[legacyField], 0.5, 2, legacyHl) : legacyHl;
       headlineScales[spec.type] = clampNumber(sentScales[spec.type], 0.5, 2, fallback);
     }
+    let autoFitTypes = [];
+    try {
+      const parsed = JSON.parse(b.autoFitTypes || "[]");
+      if (Array.isArray(parsed)) {
+        autoFitTypes = parsed.map(String).filter((t) => productSpecs.some((spec) => spec.type === t && spec.autoFit));
+      }
+    } catch {
+      /* malformed → nothing is re-checked, the sizes are used as sent */
+    }
     const subtitleScale = clampNumber(b.subtitleScale, 0.5, 2, 1);
     const lesMerSize = clampNumber(b.lesMerSize, 12, 28, 17);
     const lesMerStyle = b.lesMerStyle === "button" ? "button" : "text";
@@ -1049,6 +1058,9 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       lesMerStyle,
       accentColor,
       houseWeight,
+      // Formats whose headline size the Auto rule picked: the template
+      // re-measures those before the screenshot (see templates/_render.js).
+      autoFitCheck: autoFitTypes.length ? { min: 0.5, types: autoFitTypes } : null,
       // Not client-controlled: the 18+/Hjelpelinjen lockup is a Norsk Tipping
       // obligation and must never appear on another advertiser's creative.
       hideAgeBadge: !productCfg.ageBadge,
@@ -1335,7 +1347,12 @@ app.get("/api/settings", async (req, res) => {
 
 app.post("/api/settings", async (req, res) => {
   try {
-    const saved = await saveSettings(req.body || {});
+    const body = { ...(req.body || {}) };
+    // The Innstillinger drawer posts only the fields it shows. The text-size
+    // rules are edited elsewhere (Bulk → Tekststørrelse-regler), so a save
+    // that does not mention them keeps the stored ones instead of erasing them.
+    if (!("autoFit" in body)) body.autoFit = (await loadSettings()).autoFit;
+    const saved = await saveSettings(body);
     res.json(saved);
   } catch (err) {
     console.error("[settings] " + err.message);
