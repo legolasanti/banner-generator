@@ -43,6 +43,7 @@ come from the approved Canva creatives.
 | --------------- | ---------- | -------------------------- |
 | **Mobil**       | 320 × 400  | Noto Serif 22 — 3 lines    |
 | **Toppbanner**  | 980 × 300  | Noto Serif 31 — 3 lines, beside the photo |
+| **Billboard**   | 980 × 500  | Noto Serif 36 — 4 lines, beside the photo |
 | **Desktop**     | 580 × 500  | Noto Serif 26.5 — 2 lines  |
 | **Skyskraper**  | 300 × 600  | Noto Serif 25.7 — 4 lines  |
 | **Rektangel**   | 300 × 250  | Noto Serif 20 — 3 lines    |
@@ -52,7 +53,77 @@ derived from the other four instead — same width and header type as the
 skyscraper, and the largest headline that still leaves three lines inside 250px.
 If a Canva version turns up, the numbers to match are in
 `public/assets/formats.js` and the `.bn--house-rectangle` block of
-`public/assets/banner.css`.
+`public/assets/banner.css`. The same goes for the 980×500: the toppbanner's
+layout with a 520×420 photo, leaving the headline a column wide enough for long
+Norwegian compound words.
+
+### Bulk (Houseads from a spreadsheet)
+
+The **Bulk** tab makes many Houseads at once: one spreadsheet row per banner,
+every row in every chosen size, delivered as one ZIP.
+
+1. **Bring the sheet in** — paste a Google Sheets link (the sheet must be
+   shared as *Anyone with the link → Viewer*; a link to a specific tab uses
+   that tab), upload an `.xlsx` / `.csv` / `.tsv`, or copy the cells in Sheets
+   and paste them. *Last ned mal (CSV)* gives a ready template, and *Prøv med
+   eksempeldata* loads a working example.
+2. **Check** — every photo is fetched, every headline is sized per format, and
+   each row says *Klar*, *Sjekk* or *Feil* with the reason (missing photo, dead
+   link, a headline too long for a format, a word too long for one line, a
+   photo too small for sharp output). Edit a headline in place, or *Juster* a
+   row: drag the focus point on the photo, zoom, swap the photo, change weight,
+   filename or click link, and set any format's size by hand.
+3. **Download** — PNG, JPEG, Auto or HTML5 (CM360), 1×/1.5×/2×, and the ZIP
+   laid out per size (`320x400/…`), per banner, or flat. The run happens in the
+   background with progress and an estimate; it can be cancelled (finished
+   banners are kept), and it lands in *Historikk*. Every ZIP holds
+   `rapport.csv` (headline, size used and file size per file).
+
+Rows with errors are skipped, never shipped broken. The work survives a reload
+of the page.
+
+**The sheet.** The first row names the columns; order does not matter and
+other columns are ignored (Norwegian, English and Turkish names work).
+
+| Column | Required | Example | Note |
+| --- | --- | --- | --- |
+| `Overskrift` | yes | Spar opptil 50 % på hotell i høst | |
+| `Bildelenke` | yes | https://…/hotell.jpg | A direct image link. Google Drive and Dropbox share links work too. |
+| `Filnavn` | no | hotell-host | Empty = made from the headline |
+| `Skrift` | no | Halvfet / Normal | Empty = the run's choice |
+| `Fokus` | no | topp · bunn venstre · 30/70 | Where to hold the crop. Empty = automatic |
+| `Klikk-lenke` | no | https://www.abcnyheter.no/… | HTML5 only. Empty = the default set at download |
+
+Helpful extras in the sheet: `=LEN(A2)` for a character count, `=IMAGE(C2)` to
+see the photo. A demo sheet: *Houseads bulk – mal* (Google Sheets).
+
+**Automatic crop.** The photo is held where its detail and colour are, pulled
+toward the centre; for tall photos (usually a person) the upper third is kept,
+so faces survive the wide formats. Switch it off with *Smart beskjæring*, set
+`Fokus` in the sheet, or drag the point in *Juster*.
+
+### Auto text size
+
+Houseads headlines are sized per format from their length — short copy bigger
+(up to 120 %), long copy smaller (down to 70 %) — and then **measured**: if the
+text would be clipped or a word split, it steps down 5 % at a time. The
+default rules were measured with ~60 real Norwegian shop headlines in every
+format:
+
+| Format | 120 % | 110 % | 100 % | 90 % | 80 % | 70 % (max) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 320×400 | ≤ 26 | ≤ 40 | ≤ 64 | ≤ 74 | ≤ 82 | ~97 |
+| 980×300 | ≤ 25 | ≤ 39 | ≤ 63 | ≤ 66 | ≤ 77 | ~85 |
+| 980×500 | ≤ 25 | ≤ 40 | ≤ 65 | ≤ 73 | ≤ 78 | ~96 |
+| 580×500 | ≤ 30 | ≤ 46 | ≤ 74 | ≤ 77 | ≤ 85 | ~116 |
+| 300×600 | ≤ 25 | ≤ 40 | ≤ 65 | ≤ 73 | ≤ 78 | ~96 |
+| 300×250 | ≤ 26 | ≤ 35 | ≤ 66 | ≤ 74 | ≤ 82 | ~97 |
+
+(characters, spaces included). The rules are editable for everyone under
+*Bulk → Tekststørrelse-regler*, which also has a test field. In the Houseads
+tab each format's *Tekststørrelse* slider has an **Auto** switch; dragging a
+slider makes that format manual. The export re-measures every Auto size in the
+rendering browser before the screenshot, so a clipped headline cannot ship.
 
 ### Wallpaper
 
@@ -273,6 +344,10 @@ Leave the Terminal window open while you work. Closing it stops the app.
   strip, with the advertiser's own name and an editable "Les mer") and
   **Houseads** (abc shopping's 320×400, 980×300, 980×500, 580×500, 300×600
   and 300×250).
+- **Bulk**: many Houseads from one Google Sheet / Excel / CSV, checked row by
+  row and downloaded as one ZIP (see *Bulk* above), and the new **980×500**.
+- **Auto text size** on the Houseads formats: the size follows the headline's
+  length and is measured so nothing is clipped.
 - **Egne grenser per format** under Innstillinger → Eksport, so a 190×190 and a
   980×300 no longer have to share one size limit.
 - Overskrift and Ingress both fit three lines, and "Les mer" follows the Ingress
@@ -611,7 +686,9 @@ banner-generator/
 ├── lib/
 │   ├── image.js           Downscaling + the per-file byte budget (sharp)
 │   ├── html5.js           Campaign Manager 360 package builder
-│   └── safe-fetch.js      "Fetch from link" without reaching inside the network
+│   ├── safe-fetch.js      "Fetch from link" without reaching inside the network
+│   └── bulk/              Bulk: sheet + XLSX reading, link rewrites, photos,
+│                          background runs, ZIP delivery, /api/bulk routes
 ├── templates/             Puppeteer pages → produce the final banners
 │   ├── banner.html        One generic template; the format arrives in the data
 │   └── _render.js         Shared init (signals "ready to screenshot")
@@ -619,11 +696,13 @@ banner-generator/
 │   ├── index.html         App UI
 │   ├── style.css          App styling (chrome only)
 │   ├── app.js             Frontend logic
+│   ├── bulk/              The Bulk tab (state, fitting, grid, editor, rules, run)
 │   └── assets/
 │       ├── formats.js     ONE source of truth for the products and their
 │       │                  formats — loaded by the server AND the browser
 │       ├── banner.css     ┐ ONE source of truth for the banner look —
 │       ├── banner.js      ┘ used by BOTH the templates and the live preview
+│       ├── autofit.js     Headline size from length + measurement (Auto)
 │       ├── fonts/         Bundled Arimo (Arial-compatible) + Noto Serif
 │       ├── norsktipping-icon.svg   The mark in the 18+ badge
 │       ├── abc-shopping.png        The Houseads mark
@@ -632,7 +711,7 @@ banner-generator/
 ├── test/                  node --test suites (npm test)
 ├── references/            Source artwork + real ads to compare against
 ├── history/               Saved packages (max 30)
-├── uploads/               Reserved (uploads are handled in memory)
+├── uploads/               Wallpaper + Bulk photos (bulk ones cleared after 21 days)
 ├── LICENSE
 ├── README.md / README.no.md
 └── package.json
@@ -651,7 +730,7 @@ look in one place and both change — the preview is a faithful copy of the resu
 | `POST /api/generate`             | Multipart: image + fields → streams the download      |
 | `POST /api/fetch-image`          | `{url}` → fetches an image from a link                |
 | `GET  /api/history`              | List of the last 30 packages                         |
-| `GET  /api/history/:id/download` | Re-download a package — `?set=core\|newsgrid\|all`, `&type=html` |
+| `GET  /api/history/:id/download` | Re-download a package — `?set=core\|newsgrid\|all`, `&type=html`; bulk runs: `?layout=format\|banner\|flat`, `&row=N` |
 | `DELETE /api/history/:id`        | Delete a package                                     |
 | `GET  /api/settings`             | Read settings (+ `ageIcon`, `imageTools`, read-only) |
 | `POST /api/settings`             | Save settings                                        |
@@ -661,6 +740,15 @@ look in one place and both change — the preview is a faithful copy of the resu
 | `POST /api/wallpaper/estimate`   | `{doc, options}` → each file's real size (+ preview image)    |
 | `POST /api/wallpaper/export`     | `{doc, options}` → streams the download, saves to history     |
 | `GET  /wp-assets/:id`            | An uploaded wallpaper image (immutable)              |
+| `POST /api/bulk/sheet`           | `{url}` (Google Sheets/CSV link) or `{text}` (pasted cells) → rows |
+| `POST /api/bulk/sheet-file`      | Multipart `file` (.xlsx/.csv/.tsv) → rows             |
+| `GET  /api/bulk/template.csv`    | The example sheet                                    |
+| `POST /api/bulk/image`           | `{url}` → fetches and stores a photo (master, preview, focus) |
+| `POST /api/bulk/image-file`      | Multipart `image` → stores a photo                    |
+| `POST /api/bulk/jobs`            | `{rows, options}` → starts a run (202)               |
+| `GET  /api/bulk/jobs/:id`        | Progress of a run                                    |
+| `DELETE /api/bulk/jobs/:id`      | Cancel (finished rows are kept)                      |
+| `GET  /bulk-assets/:file`        | A stored bulk photo (immutable)                      |
 | `GET  /api/health`               | Status (browser connected?)                          |
 
 All four formats are rendered and saved on every generate; `downloadSet` only

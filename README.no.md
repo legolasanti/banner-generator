@@ -43,6 +43,7 @@ skriftstørrelser er hentet fra de godkjente Canva-malene.
 | --------------- | ---------- | --------------------------- |
 | **Mobil**       | 320 × 400  | Noto Serif 22 — 3 linjer    |
 | **Toppbanner**  | 980 × 300  | Noto Serif 31 — 3 linjer, ved siden av bildet |
+| **Billboard**   | 980 × 500  | Noto Serif 36 — 4 linjer, ved siden av bildet |
 | **Desktop**     | 580 × 500  | Noto Serif 26,5 — 2 linjer  |
 | **Skyskraper**  | 300 × 600  | Noto Serif 25,7 — 4 linjer  |
 | **Rektangel**   | 300 × 250  | Noto Serif 20 — 3 linjer    |
@@ -51,7 +52,76 @@ skriftstørrelser er hentet fra de godkjente Canva-malene.
 fra de fire andre i stedet — samme bredde og topptekst som skyskraperen, og den
 største overskriften som fortsatt gir plass til tre linjer innenfor 250px.
 Dukker det opp en Canva-versjon, ligger tallene i `public/assets/formats.js` og
-i `.bn--house-rectangle`-blokken i `public/assets/banner.css`.
+i `.bn--house-rectangle`-blokken i `public/assets/banner.css`. Det samme
+gjelder 980×500: toppbannerets oppsett med et 520×420-bilde, så overskriften får
+en kolonne som er bred nok til lange norske sammensatte ord.
+
+### Bulk (Houseads fra regneark)
+
+**Bulk**-fanen lager mange Houseads på én gang: én rad i regnearket per
+banner, hver rad i alle valgte størrelser, levert som én ZIP.
+
+1. **Hent arket** — lim inn en Google Sheets-lenke (arket må være delt som
+   *Alle med lenken → Leser*; en lenke til en bestemt fane bruker den fanen),
+   last opp `.xlsx` / `.csv` / `.tsv`, eller kopier cellene i Sheets og lim dem
+   inn. *Last ned mal (CSV)* gir en ferdig mal, og *Prøv med eksempeldata*
+   laster et eksempel som virker.
+2. **Kontroller** — alle bilder hentes, alle overskrifter får størrelse per
+   format, og hver rad sier *Klar*, *Sjekk* eller *Feil* med årsak (mangler
+   bilde, død lenke, overskrift for lang for et format, et ord for langt for én
+   linje, bilde for lite til skarpt resultat). Rett en overskrift direkte, eller
+   *Juster* en rad: dra fokuspunktet i bildet, zoom, bytt bilde, endre skrift,
+   filnavn eller klikk-lenke, og sett størrelsen for hånd i et format.
+3. **Last ned** — PNG, JPEG, Auto eller HTML5 (CM360), 1×/1,5×/2×, og ZIP-en
+   ordnet per størrelse (`320x400/…`), per banner eller alt i én mappe.
+   Kjøringen går i bakgrunnen med fremdrift og tidsanslag; den kan avbrytes
+   (ferdige bannere beholdes), og den havner i *Historikk*. Hver ZIP har
+   `rapport.csv` (overskrift, brukt størrelse og filstørrelse per fil).
+
+Rader med feil hoppes over – de leveres aldri ødelagte. Arbeidet overlever at
+siden lastes på nytt.
+
+**Arket.** Første rad er kolonnenavn; rekkefølgen spiller ingen rolle, og andre
+kolonner ignoreres (norske, engelske og tyrkiske navn virker).
+
+| Kolonne | Må med | Eksempel | Merknad |
+| --- | --- | --- | --- |
+| `Overskrift` | ja | Spar opptil 50 % på hotell i høst | |
+| `Bildelenke` | ja | https://…/hotell.jpg | Direkte bildelenke. Delingslenker fra Google Drive og Dropbox virker også. |
+| `Filnavn` | nei | hotell-host | Tomt = lages fra overskriften |
+| `Skrift` | nei | Halvfet / Normal | Tomt = valget for hele kjøringen |
+| `Fokus` | nei | topp · bunn venstre · 30/70 | Hvor bildet holdes ved beskjæring. Tomt = automatisk |
+| `Klikk-lenke` | nei | https://www.abcnyheter.no/… | Bare HTML5. Tomt = standardlenken ved nedlasting |
+
+Nyttig i arket: `=LEN(A2)` for antall tegn, `=IMAGE(C2)` for å se bildet. Et
+demoark: *Houseads bulk – mal* (Google Sheets).
+
+**Automatisk beskjæring.** Bildet holdes der detaljene og fargene er, dratt mot
+midten; i høye bilder (som oftest en person) beholdes øvre tredjedel, så ansikter
+overlever de brede formatene. Slå av med *Smart beskjæring*, sett `Fokus` i
+arket, eller dra punktet i *Juster*.
+
+### Auto tekststørrelse
+
+Houseads-overskrifter får størrelse per format ut fra lengden – kort tekst
+større (opptil 120 %), lang tekst mindre (ned til 70 %) – og blir deretter
+**målt**: blir teksten kuttet eller et ord delt, settes den ned 5 % om gangen.
+Standardreglene er målt med ~60 ekte norske butikkoverskrifter i hvert format:
+
+| Format | 120 % | 110 % | 100 % | 90 % | 80 % | 70 % (maks) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 320×400 | ≤ 26 | ≤ 40 | ≤ 64 | ≤ 74 | ≤ 82 | ~97 |
+| 980×300 | ≤ 25 | ≤ 39 | ≤ 63 | ≤ 66 | ≤ 77 | ~85 |
+| 980×500 | ≤ 25 | ≤ 40 | ≤ 65 | ≤ 73 | ≤ 78 | ~96 |
+| 580×500 | ≤ 30 | ≤ 46 | ≤ 74 | ≤ 77 | ≤ 85 | ~116 |
+| 300×600 | ≤ 25 | ≤ 40 | ≤ 65 | ≤ 73 | ≤ 78 | ~96 |
+| 300×250 | ≤ 26 | ≤ 35 | ≤ 66 | ≤ 74 | ≤ 82 | ~97 |
+
+(tegn, mellomrom regnet med). Reglene kan endres for alle under *Bulk →
+Tekststørrelse-regler*, som også har et testfelt. I Houseads-fanen har hvert
+formats *Tekststørrelse*-glidebryter en **Auto**-bryter; drar du i den, blir
+formatet manuelt. Eksporten måler hver Auto-størrelse på nytt i nettleseren som
+tar bildet, så en kuttet overskrift kan ikke leveres.
 
 ### Wallpaper
 
@@ -273,6 +343,10 @@ La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
   vinnersannsynlighet, med annonsørens eget navn og «Les mer» som kan endres) og
   **Houseads** (abc shoppings 320×400, 980×300, 980×500, 580×500, 300×600
   og 300×250).
+- **Bulk**: mange Houseads fra ett Google-ark / Excel / CSV, kontrollert rad for
+  rad og lastet ned som én ZIP (se *Bulk* over), og nye **980×500**.
+- **Auto tekststørrelse** på Houseads-formatene: størrelsen følger lengden på
+  overskriften og måles, så ingenting kuttes.
 - **Egne grenser per format** under Innstillinger → Eksport, så et 190×190 og et
   980×300 slipper å dele én størrelsesgrense.
 - Overskrift og Ingress får plass til tre linjer hver, og «Les mer» følger
