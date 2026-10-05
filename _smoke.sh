@@ -33,6 +33,7 @@ HTTP=$(curl -s -o "$TMP/out.zip" -w "%{http_code}" \
   -F "imagePositionX=40" -F "imagePositionY=30" \
   -F "resolution=1" \
   -F "filename=Test Banner Æ Ø Å!!" -F "jpegQuality=92" \
+  -F "downloadSet=core" \
   "http://localhost:$PORT/api/generate")
 [ "$HTTP" = "200" ] || { cat "$TMP/server.log"; fail "generate returned $HTTP"; }
 
@@ -91,6 +92,44 @@ curl -fsS "http://localhost:$PORT/api/history/$HID/download" -o "$TMP/re.zip" &&
 
 echo "→ delete history entry"
 curl -fsS -X DELETE "http://localhost:$PORT/api/history/$HID" >/dev/null && echo "  ✓ delete OK" || fail "delete failed"
+
+echo "→ Wallpaper: upload an image"
+ASSET=$(curl -fsS -F "file=@${TESTIMG};type=image/png" "http://localhost:$PORT/api/wallpaper/assets" \
+  | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).id))") || fail "wallpaper upload failed"
+echo "  ✓ asset $ASSET"
+WPDOC=$(node -e '
+const Doc = require("./public/wallpaper/doc.js");
+const d = Doc.emptyDoc();
+d.name = "Smoke wallpaper";
+d.artboards.background.elements = [
+  Doc.createElement("image", { asset: process.argv[1], natW: 580, natH: 500, x: 320, y: 40, w: 140, h: 120 }),
+  Doc.createElement("text", { x: 320, y: 200, w: 140, text: "Tilbud nå", style: { font: "Montserrat", weight: 800, size: 22 } }),
+];
+d.artboards.topbanner.elements = [Doc.createElement("shape", { x: 40, y: 100, w: 220, h: 60, radius: 999, text: "Bestill ›" })];
+process.stdout.write(JSON.stringify(d));' "$ASSET")
+
+echo "→ Wallpaper: estimate (image, 100 KB each)"
+EST=$(curl -fsS -H "Content-Type: application/json" -d "{\"doc\":$WPDOC,\"options\":{}}" "http://localhost:$PORT/api/wallpaper/estimate") || fail "estimate failed"
+echo "$EST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s).results;if(r.length!==2)process.exit(2);for(const x of r){if(x.bytes>x.limitBytes)process.exit(3);console.log('  ✓ '+x.key+' '+Math.round(x.bytes/1024)+' KB ≤ '+x.limitBytes/1024+' KB')}})" || fail "estimate over budget or incomplete"
+
+echo "→ Wallpaper: export images"
+HTTPW=$(curl -s -o "$TMP/wp.zip" -w "%{http_code}" -H "Content-Type: application/json" \
+  -d "{\"doc\":$WPDOC,\"options\":{\"format\":\"jpg\"}}" "http://localhost:$PORT/api/wallpaper/export")
+[ "$HTTPW" = "200" ] || fail "wallpaper export returned $HTTPW"
+unzip -o "$TMP/wp.zip" -d "$TMP/wp" >/dev/null || fail "wallpaper zip invalid"
+check_dim "$(ls "$TMP/wp"/*bakgrunn*.jpg)" 1920 850
+check_dim "$(ls "$TMP/wp"/*toppbanner*.jpg)" 1000 300
+
+echo "→ Wallpaper: export HTML5"
+HTTPH=$(curl -s -o "$TMP/wph.zip" -w "%{http_code}" -H "Content-Type: application/json" \
+  -d "{\"doc\":$WPDOC,\"options\":{\"outputType\":\"html\",\"clickUrl\":\"https://example.com/\"}}" "http://localhost:$PORT/api/wallpaper/export")
+[ "$HTTPH" = "200" ] || fail "wallpaper html export returned $HTTPH"
+unzip -o "$TMP/wph.zip" -d "$TMP/wph" >/dev/null || fail "wallpaper html zip invalid"
+unzip -o "$(ls "$TMP/wph"/*bakgrunn*.zip)" -d "$TMP/wph/bg" >/dev/null || fail "inner creative zip invalid"
+grep -q 'content="width=1920,height=850"' "$TMP/wph/bg/index.html" || fail "ad.size missing"
+grep -q 'var clickTag = "https://example.com/"' "$TMP/wph/bg/index.html" || fail "clickTag missing"
+ls "$TMP/wph/bg/fonts/"*.woff2 >/dev/null 2>&1 || fail "subset font missing"
+echo "  ✓ HTML5 creative: index.html + ad.size + clickTag + subset fonts"
 
 echo "→ server log (browser reuse?)"
 grep -iE "launched via|browser ready" "$TMP/server.log" >/dev/null || fail "browser never launched"

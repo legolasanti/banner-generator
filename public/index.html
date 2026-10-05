@@ -14,6 +14,7 @@
     />
     <link rel="stylesheet" href="assets/banner.css" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="wallpaper/wallpaper.css" />
   </head>
   <body>
     <!-- ============================ TOP BAR ============================ -->
@@ -36,6 +37,7 @@
         <button class="tab is-active" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="true" aria-controls="view-new">Norsk Tipping</button>
         <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">ReadPeak</button>
         <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">Houseads</button>
+        <button class="tab" data-tab="wallpaper" id="tab-wallpaper" role="tab" aria-selected="false" aria-controls="view-wallpaper" tabindex="-1">Wallpaper</button>
         <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1">
           Historikk <span class="tab__count" id="historyCount" hidden>0</span>
         </button>
@@ -342,6 +344,11 @@
         </div>
       </section>
 
+      <!-- =========================== WALLPAPER ============================ -->
+      <!-- The design editor for the 1920×850 + 1000×300 wallpaper. Built by
+           wallpaper/editor/main.js the first time the tab is opened. -->
+      <section class="view is-hidden" id="view-wallpaper" role="tabpanel" aria-labelledby="tab-wallpaper" tabindex="-1"></section>
+
       <!-- =========================== HISTORIKK =========================== -->
       <section class="view is-hidden" id="view-history" role="tabpanel" aria-labelledby="tab-history" tabindex="-1">
         <div class="history">
@@ -478,6 +485,29 @@
 
     <script src="assets/formats.js"></script>
     <script src="assets/banner.js"></script>
+    <!-- Wallpaper editor: shared model/renderer first (the server uses the
+         same four files), then the editor modules in dependency order. -->
+    <script src="wallpaper/fonts.js"></script>
+    <script src="wallpaper/spec.js"></script>
+    <script src="wallpaper/doc.js"></script>
+    <script src="wallpaper/render.js"></script>
+    <script src="wallpaper/editor/util.js"></script>
+    <script src="wallpaper/editor/store.js"></script>
+    <script src="wallpaper/editor/geom.js"></script>
+    <script src="wallpaper/editor/fontload.js"></script>
+    <script src="wallpaper/editor/canvas.js"></script>
+    <script src="wallpaper/editor/interact.js"></script>
+    <script src="wallpaper/editor/storage.js"></script>
+    <script src="wallpaper/editor/controls.js"></script>
+    <script src="wallpaper/editor/preflight.js"></script>
+    <script src="wallpaper/editor/props.js"></script>
+    <script src="wallpaper/editor/props-types.js"></script>
+    <script src="wallpaper/editor/templates.js"></script>
+    <script src="wallpaper/editor/panels.js"></script>
+    <script src="wallpaper/editor/keys.js"></script>
+    <script src="wallpaper/editor/export.js"></script>
+    <script src="wallpaper/editor/preview.js"></script>
+    <script src="wallpaper/editor/main.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

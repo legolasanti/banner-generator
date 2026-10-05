@@ -53,6 +53,56 @@ største overskriften som fortsatt gir plass til tre linjer innenfor 250px.
 Dukker det opp en Canva-versjon, ligger tallene i `public/assets/formats.js` og
 i `.bn--house-rectangle`-blokken i `public/assets/banner.css`.
 
+### Wallpaper
+
+En fullverdig designeditor (egen **Wallpaper**-fane) for wallpaper-plasseringen
+i to deler: en **bakgrunn på 1920 × 850** bak hele siden og et **toppbanner på
+1000 × 300** øverst i innholdskolonnen. Designeren lager den rett i nettleseren
+— eller laster opp et ferdig design og legger ekte tekst og knapper oppå.
+
+| Tegneflate     | Størrelse   | Sikker sone                         |
+| -------------- | ----------- | ----------------------------------- |
+| **Bakgrunn**   | 1920 × 850  | 1280 × 700, midtstilt, fra toppen   |
+| **Toppbanner** | 1000 × 300  | hele banneret                       |
+
+- **Tekst** i 104 Google-skrifter (alle vekter og kursiv familien har),
+  størrelse, linjeavstand, sperring, justering, farge eller gradient-tekst,
+  kontur, understrek/gjennomstrek, store bokstaver, og tekstboks med fyll,
+  luft og hjørner.
+- **Former** — rektangel, avrundet, sirkel/ellipse, trekant, rombe, femkant,
+  sekskant, stjerne, tilbudsmerke, pil, vinkel, snakkeboble, hjerte, ramme —
+  med fyll (farge, lineær/radiell gradient eller ingen), hel/stiplet/prikket
+  kant, hjørneradius og tekst inni. Ferdige **knapper**.
+- **Linjer** — hel, stiplet, prikket, med pil/prikk/strek i endene.
+- **Ikoner** — hele Lucide-settet (~1 850), søkbart, kan farges.
+- **Bilder** — last opp, dra inn, lim inn fra utklippstavlen eller hent fra
+  lenke; utsnitt (fyll/tilpass/strekk), fokus, zoom, speilvending, runde
+  hjørner eller sirkel, kant og filtre (lysstyrke, kontrast, metning, gråtone,
+  sepia, fargetone). «Importer ferdig design» legger en hel PNG/JPG inn som
+  låst bunnlag.
+- **Effekter** på alt: synlighet, uskarphet, skygge, blandingsmodus og en
+  hover-effekt som virker i HTML5-eksporten.
+- **Lerretet**: flytt, skaler (roterte elementer skaleres i egen retning),
+  roter, markeringsramme, smarte hjelpelinjer som fester seg til tegneflaten,
+  sikker sone, sidens kanter og andre elementer, justering/fordeling, lag
+  (rekkefølge, lås, skjul, gi navn), angre/gjør om, kopier/lim inn,
+  piltaster, zoom og panorering.
+- **Hjelpelinjer som aldri eksporteres**: den røde sikre sonen og et overlegg
+  som viser hvor nettsiden dekker bakgrunnen — begge kan slås av.
+- **Kvalitetssjekk** som varsler om det som faktisk går galt med formatet:
+  innhold delvis utenfor sikker sone, innhold skjult under nettsiden, bilder
+  forstørret forbi oppløsningen sin, bitteliten tekst.
+- **Forhåndsvisning på nettsiden** i 1280/1440/1680/1920 px viser nøyaktig hvor
+  mye av sidene hver skjerm ser.
+- **Eksport** som JPG/PNG eller HTML5 (én CM360-klar ZIP per tegneflate, tekst
+  beholdt som ekte tekst med skrifter redusert til tegnene som faktisk brukes
+  — typisk 2–5 KB per snitt). Dialogen lager de ekte filene mens du endrer
+  innstillingene og viser størrelsen mot grensen (standard 2 × 100 KB), og det
+  komprimerte bildet kan ses i 100 %/200 % før du laster ned.
+- Lagres automatisk i nettleseren; lagre/åpne en selvstendig prosjektfil; alle
+  eksporter havner i **Historikk** sammen med designet, så de kan åpnes og
+  redigeres igjen.
+
 ## Funksjoner
 
 - 🖼️ **Last opp eller hent fra lenke** — dra og slipp / velg fil, **eller lim inn

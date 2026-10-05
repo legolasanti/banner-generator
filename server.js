@@ -31,6 +31,8 @@ const puppeteer = require("puppeteer");
 const imageTools = require("./lib/image");
 const html5 = require("./lib/html5");
 const safeFetch = require("./lib/safe-fetch");
+const { createWallpaperService } = require("./lib/wallpaper");
+const wallpaperDeliver = require("./lib/wallpaper/deliver");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -46,6 +48,12 @@ const HISTORY_JSON = path.join(ROOT, "history.json");
 const SETTINGS_JSON = path.join(ROOT, "settings.json");
 const FONTS_DIR = path.join(ASSETS_DIR, "fonts");
 const BANNER_CSS = path.join(ASSETS_DIR, "banner.css");
+// Wallpaper editor uploads, stored content-addressed (<sha256>.<ext>) so the
+// same image uploaded twice is one file, and a design can refer to it by id.
+const WP_ASSET_DIR = path.join(UPLOADS_DIR, "wallpaper");
+// Subset fonts fetched from Google Fonts, so a re-export works offline.
+const WP_FONT_DIR = path.join(UPLOADS_DIR, "wallpaper-fonts");
+const WP_MAX_ASSET_BYTES = 25 * 1024 * 1024;
 // Optional replacement for the Norsk Tipping mark in the 18+ badge. When none
 // of these exist, banner.js draws its built-in inline SVG. Only types Campaign
 // Manager 360 accepts inside a creative ZIP — a WEBP mark would be copied into
@@ -164,7 +172,7 @@ function normalizeClickUrl(raw) {
 // Small utilities
 // --------------------------------------------------------------------------
 function ensureDirsSync() {
-  for (const dir of [PUBLIC_DIR, ASSETS_DIR, TEMPLATES_DIR, UPLOADS_DIR, HISTORY_DIR]) {
+  for (const dir of [PUBLIC_DIR, ASSETS_DIR, TEMPLATES_DIR, UPLOADS_DIR, HISTORY_DIR, WP_ASSET_DIR]) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
@@ -561,6 +569,17 @@ function enqueue(task) {
   return run;
 }
 
+// The Wallpaper editor's export service shares the browser and the render
+// queue with the banner builder, so the two can never fight over Chrome.
+const wallpaper = createWallpaperService({
+  getBrowser,
+  enqueue,
+  imageTools,
+  html5,
+  assetDir: WP_ASSET_DIR,
+  fontCacheDir: WP_FONT_DIR,
+});
+
 // --------------------------------------------------------------------------
 // HTML5 (Campaign Manager 360) packaging
 // --------------------------------------------------------------------------
@@ -767,11 +786,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// A wallpaper design travels as JSON (images are uploaded separately and
+// referred to by id), but hundreds of elements with icon geometry can pass the
+// 1 MB the rest of the API allows. Parsed first, so the global parser below
+// sees an already-read body and leaves it alone.
+app.use("/api/wallpaper", express.json({ limit: "8mb" }));
 app.use(express.json({ limit: "1mb" }));
 
 // Static: app frontend + history (read-only, for thumbnails / re-download)
 app.use(express.static(PUBLIC_DIR));
 app.use("/history", express.static(HISTORY_DIR));
+// Uploaded wallpaper images. Names are content hashes, so they never change
+// and can be cached forever. nosniff: the bytes were checked on the way in and
+// must be served as exactly that type.
+app.use(
+  "/wp-assets",
+  express.static(WP_ASSET_DIR, {
+    index: false,
+    dotfiles: "deny",
+    immutable: true,
+    maxAge: "365d",
+    fallthrough: false,
+    setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
+  })
+);
 
 // Multer (in-memory; we convert straight to base64 — no temp files to leak)
 const ACCEPTED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
@@ -1111,6 +1149,12 @@ app.get("/api/history/:id/download", async (req, res) => {
   const history = await loadHistory();
   const entry = history.find((e) => e.id === req.params.id);
   if (!entry) return res.status(404).json({ error: "Fant ikke historikk-oppføring" });
+  if (entry.kind === "wallpaper") {
+    return wallpaperDeliver.sendDownload(res, entry, HISTORY_DIR, req.query.type).catch((err) => {
+      console.error("[wallpaper:download] " + err.message);
+      if (!res.headersSent) res.status(500).json({ error: "Kunne ikke laste ned" });
+    });
+  }
 
   const folderAbs = path.join(HISTORY_DIR, entry.id);
   if (!(await pathExists(folderAbs))) {
@@ -1317,6 +1361,109 @@ app.post("/api/fetch-image", async (req, res) => {
     // (DNS errors, TLS failures) could describe the internal network.
     const message = err && err.safe ? err.message : "Kunne ikke hente bildet fra lenken";
     res.status(400).json({ error: message });
+  }
+});
+
+// ---- Wallpaper editor ----------------------------------------------------
+const WP_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif", "image/gif": "gif" };
+
+const uploadWallpaperAsset = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: WP_MAX_ASSET_BYTES },
+  fileFilter(req, file, cb) {
+    const ok = ACCEPTED_IMAGE_MIMES.includes(file.mimetype);
+    cb(ok ? null : new Error("Kun JPG, PNG, WEBP, AVIF eller GIF er tillatt"), ok);
+  },
+}).single("file");
+
+/** A user-facing message for errors raised on purpose; a generic one otherwise. */
+function wallpaperError(res, err, fallback) {
+  console.error("[wallpaper] " + (err && err.stack ? err.stack : err));
+  if (res.headersSent) return res.destroy();
+  const safe = err && err.safe;
+  res.status(safe ? 400 : 500).json({ error: safe ? err.message : fallback });
+}
+
+// Images for the editor. Stored under their SHA-256, so a design can refer to
+// an image by an id that is also a guarantee of its content.
+app.post("/api/wallpaper/assets", (req, res) => {
+  uploadWallpaperAsset(req, res, async (err) => {
+    if (err) {
+      const msg = err.code === "LIMIT_FILE_SIZE" ? "Bildet er for stort (maks 25 MB)" : err.message || "Opplasting feilet";
+      return res.status(400).json({ error: msg });
+    }
+    try {
+      if (!req.file) return res.status(400).json({ error: "Mangler bildefil" });
+      // Trust the bytes, never the declared type: the extension decides how
+      // the file is served back out.
+      const ext = WP_EXT[sniffImageMime(req.file.buffer)];
+      if (!ext) return res.status(400).json({ error: "Filen er ikke et støttet bilde (JPG/PNG/WEBP/AVIF/GIF)" });
+      const id = require("crypto").createHash("sha256").update(req.file.buffer).digest("hex") + "." + ext;
+      const abs = path.join(WP_ASSET_DIR, id);
+      if (!(await pathExists(abs))) await fsp.writeFile(abs, req.file.buffer);
+      let width = 0;
+      let height = 0;
+      // JPEG can never be transparent; for the others, look at the pixels.
+      // The editor uses this to tell when an image hides what is under it.
+      let opaque = ext === "jpg";
+      const sharp = imageTools.getSharp();
+      if (sharp) {
+        const meta = await sharp(req.file.buffer).metadata();
+        if (!opaque) opaque = !meta.hasAlpha || (await sharp(req.file.buffer).stats()).isOpaque;
+        // EXIF orientation 5–8 swaps the axes of what the browser shows.
+        const swap = meta.orientation >= 5;
+        width = (swap ? meta.height : meta.width) || 0;
+        height = (swap ? meta.width : meta.height) || 0;
+      }
+      res.json({ id, url: "/wp-assets/" + id, width, height, opaque, bytes: req.file.buffer.length });
+    } catch (e) {
+      wallpaperError(res, e, "Kunne ikke lagre bildet");
+    }
+  });
+});
+
+// What the files will weigh with the chosen settings — the export dialog
+// calls this as settings change, so the designer sees the KB before download.
+app.post("/api/wallpaper/estimate", async (req, res) => {
+  try {
+    const body = req.body || {};
+    res.json(await wallpaper.estimate(body.doc, body.options));
+  } catch (err) {
+    wallpaperError(res, err, "Kunne ikke beregne filstørrelsen");
+  }
+});
+
+app.post("/api/wallpaper/export", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const result = await wallpaper.exportAll(body.doc, body.options);
+    const settings = await loadSettings();
+    const now = new Date();
+    const baseName = sanitizeFilename((body.options && body.options.filename) || result.doc.name || "wallpaper");
+    const fileBase = settings.export.includeTimestampInFilename ? `${baseName}-${fileStamp(now)}` : baseName;
+    const id = `${now.getTime()}-${baseName}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const entry = await wallpaperDeliver.saveToHistory({
+      historyDir: HISTORY_DIR,
+      id,
+      fileBase,
+      filename: baseName,
+      now,
+      result,
+      html5,
+    });
+    await withHistoryLock(async () => {
+      let history = await loadHistory();
+      history.unshift(entry);
+      history = await trimHistory(history);
+      await writeHistory(history);
+    });
+
+    res.setHeader("X-Entry-Id", id);
+    res.setHeader("X-Banner-Report", encodeURIComponent(JSON.stringify(entry.report)));
+    await wallpaperDeliver.sendDownload(res, entry, HISTORY_DIR, result.opts.outputType);
+  } catch (err) {
+    wallpaperError(res, err, "Eksporten feilet. Prøv igjen – vedvarer det, se serverloggen.");
   }
 });
 

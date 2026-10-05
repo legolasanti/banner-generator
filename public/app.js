@@ -114,6 +114,7 @@
     tabs: $$(".tab"),
     viewNew: $("#view-new"),
     viewHistory: $("#view-history"),
+    viewWallpaper: $("#view-wallpaper"),
     historyCount: $("#historyCount"),
 
     dropzone: $("#dropzone"),
@@ -1267,6 +1268,7 @@
       thumb.loading = "lazy";
       thumb.alt = entry.filename;
       thumb.src = "/" + entry.thumbnailPath;
+      if (entry.kind === "wallpaper") thumb.classList.add("hcard__thumb--wide");
       thumb.onerror = () => { thumb.src = "assets/placeholder.svg"; };
 
       const body = document.createElement("div");
@@ -1277,7 +1279,7 @@
       // Entries predating the three-product split are Norsk Tipping.
       const tag = document.createElement("span");
       tag.className = "hcard__tag";
-      tag.textContent = F.getProduct(entry.product).label;
+      tag.textContent = entry.kind === "wallpaper" ? "Wallpaper" : F.getProduct(entry.product).label;
       name.appendChild(tag);
       const head = document.createElement("div");
       head.className = "hcard__head";
@@ -1310,6 +1312,20 @@
 
       actions.appendChild(dl);
       if (htmlDl) actions.appendChild(htmlDl);
+      // A wallpaper export keeps its design (project.json), so it can be
+      // reopened in the editor and changed — not just re-downloaded.
+      if (entry.kind === "wallpaper" && entry.project) {
+        const edit = document.createElement("button");
+        edit.className = "btn-ghost btn-sm";
+        edit.type = "button";
+        edit.textContent = "Rediger";
+        edit.addEventListener("click", () => {
+          if (!confirm("Åpne dette designet i Wallpaper-editoren? Det du jobber med nå, kan hentes tilbake med Angre.")) return;
+          switchTab("wallpaper");
+          window.WPE.main.openProject("/" + entry.folderPath + entry.project);
+        });
+        actions.appendChild(edit);
+      }
       actions.appendChild(del);
       body.appendChild(name);
       body.appendChild(head);
@@ -1339,6 +1355,8 @@
   // is the history log.
   function switchTab(tab, focusTab) {
     const isHistory = tab === "history";
+    const isWallpaper = tab === "wallpaper";
+    const isBuilder = !isHistory && !isWallpaper;
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -1346,12 +1364,18 @@
       b.tabIndex = active ? 0 : -1; // roving tabindex
       if (active && focusTab) b.focus();
     });
-    el.viewNew.classList.toggle("is-hidden", isHistory);
+    el.viewNew.classList.toggle("is-hidden", !isBuilder);
     el.viewHistory.classList.toggle("is-hidden", !isHistory);
-    el.viewNew.tabIndex = isHistory ? -1 : 0;
+    el.viewWallpaper.classList.toggle("is-hidden", !isWallpaper);
+    el.viewNew.tabIndex = isBuilder ? 0 : -1;
     el.viewHistory.tabIndex = isHistory ? 0 : -1;
     if (isHistory) {
       loadHistory();
+      return;
+    }
+    // The wallpaper editor is its own workspace; it builds itself on first use.
+    if (isWallpaper) {
+      if (window.WPE && window.WPE.main) window.WPE.main.activate();
       return;
     }
     // The builder panel is shared, so say which tab it currently belongs to.
@@ -1367,7 +1391,7 @@
   function initTabs() {
     el.tabs.forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     // WAI-ARIA tablist keyboard support: Arrow / Home / End move + select.
-    const order = F.ORDER.concat("history");
+    const order = F.ORDER.concat("wallpaper", "history");
     const tablist = document.querySelector(".tabs");
     tablist.addEventListener("keydown", (e) => {
       const activeBtn = document.querySelector(".tab.is-active");
@@ -1699,6 +1723,8 @@
     // whose tab is open, then renders everything.
     applyProduct(state.product);
     loadHistory();
+    // Wallpaper exports land in the same history.
+    window.addEventListener("wallpaper:exported", loadHistory);
 
     let raf = 0;
     window.addEventListener("resize", () => {

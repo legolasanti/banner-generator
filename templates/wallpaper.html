@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <title>Wallpaper</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wp-root"></div>
+    <script src="../public/wallpaper/fonts.js"></script>
+    <script src="../public/wallpaper/render.js"></script>
+    <script>
+      /* The server injects window.__WP__ before navigation (Puppeteer
+         evaluateOnNewDocument):
+           { artboard, width, height, fontCss, assetBase }
+         fontCss holds @font-face rules with the design's subset fonts as
+         data: URLs, so the render never depends on a network round-trip. */
+      (function () {
+        window.__WP_READY__ = false;
+        window.__WP_ERROR__ = null;
+
+        function addStyle(css) {
+          var s = document.createElement("style");
+          s.textContent = css;
+          document.head.appendChild(s);
+        }
+
+        function imagesReady() {
+          var imgs = Array.prototype.slice.call(document.images);
+          return Promise.all(
+            imgs.map(function (img) {
+              if (img.complete && img.naturalWidth) return Promise.resolve();
+              return new Promise(function (resolve) {
+                img.addEventListener("load", resolve);
+                img.addEventListener("error", function () {
+                  window.__WP_ERROR__ = "Kunne ikke laste bildet " + img.getAttribute("data-asset");
+                  resolve();
+                });
+              });
+            })
+          );
+        }
+
+        function start() {
+          try {
+            var d = window.__WP__ || {};
+            addStyle(WallpaperRender.BASE_CSS);
+            addStyle(d.fontCss || "");
+            var root = document.getElementById("wp-root");
+            WallpaperRender.renderArtboard(root, d.artboard, { width: d.width, height: d.height }, {
+              assetUrl: function (id) {
+                return d.assetBase + id;
+              },
+            });
+            // Fonts only load once text using them is laid out.
+            void root.offsetHeight;
+            var faces = (d.faces || []).map(function (f) {
+              var spec = (f.italic ? "italic " : "") + f.weight + ' 16px "' + f.family + '"';
+              return document.fonts.load(spec, f.text).catch(function () {});
+            });
+            Promise.all(faces)
+              .then(function () {
+                return document.fonts.ready;
+              })
+              .then(imagesReady)
+              .then(function () {
+                requestAnimationFrame(function () {
+                  requestAnimationFrame(function () {
+                    window.__WP_READY__ = true;
+                  });
+                });
+              });
+          } catch (err) {
+            window.__WP_ERROR__ = String((err && err.stack) || err);
+            window.__WP_READY__ = true;
+          }
+        }
+
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+        else start();
+      })();
+    </script>
+  </body>
+</html>
