@@ -82,6 +82,18 @@
     name: "Mobil", hint: "320×400",
     headline: { size: 22, lines: 3 },
   };
+  // The tall sibling of the toppbanner: same row layout (headline beside the
+  // photo), but with the height to give the photo a plain 4:3 crop and the
+  // headline four lines instead of three. No Canva original either; the header
+  // is the desktop's, and the photo is the largest 4:3 that leaves the copy a
+  // column wide enough for ~15 characters a line at 38px.
+  var HA_BILLBOARD = {
+    key: "house-billboard", type: "house-billboard", file: TEMPLATE,
+    width: 980, height: 500, label: "house-980x500",
+    media: { width: 560, height: 420 },
+    name: "Billboard", hint: "980×500",
+    headline: { size: 38, lines: 4 },
+  };
   var HA_PANORAMA = {
     key: "house-panorama", type: "house-panorama", file: TEMPLATE,
     width: 980, height: 300, label: "house-980x300",
@@ -160,7 +172,7 @@
       id: "houseads",
       label: "Houseads",
       fontPrefix: "noto-serif-",
-      specs: [HA_MOBILE, HA_PANORAMA, HA_DESKTOP, HA_SKYSCRAPER, HA_RECTANGLE],
+      specs: [HA_MOBILE, HA_PANORAMA, HA_BILLBOARD, HA_DESKTOP, HA_SKYSCRAPER, HA_RECTANGLE],
       ageBadge: false,
       vinnersjanse: false,
       // Headline and image only — the header (ANNONSE + abc shopping) is fixed
@@ -170,12 +182,13 @@
       sets: [
         {
           id: "all",
-          label: "Alle 5",
-          keys: ["house-mobile", "house-panorama", "house-desktop", "house-skyscraper", "house-rectangle"],
-          count: "5 størrelser",
+          label: "Alle 6",
+          keys: ["house-mobile", "house-panorama", "house-billboard", "house-desktop", "house-skyscraper", "house-rectangle"],
+          count: "6 størrelser",
         },
         { id: "house-mobile", label: "320×400", keys: ["house-mobile"], count: "1 størrelse (320×400)" },
         { id: "house-panorama", label: "980×300", keys: ["house-panorama"], count: "1 størrelse (980×300)" },
+        { id: "house-billboard", label: "980×500", keys: ["house-billboard"], count: "1 størrelse (980×500)" },
         { id: "house-desktop", label: "580×500", keys: ["house-desktop"], count: "1 størrelse (580×500)" },
         { id: "house-skyscraper", label: "300×600", keys: ["house-skyscraper"], count: "1 størrelse (300×600)" },
         { id: "house-rectangle", label: "300×250", keys: ["house-rectangle"], count: "1 størrelse (300×250)" },

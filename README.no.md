@@ -271,8 +271,8 @@ La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
 - Tre produkter i fanene i stedet for ett: **Norsk Tipping** (uendret),
   **ReadPeak** (de samme to plasseringene uten 18+-merket og uten
   vinnersannsynlighet, med annonsørens eget navn og «Les mer» som kan endres) og
-  **Houseads** (abc shoppings 320×400, 980×300, 580×500, 300×600 og
-  300×250).
+  **Houseads** (abc shoppings 320×400, 980×300, 980×500, 580×500, 300×600
+  og 300×250).
 - **Egne grenser per format** under Innstillinger → Eksport, så et 190×190 og et
   980×300 slipper å dele én størrelsesgrense.
 - Overskrift og Ingress får plass til tre linjer hver, og «Les mer» følger

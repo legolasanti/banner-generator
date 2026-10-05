@@ -237,9 +237,9 @@
      only editable parts are the photo and the headline, set in Noto Serif at a
      size and line count fixed per format (see formats.js / banner.css).
 
-     One markup shape for all four: .bn__house-row is a column on the three
-     upright formats (headline under the photo) and a row on the 980x300
-     toppbanner (headline beside it) — the direction is the only difference, so
+     One markup shape for all of them: .bn__house-row is a column on the
+     upright formats (headline under the photo) and a row on the two 980-wide
+     ones, 980×300 and 980×500 (headline beside it) — the direction is the only difference, so
      CSS decides it and the markup never forks. */
   function renderHouse(data) {
     // The same «Annonse»-tekst setting as every other format — the house

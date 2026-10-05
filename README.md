@@ -271,8 +271,8 @@ Leave the Terminal window open while you work. Closing it stops the app.
 - Three products in the tab bar instead of one: **Norsk Tipping** (unchanged),
   **ReadPeak** (same two placements without the 18+ mark and the Vinnersjanse
   strip, with the advertiser's own name and an editable "Les mer") and
-  **Houseads** (abc shopping's 320×400, 980×300, 580×500, 300×600 and
-  300×250).
+  **Houseads** (abc shopping's 320×400, 980×300, 980×500, 580×500, 300×600
+  and 300×250).
 - **Egne grenser per format** under Innstillinger → Eksport, so a 190×190 and a
   980×300 no longer have to share one size limit.
 - Overskrift and Ingress both fit three lines, and "Les mer" follows the Ingress

@@ -76,6 +76,7 @@
 /* Houseads */
 .bn--house-mobile     { width: 320px; height: 400px; }
 .bn--house-panorama   { width: 980px; height: 300px; }
+.bn--house-billboard  { width: 980px; height: 500px; }
 .bn--house-desktop    { width: 580px; height: 500px; }
 .bn--house-skyscraper { width: 300px; height: 600px; }
 .bn--house-rectangle  { width: 300px; height: 250px; }
@@ -569,6 +570,33 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   justify-content: center;
 }
 .bn--house-panorama .bn__headline { -webkit-line-clamp: 3; }
+
+/* ---- 980×500 · Billboard ---------------------------------------------- */
+/* The toppbanner's layout with room to breathe: headline beside the photo,
+   centred against it. 56 header + 420 photo + 24 bottom = 500; the photo is a
+   plain 4:3 (560×420), leaving the copy a 336px column (980 − 2×24 − 560 − 36). */
+.bn--house-billboard {
+  --house-pad: 24px;
+  --house-head-h: 56px;
+  --house-ink: 17px;
+  --house-logo-h: 21px;
+  --house-media-h: 420px;
+  --house-hl: 38px;
+  --house-text-top: 0px;
+}
+.bn--house-billboard .bn__house-row {
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0 var(--house-pad) 24px;
+  gap: 36px;
+}
+.bn--house-billboard .bn__media { width: 560px; }
+.bn--house-billboard .bn__body {
+  padding: 0;
+  height: var(--house-media-h);
+  justify-content: center;
+}
+.bn--house-billboard .bn__headline { -webkit-line-clamp: 4; }
 
 /* ---- 580×500 · Desktop -------------------------------------------------- */
 .bn--house-desktop {
