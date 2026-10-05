@@ -238,3 +238,39 @@ test("turns Drive and Dropbox share links into direct downloads", () => {
   );
   assert.equal(links.directImageUrl("https://images.example.com/a.jpg?w=1600"), "https://images.example.com/a.jpg?w=1600");
 });
+
+// ---------------------------------------------------------------------------
+// Hardening (from review)
+// ---------------------------------------------------------------------------
+function tinyXlsx(sheetXml) {
+  return zipToBuffer([
+    { name: "xl/workbook.xml", buffer: Buffer.from('<workbook><sheets><sheet name="A" r:id="rId1"/></sheets></workbook>') },
+    { name: "xl/worksheets/sheet1.xml", buffer: Buffer.from("<worksheet><sheetData>" + sheetXml + "</sheetData></worksheet>") },
+  ]);
+}
+
+test("an XLSX with an absurd row or column number is refused, not allocated", async () => {
+  const cell = '<c r="A1" t="inlineStr"><is><t>x</t></is></c>';
+  await assert.rejects(async () => xlsx.readFirstSheet(await tinyXlsx('<row r="4000000000">' + cell + "</row>")), /for stort/);
+  await assert.rejects(
+    async () => xlsx.readFirstSheet(await tinyXlsx('<row r="1"><c r="ZZZZZZ1" t="inlineStr"><is><t>x</t></is></c></row>')),
+    /kolonner/
+  );
+});
+
+test("a self-closing XLSX row does not swallow the next one", async () => {
+  const { table } = xlsx.readFirstSheet(
+    await tinyXlsx(
+      '<row r="1"><c r="A1" t="inlineStr"><is><t>Overskrift</t></is></c></row>' +
+        '<row r="2" ht="30" customHeight="1"/>' +
+        '<row r="3"><c r="A3" t="inlineStr"><is><t>Hei</t></is></c></row>'
+    )
+  );
+  assert.deepEqual(table, [["Overskrift"], [], ["Hei"]]);
+});
+
+test("focus words with æøå and Turkish letters are recognised", () => {
+  assert.deepEqual(sheet.parseFocus("øverst til venstre"), { x: 0, y: 0 });
+  assert.deepEqual(sheet.parseFocus("Øverst"), { x: 50, y: 0 });
+  assert.deepEqual(sheet.parseFocus("sağ üst"), { x: 100, y: 0 });
+});

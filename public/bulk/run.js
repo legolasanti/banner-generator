@@ -229,12 +229,24 @@
     pollTimer = setTimeout(poll, POLL_MS);
   }
 
+  var pollFailures = 0;
+  var MAX_POLL_FAILURES = 8;
+
   function poll() {
     var job = state.job;
     if (!job) return;
     fetch("/api/bulk/jobs/" + encodeURIComponent(job.id))
-      .then(BULK.source.readJson)
+      .then(function (res) {
+        // 404 = the server no longer knows the run (it restarted): final.
+        return BULK.source.readJson(res).catch(function (err) {
+          if (res.status === 404) err.final = true;
+          throw err;
+        });
+      })
       .then(function (next) {
+        // The sheet was closed (or another run started) while this was in flight.
+        if (state.job !== job) return;
+        pollFailures = 0;
         next.rids = job.rids;
         state.job = next;
         mirrorRows(next);
@@ -246,8 +258,17 @@
         }
       })
       .catch(function (err) {
-        // The server restarted, or went away: say so and stop.
-        state.job = Object.assign({}, job, { status: "failed", error: err.message });
+        if (state.job !== job) return;
+        // A laptop waking up or a dropped connection: the run goes on on the
+        // server, so keep asking for a while before giving up.
+        if (!err.final && ++pollFailures < MAX_POLL_FAILURES) {
+          pollTimer = setTimeout(poll, POLL_MS * Math.min(8, pollFailures + 1));
+          return;
+        }
+        state.job = Object.assign({}, job, {
+          status: "failed",
+          error: err.final ? err.message : "Mistet kontakten med serveren. Sjekk Historikk – kjøringen kan ha blitt ferdig der.",
+        });
         showProgress(state.job);
         finished(state.job);
       });
@@ -380,8 +401,13 @@
 
   store.on(function (what) {
     if (what === "fit-done" || what === "evaluated" || what === "rows" || what === "formats") refresh();
-    if (what === "rows" && !state.rows.length) {
-      dom.result && (dom.result.hidden = true);
+    // The sheet was closed: stop following its run and clear what it showed.
+    // (The run itself carries on on the server and lands in Historikk.)
+    if (what === "rows" && !state.rows.length && dom.go) {
+      clearTimeout(pollTimer);
+      dom.progress.hidden = true;
+      dom.result.hidden = true;
+      refresh();
     }
   });
 

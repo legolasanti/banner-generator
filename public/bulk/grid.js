@@ -401,7 +401,10 @@
     } else if (what === "row") {
       refreshRow(payload.row);
       refreshCountsSoon();
-    } else if (what === "evaluated" || what === "formats" || what === "crop" || what === "run-rows") {
+    } else if (what === "run-rows") {
+      // Only the run mark changed: the banners themselves stay as drawn.
+      state.rows.forEach(updateMeta);
+    } else if (what === "evaluated" || what === "formats" || what === "crop") {
       state.rows.forEach(refreshRow);
       refreshCountsSoon();
     }

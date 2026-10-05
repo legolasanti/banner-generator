@@ -15,6 +15,7 @@
 
   var view = null;
   var built = false;
+  var booting = false; // settings are loading; build() follows
   var dom = {};
 
   function loadSettings() {
@@ -51,9 +52,14 @@
       showScreen();
       return;
     }
-    build();
+    if (booting) return;
+    // The session is restored BEFORE the controls are built, so the toolbar
+    // and the run bar start out showing the restored formats, weight and
+    // output — not the defaults with the old values hiding behind them.
+    booting = true;
     loadSettings().then(function () {
       var resumed = store.restore();
+      build();
       if (resumed) {
         store.emit("rows"); // rebuilds the cards and refits every row
         state.rows.forEach(function (row) {

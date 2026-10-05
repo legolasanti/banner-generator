@@ -51,7 +51,7 @@
         console.error("[bulk] listener failed on " + what, err);
       }
     });
-    if (what !== "job" && what !== "fit") persistSoon();
+    if (what !== "job" && what !== "fit" && what !== "run-rows") persistSoon();
   }
 
   function specs() {

@@ -199,3 +199,12 @@ test("the report is one semicolon line per file, readable by Norwegian Excel", (
 test("size folders drop the house- prefix", () => {
   assert.equal(sizeFolder("house-980x500"), "980x500");
 });
+
+test("a headline that looks like a formula is defused in the report", () => {
+  const csv = reportCsv(
+    { rows: [{ sheetRow: 2, fileBase: "a", headline: '=HYPERLINK("x")', report: [{ key: "k", label: "house-1x1", file: "f", bytes: 1024, scale: 1 }] }] },
+    { k: "house-1x1" },
+    false
+  );
+  assert.match(csv, /"'=HYPERLINK\(""x""\)"/);
+});
