@@ -54,6 +54,55 @@ If a Canva version turns up, the numbers to match are in
 `public/assets/formats.js` and the `.bn--house-rectangle` block of
 `public/assets/banner.css`.
 
+### Wallpaper
+
+A full design editor (its own **Wallpaper** tab) for the two-part wallpaper
+placement: a **1920 × 850 background** behind the whole page and a **1000 × 300
+top banner** at the top of the content column. Designers build it right in the
+browser — or upload a finished design and put live text and buttons on top.
+
+| Artboard       | Size        | Safe area                         |
+| -------------- | ----------- | --------------------------------- |
+| **Bakgrunn**   | 1920 × 850  | 1280 × 700, centred, from the top |
+| **Toppbanner** | 1000 × 300  | the whole banner                  |
+
+- **Text** in 104 Google Fonts (every weight and italic the family has), size,
+  line height, letter spacing, alignment, colour or gradient text, outline,
+  underline/strike, capitals, and a text box with fill, padding and radius.
+- **Shapes** — rectangle, rounded, circle/ellipse, triangle, diamond,
+  pentagon, hexagon, star, offer burst, arrow, chevron, speech bubble, heart,
+  frame — with fill (colour, linear/radial gradient or none), solid/dashed/
+  dotted borders, corner radius, and text inside. Ready-made **buttons**.
+- **Lines** — solid, dashed, dotted, with arrow/dot/bar ends.
+- **Icons** — the full Lucide set (~1 850), searchable, recolourable.
+- **Images** — upload, drag in, paste from the clipboard or fetch by link;
+  crop (fill/fit/stretch), focus, zoom, flip, round corners or circle,
+  border, and filters (brightness, contrast, saturation, greyscale, sepia,
+  hue). "Import finished design" drops a complete PNG/JPG in as a locked
+  bottom layer.
+- **Effects** on everything: opacity, blur, drop shadow, blend mode, and a
+  hover effect that comes alive in the HTML5 export.
+- **Canvas**: move, resize (rotated elements resize in their own frame),
+  rotate, marquee select, smart guides that snap to the artboard, the safe
+  area, the page edges and other elements, alignment/distribution, layers
+  (reorder, lock, hide, rename), undo/redo, copy/paste, keyboard nudging,
+  zoom and pan.
+- **Guides that never export**: the red safe-area frame and an overlay
+  showing where the page covers the background — each can be switched off.
+- **Quality check** flags what really goes wrong with this format: content
+  partly outside the safe area, content hidden under the page, images blown
+  up past their resolution, tiny text.
+- **Site preview** at 1280/1440/1680/1920 px shows exactly how much of the
+  sides each screen sees.
+- **Export** as JPG/PNG or as HTML5 (one CM360-ready ZIP per artboard, text
+  kept as live text with fonts subset to the glyphs actually used — typically
+  2–5 KB per face). The dialog renders the real files as you change settings
+  and shows each one's size against its limit (default 2 × 100 KB), with the
+  compressed image viewable at 100 %/200 % before you download.
+- Autosaved in the browser; save/open a self-contained project file; every
+  export lands in **History** with its design, so it can be reopened and
+  edited.
+
 ## Features
 
 - 🖼️ **Upload or fetch by URL** — drag & drop / pick a file, **or paste an image
@@ -608,6 +657,10 @@ look in one place and both change — the preview is a faithful copy of the resu
 | `POST /api/settings`             | Save settings                                        |
 | `POST /api/settings/badge-icon`  | Replace the mark in the 18+ badge (PNG/JPG)          |
 | `DELETE /api/settings/badge-icon`| Go back to the built-in mark                         |
+| `POST /api/wallpaper/assets`     | Multipart `file` → stores an image by SHA-256, returns its id |
+| `POST /api/wallpaper/estimate`   | `{doc, options}` → each file's real size (+ preview image)    |
+| `POST /api/wallpaper/export`     | `{doc, options}` → streams the download, saves to history     |
+| `GET  /wp-assets/:id`            | An uploaded wallpaper image (immutable)              |
 | `GET  /api/health`               | Status (browser connected?)                          |
 
 All four formats are rendered and saved on every generate; `downloadSet` only

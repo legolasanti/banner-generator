@@ -827,3 +827,7 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 .limit-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .limit-row input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .limit-row__unit { font-size: 11px; color: var(--ink-3); }
+
+/* Wallpaper exports are 1920×850 — show the whole strip, not a crop of it. */
+.hcard__thumb--wide { object-fit: contain; background: #eef0ea; }
+.hcard__actions .btn-ghost { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
