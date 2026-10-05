@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="assets/banner.css" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="wallpaper/wallpaper.css" />
+    <link rel="stylesheet" href="bulk/bulk.css" />
   </head>
   <body>
     <!-- ============================ TOP BAR ============================ -->
@@ -37,6 +38,7 @@
         <button class="tab is-active" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="true" aria-controls="view-new">Norsk Tipping</button>
         <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">ReadPeak</button>
         <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">Houseads</button>
+        <button class="tab" data-tab="bulk" id="tab-bulk" role="tab" aria-selected="false" aria-controls="view-bulk" tabindex="-1" title="Mange Houseads fra ett regneark">Bulk</button>
         <button class="tab" data-tab="wallpaper" id="tab-wallpaper" role="tab" aria-selected="false" aria-controls="view-wallpaper" tabindex="-1">Wallpaper</button>
         <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1">
           Historikk <span class="tab__count" id="historyCount" hidden>0</span>
@@ -344,6 +346,11 @@
         </div>
       </section>
 
+      <!-- ============================= BULK =============================== -->
+      <!-- Many Houseads from one spreadsheet. Built by bulk/main.js the first
+           time the tab is opened. -->
+      <section class="view is-hidden" id="view-bulk" role="tabpanel" aria-labelledby="tab-bulk" tabindex="-1"></section>
+
       <!-- =========================== WALLPAPER ============================ -->
       <!-- The design editor for the 1920×850 + 1000×300 wallpaper. Built by
            wallpaper/editor/main.js the first time the tab is opened. -->
@@ -485,6 +492,7 @@
 
     <script src="assets/formats.js"></script>
     <script src="assets/banner.js"></script>
+    <script src="assets/autofit.js"></script>
     <!-- Wallpaper editor: shared model/renderer first (the server uses the
          same four files), then the editor modules in dependency order. -->
     <script src="wallpaper/fonts.js"></script>
@@ -508,6 +516,16 @@
     <script src="wallpaper/editor/export.js"></script>
     <script src="wallpaper/editor/preview.js"></script>
     <script src="wallpaper/editor/main.js"></script>
+    <!-- Bulk: model first, then the pieces that listen to it. Uses the
+         wallpaper editor's DOM helper (WPE.util.h), so it loads after it. -->
+    <script src="bulk/state.js"></script>
+    <script src="bulk/fit.js"></script>
+    <script src="bulk/source.js"></script>
+    <script src="bulk/grid.js"></script>
+    <script src="bulk/editor.js"></script>
+    <script src="bulk/rules.js"></script>
+    <script src="bulk/run.js"></script>
+    <script src="bulk/main.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

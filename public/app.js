@@ -115,6 +115,7 @@
     viewNew: $("#view-new"),
     viewHistory: $("#view-history"),
     viewWallpaper: $("#view-wallpaper"),
+    viewBulk: $("#view-bulk"),
     historyCount: $("#historyCount"),
 
     dropzone: $("#dropzone"),
@@ -1268,7 +1269,7 @@
       thumb.loading = "lazy";
       thumb.alt = entry.filename;
       thumb.src = "/" + entry.thumbnailPath;
-      if (entry.kind === "wallpaper") thumb.classList.add("hcard__thumb--wide");
+      if (entry.kind === "wallpaper" || entry.kind === "bulk") thumb.classList.add("hcard__thumb--wide");
       thumb.onerror = () => { thumb.src = "assets/placeholder.svg"; };
 
       const body = document.createElement("div");
@@ -1279,7 +1280,8 @@
       // Entries predating the three-product split are Norsk Tipping.
       const tag = document.createElement("span");
       tag.className = "hcard__tag";
-      tag.textContent = entry.kind === "wallpaper" ? "Wallpaper" : F.getProduct(entry.product).label;
+      tag.textContent =
+        entry.kind === "wallpaper" ? "Wallpaper" : entry.kind === "bulk" ? "Bulk" : F.getProduct(entry.product).label;
       name.appendChild(tag);
       const head = document.createElement("div");
       head.className = "hcard__head";
@@ -1298,7 +1300,18 @@
       // Entries generated as HTML5 keep both: the images (also the backup
       // images for CM360) and the ready-to-upload packages.
       let htmlDl = null;
-      if (entry.htmlFiles) {
+      // A bulk run downloads as one ZIP, one folder per size; its HTML5
+      // packages (when it made them) are a second ZIP.
+      if (entry.kind === "bulk") {
+        dl.textContent = entry.outputType === "html" ? "Bilder" : "Last ned";
+        dl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?layout=format";
+        if (entry.outputType === "html") {
+          htmlDl = document.createElement("a");
+          htmlDl.className = "btn-ghost btn-sm";
+          htmlDl.textContent = "HTML5";
+          htmlDl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?layout=format&type=html";
+        }
+      } else if (entry.htmlFiles) {
         htmlDl = document.createElement("a");
         htmlDl.className = "btn-ghost btn-sm";
         htmlDl.textContent = "HTML5";
@@ -1356,7 +1369,8 @@
   function switchTab(tab, focusTab) {
     const isHistory = tab === "history";
     const isWallpaper = tab === "wallpaper";
-    const isBuilder = !isHistory && !isWallpaper;
+    const isBulk = tab === "bulk";
+    const isBuilder = !isHistory && !isWallpaper && !isBulk;
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -1367,10 +1381,16 @@
     el.viewNew.classList.toggle("is-hidden", !isBuilder);
     el.viewHistory.classList.toggle("is-hidden", !isHistory);
     el.viewWallpaper.classList.toggle("is-hidden", !isWallpaper);
+    el.viewBulk.classList.toggle("is-hidden", !isBulk);
     el.viewNew.tabIndex = isBuilder ? 0 : -1;
     el.viewHistory.tabIndex = isHistory ? 0 : -1;
     if (isHistory) {
       loadHistory();
+      return;
+    }
+    // Bulk is its own workspace too, built on first use.
+    if (isBulk) {
+      if (window.BULK && window.BULK.main) window.BULK.main.activate();
       return;
     }
     // The wallpaper editor is its own workspace; it builds itself on first use.
@@ -1391,7 +1411,7 @@
   function initTabs() {
     el.tabs.forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     // WAI-ARIA tablist keyboard support: Arrow / Home / End move + select.
-    const order = F.ORDER.concat("wallpaper", "history");
+    const order = F.ORDER.concat("bulk", "wallpaper", "history");
     const tablist = document.querySelector(".tabs");
     tablist.addEventListener("keydown", (e) => {
       const activeBtn = document.querySelector(".tab.is-active");
@@ -1725,6 +1745,7 @@
     loadHistory();
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);
+    window.addEventListener("bulk:exported", loadHistory);
 
     let raf = 0;
     window.addEventListener("resize", () => {

@@ -33,6 +33,11 @@ const html5 = require("./lib/html5");
 const safeFetch = require("./lib/safe-fetch");
 const { createWallpaperService } = require("./lib/wallpaper");
 const wallpaperDeliver = require("./lib/wallpaper/deliver");
+const { createBulkImages } = require("./lib/bulk/images");
+const { createBulkJobs } = require("./lib/bulk/jobs");
+const bulkDeliver = require("./lib/bulk/deliver");
+const bulkLinks = require("./lib/bulk/links");
+const { registerBulkRoutes } = require("./lib/bulk/routes");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -54,6 +59,8 @@ const WP_ASSET_DIR = path.join(UPLOADS_DIR, "wallpaper");
 // Subset fonts fetched from Google Fonts, so a re-export works offline.
 const WP_FONT_DIR = path.join(UPLOADS_DIR, "wallpaper-fonts");
 const WP_MAX_ASSET_BYTES = 25 * 1024 * 1024;
+// Bulk photos: a render master and a preview per photo, content-addressed.
+const BULK_DIR = path.join(UPLOADS_DIR, "bulk");
 // Optional replacement for the Norsk Tipping mark in the 18+ badge. When none
 // of these exist, banner.js draws its built-in inline SVG. Only types Campaign
 // Manager 360 accepts inside a creative ZIP — a WEBP mark would be copied into
@@ -115,6 +122,11 @@ function budgetFor(settings, spec) {
   return kb > 0 ? kb * 1024 : 0;
 }
 
+// Formats whose headline can be auto-sized, i.e. that carry an autoFit rule.
+const AUTOFIT_LABELS = formats.ORDER.flatMap((id) =>
+  formats.getProduct(id).specs.filter((spec) => spec.autoFit).map((spec) => spec.label)
+);
+
 const DEFAULT_SETTINGS = {
   gamePresets: [
     { id: "vikinglotto", label: "Vikinglotto", vinnersjanse: "Vinnersjanse 1.premie 1:61 mill. per rekke" },
@@ -149,6 +161,10 @@ const DEFAULT_SETTINGS = {
     // photo. Requires sharp; ignored when it is unavailable.
     superSample: true,
   },
+  // Text-size rules for auto-sized headlines (Bulk, and Houseads with "Auto"),
+  // keyed by format label: { "house-320x400": { tiers: [[26, 1.2], …] } }.
+  // Empty means every format uses the measured default in formats.js.
+  autoFit: {},
 };
 
 // Landing pages for the HTML5 export. Kept deliberately strict: the value ends
@@ -172,7 +188,7 @@ function normalizeClickUrl(raw) {
 // Small utilities
 // --------------------------------------------------------------------------
 function ensureDirsSync() {
-  for (const dir of [PUBLIC_DIR, ASSETS_DIR, TEMPLATES_DIR, UPLOADS_DIR, HISTORY_DIR, WP_ASSET_DIR]) {
+  for (const dir of [PUBLIC_DIR, ASSETS_DIR, TEMPLATES_DIR, UPLOADS_DIR, HISTORY_DIR, WP_ASSET_DIR, BULK_DIR]) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
@@ -317,6 +333,32 @@ function normalizeSettings(raw) {
       }
     }
   }
+  if (raw && raw.autoFit && typeof raw.autoFit === "object") out.autoFit = normalizeAutoFit(raw.autoFit);
+  return out;
+}
+
+/**
+ * Only formats that have an auto-fit rule, only sane tiers: a character count
+ * of 1–500 and a size between the floor and 200 %. A format whose override
+ * ends up empty is dropped, which means "back to the measured default".
+ */
+function normalizeAutoFit(raw) {
+  const out = {};
+  for (const label of AUTOFIT_LABELS) {
+    const rule = raw[label];
+    if (!rule || typeof rule !== "object") continue;
+    const min = clampNumber(rule.min, 0.5, 1, 0.7);
+    const max = clampNumber(rule.max, 1, 2, 1.2);
+    const seen = new Set();
+    const tiers = (Array.isArray(rule.tiers) ? rule.tiers : [])
+      .map((t) => [Math.round(Number(Array.isArray(t) ? t[0] : NaN)), Number(Array.isArray(t) ? t[1] : NaN)])
+      .filter(([n, sc]) => isFinite(n) && n >= 1 && n <= 500 && isFinite(sc))
+      .map(([n, sc]) => [n, Math.round(clampNumber(sc, min, max, 1) * 100) / 100])
+      .sort((a, b) => a[0] - b[0])
+      .filter(([n]) => (seen.has(n) ? false : (seen.add(n), true)))
+      .slice(0, 12);
+    if (tiers.length) out[label] = { min, max, tiers };
+  }
   return out;
 }
 
@@ -453,7 +495,8 @@ async function getBrowser() {
  * it is drawn from vectors at whatever resolution we render at.
  *
  * @returns {Promise<{image: {buffer:Buffer,ext:string,mime:string,bytes:number,note:string},
- *                    markup: string|null, width: number, height: number}>}
+ *                    markup: string|null, width: number, height: number,
+ *                    fit: {requested:number,scale:number,fits:boolean}|null}>}
  */
 async function renderSpec(spec, data, browser, opts) {
   const o = opts || {};
@@ -482,7 +525,10 @@ async function renderSpec(spec, data, browser, opts) {
     const fileUrl = pathToFileURL(path.join(TEMPLATES_DIR, spec.file)).href;
     await page.goto(fileUrl, { waitUntil: "load", timeout: 20000 });
     await page.waitForFunction("window.__BANNER_READY__ === true", { timeout: 12000 });
-    const renderError = await page.evaluate(() => window.__BANNER_ERROR__ || null);
+    const { renderError, fit } = await page.evaluate(() => ({
+      renderError: window.__BANNER_ERROR__ || null,
+      fit: window.__FIT__ || null,
+    }));
     if (renderError) throw new Error("Template (" + spec.key + ") render error: " + renderError);
     // settle paint
     await new Promise((r) => setTimeout(r, 250));
@@ -524,7 +570,7 @@ async function renderSpec(spec, data, browser, opts) {
       }, o.assetNames);
     }
 
-    return { image, markup, width: outWidth, height: outHeight };
+    return { image, markup, width: outWidth, height: outHeight, fit };
   } finally {
     await page.close().catch(() => {});
   }
@@ -533,17 +579,26 @@ async function renderSpec(spec, data, browser, opts) {
 async function generateAll(specs, data, opts) {
   // One retry for the whole batch if the browser died mid-render.
   let lastErr;
+  // Formats are independent pages, so a caller with many of them (a bulk run)
+  // can render a few at once. The single builder keeps 1: it is fast enough,
+  // and it leaves the machine free for whoever is using it.
+  const concurrency = Math.max(1, Math.min(4, Math.round(Number(opts.concurrency) || 1)));
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const browser = await getBrowser();
       const out = {};
-      for (const spec of specs) {
-        // The byte ceiling belongs to the format, not to the batch: see
-        // budgetFor(). opts.maxBytes stays as the fallback for callers that
-        // do not care (none today, but it keeps renderSpec self-contained).
-        const maxBytes = opts.budgetFor ? opts.budgetFor(spec) : opts.maxBytes;
-        out[spec.key] = await renderSpec(spec, data, browser, { ...opts, maxBytes });
-      }
+      const queue = specs.slice();
+      const worker = async () => {
+        while (queue.length) {
+          const spec = queue.shift();
+          // The byte ceiling belongs to the format, not to the batch: see
+          // budgetFor(). opts.maxBytes stays as the fallback for callers that
+          // do not care (none today, but it keeps renderSpec self-contained).
+          const maxBytes = opts.budgetFor ? opts.budgetFor(spec) : opts.maxBytes;
+          out[spec.key] = await renderSpec(spec, data, browser, { ...opts, maxBytes });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(concurrency, specs.length) }, worker));
       return out;
     } catch (err) {
       lastErr = err;
@@ -791,6 +846,8 @@ app.use((req, res, next) => {
 // 1 MB the rest of the API allows. Parsed first, so the global parser below
 // sees an already-read body and leaves it alone.
 app.use("/api/wallpaper", express.json({ limit: "8mb" }));
+// A pasted sheet or a 300-row run can pass 1 MB too.
+app.use("/api/bulk", express.json({ limit: "6mb" }));
 app.use(express.json({ limit: "1mb" }));
 
 // Static: app frontend + history (read-only, for thumbnails / re-download)
@@ -802,6 +859,20 @@ app.use("/history", express.static(HISTORY_DIR));
 app.use(
   "/wp-assets",
   express.static(WP_ASSET_DIR, {
+    index: false,
+    dotfiles: "deny",
+    immutable: true,
+    maxAge: "365d",
+    fallthrough: false,
+    setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
+  })
+);
+
+// Bulk photos (render masters and previews). Content-hashed names; same
+// treatment as the wallpaper assets.
+app.use(
+  "/bulk-assets",
+  express.static(BULK_DIR, {
     index: false,
     dotfiles: "deny",
     immutable: true,
@@ -1156,6 +1227,18 @@ app.get("/api/history/:id/download", async (req, res) => {
     });
   }
 
+  if (entry.kind === "bulk") {
+    const send =
+      req.query.row != null
+        ? bulkDeliver.sendRow(res, entry, HISTORY_DIR, Number(req.query.row), req.query)
+        : bulkDeliver.sendZip(res, entry, HISTORY_DIR, req.query, formats);
+    return send.catch((err) => {
+      console.error("[bulk:download] " + err.message);
+      if (!res.headersSent) res.status(500).json({ error: "Kunne ikke laste ned" });
+      else res.destroy();
+    });
+  }
+
   const folderAbs = path.join(HISTORY_DIR, entry.id);
   if (!(await pathExists(folderAbs))) {
     return res.status(404).json({ error: "Filene finnes ikke lenger" });
@@ -1467,6 +1550,33 @@ app.post("/api/wallpaper/export", async (req, res) => {
   }
 });
 
+// ---- Bulk (Houseads from a spreadsheet) ----------------------------------
+const bulkImages = createBulkImages({ dir: BULK_DIR, imageTools, safeFetch, sniffImageMime, links: bulkLinks });
+const bulkJobs = createBulkJobs({
+  formats,
+  enqueue,
+  generateAll,
+  buildHtmlPackages,
+  loadSettings,
+  budgetFor,
+  sanitizeFilename,
+  normalizeClickUrl,
+  fileStamp,
+  images: bulkImages,
+  imageTools,
+  historyDir: HISTORY_DIR,
+  logoPath: ABC_LOGO,
+  logoAsset: ABC_LOGO_ASSET,
+  saveHistoryEntry: (entry) =>
+    withHistoryLock(async () => {
+      let history = await loadHistory();
+      history.unshift(entry);
+      history = await trimHistory(history);
+      await writeHistory(history);
+    }),
+});
+registerBulkRoutes(app, { safeFetch, images: bulkImages, jobs: bulkJobs });
+
 // SPA-ish fallback to index for unknown non-API GETs
 app.get(/^(?!\/api\/).*/, (req, res, next) => {
   if (req.method !== "GET") return next();
@@ -1487,6 +1597,7 @@ async function start() {
   ensureDirsSync();
   await loadSettings(); // creates settings.json if missing
   if (!(await pathExists(HISTORY_JSON))) await writeHistory([]);
+  bulkImages.cleanUp().catch((e) => console.warn("[bulk] clean-up: " + e.message));
 
   if (!imageTools.isAvailable()) {
     console.warn(

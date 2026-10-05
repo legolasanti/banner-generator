@@ -573,15 +573,18 @@ img.bn__age-icon { width: auto; object-fit: contain; }
 
 /* ---- 980×500 · Billboard ---------------------------------------------- */
 /* The toppbanner's layout with room to breathe: headline beside the photo,
-   centred against it. 56 header + 420 photo + 24 bottom = 500; the photo is a
-   plain 4:3 (560×420), leaving the copy a 336px column (980 − 2×24 − 560 − 36). */
+   centred against it. 56 header + 420 photo + 24 bottom = 500. The photo is
+   520×420 so the copy gets a 376px column (980 − 2×24 − 520 − 36): at 36px
+   that is ~16 characters a line, which is what Norwegian compound words
+   («oppbevaringsløsninger») need to stay whole. A 4:3 photo left 336px, and
+   long words broke mid-word. */
 .bn--house-billboard {
   --house-pad: 24px;
   --house-head-h: 56px;
   --house-ink: 17px;
   --house-logo-h: 21px;
   --house-media-h: 420px;
-  --house-hl: 38px;
+  --house-hl: 36px;
   --house-text-top: 0px;
 }
 .bn--house-billboard .bn__house-row {
@@ -590,7 +593,7 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   padding: 0 var(--house-pad) 24px;
   gap: 36px;
 }
-.bn--house-billboard .bn__media { width: 560px; }
+.bn--house-billboard .bn__media { width: 520px; }
 .bn--house-billboard .bn__body {
   padding: 0;
   height: var(--house-media-h);
