@@ -110,6 +110,14 @@
 
     function styleTab(body, s, device) {
       var notMain = device !== "desktop";
+      body.appendChild(
+        h(
+          "div.nx-row.nx-row--tight",
+          null,
+          ui.button("Kopier stil", { small: true, kind: "ghost", icon: "copy", title: "Kopier stilen (Alt+Ctrl+C)", onClick: function () { NP.sections.copyStyle(s.id); } }),
+          ui.button("Lim inn stil", { small: true, kind: "ghost", icon: "clipboard-paste", title: "Lim inn stil (Alt+Ctrl+V)", disabled: !NP.sections.hasStyle(), onClick: function () { NP.sections.pasteStyle(s.id); draw(); } })
+        )
+      );
       if (notMain) {
         body.appendChild(
           h(
@@ -123,12 +131,17 @@
         );
       }
       var effective = D.styleFor(s, device);
+      var lastGroup = null;
       S.STYLE_FIELDS.forEach(function (f) {
         if (!NP.fields.visible(f, effective)) return;
+        if (f.group && f.group !== lastGroup) {
+          lastGroup = f.group;
+          body.appendChild(h("h4.nx-group", null, f.group));
+        }
         var overridden = notMain && f.rs && s.rs[device] && s.rs[device].style && s.rs[device].style[f.key] !== undefined;
         var node = NP.fields.control(f, effective[f.key], function (v, opts) {
           NP.store.setStyle(s.id, f.key, v, f.rs ? device : "desktop");
-          if (f.type === "select" || (opts && opts.from !== "panel")) requestAnimationFrame(draw);
+          if (f.type === "select" || f.type === "toggle" || f.type === "image" || f.type === "video" || (opts && opts.from !== "panel")) requestAnimationFrame(draw);
         }, { project: project() });
         if (notMain && f.rs) {
           node.classList.add("is-rs");

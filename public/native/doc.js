@@ -123,7 +123,7 @@
   var RICH_TAGS = {
     p: "p", h2: "h2", h3: "h3", h4: "h3", strong: "strong", b: "strong", em: "em", i: "em",
     u: "u", a: "a", ul: "ul", ol: "ol", li: "li", blockquote: "blockquote", br: "br",
-    sup: "sup", sub: "sub", div: "p", h1: "h2",
+    sup: "sup", sub: "sub", div: "p", h1: "h2", mark: "mark", s: "s", del: "s",
   };
   var DROP_CONTENT = /^(script|style|iframe|object|embed|template|noscript|svg|math|head|title|textarea|select)$/i;
 
@@ -228,7 +228,7 @@
     // Drop empty elements (repeat: emptying an <li> can empty its list).
     for (var pass = 0; pass < 3; pass++) {
       result = result
-        .replace(/<(p|h2|h3|li|strong|em|u|sup|sub|a)(?: [^>]*)?>(?:\s|\u00a0|<br>)*<\/\1>/g, "")
+        .replace(/<(p|h2|h3|li|strong|em|u|sup|sub|a|mark|s)(?: [^>]*)?>(?:\s|\u00a0|<br>)*<\/\1>/g, "")
         .replace(/<(ul|ol|blockquote)>\s*<\/\1>/g, "");
     }
     if (hardMax && result.length > hardMax) {
@@ -341,9 +341,9 @@
   function normalizeField(f, v, ctx) {
     switch (f.type) {
       case "text":
-        return v === undefined ? defaultValue(f) : cleanText(v, S.HARD_MAX.text, false);
+        return v === undefined ? defaultValue(f) : cleanText(v, f.hardMax || S.HARD_MAX.text, false);
       case "textarea":
-        return v === undefined ? defaultValue(f) : cleanText(v, S.HARD_MAX.textarea, true);
+        return v === undefined ? defaultValue(f) : cleanText(v, f.hardMax || S.HARD_MAX.textarea, true);
       case "rich":
         return v === undefined ? defaultValue(f) : sanitizeRich(v, S.HARD_MAX.rich);
       case "url":
@@ -476,11 +476,71 @@
         body: normalizeFont(fonts.body, D.fonts.body, ctx),
       },
       headingCase: src.headingCase === "upper" ? "upper" : "none",
+      scale: oneOf(src.scale, S.TYPE_SCALES.map(function (x) { return x[0]; }), D.scale),
+      tracking: oneOf(src.tracking, ["normal", "tight", "wide"], D.tracking),
       radius: clampInt(src.radius, 0, 40, D.radius),
       button: ["solid", "outline", "pill"].indexOf(src.button) >= 0 ? src.button : D.button,
+      buttonCase: src.buttonCase === "upper" ? "upper" : "none",
       logo: assetRef(src.logo, "image", ctx),
       logoDark: assetRef(src.logoDark, "image", ctx),
     };
+  }
+
+  function oneOf(v, list, dflt) {
+    return list.indexOf(v) >= 0 ? v : dflt;
+  }
+
+  /**
+   * Custom CSS from the Side panel. It ends up inside a <style> on a page
+   * hosted on the tool's own origin, so it may style but never load or run
+   * anything: no "<" (cannot close the style tag), no comments (they could
+   * hide a keyword from the checks below), no @import / @font-face, no url()
+   * or image-set() (no outside requests), no expression(), no escapes (which
+   * could spell those again) and no !important.
+   */
+  function sanitizeCss(v) {
+    return cleanText(v, 20000, true)
+      .replace(/\/\*[\s\S]*?(\*\/|$)/g, "")
+      .replace(/[<\\]/g, "")
+      .replace(/@(import|charset|font-face|namespace|layer|scope|property)\b[^;{]*(;|\{[^}]*\})?/gi, "")
+      .replace(/\b(url|image-set|-webkit-image-set|cross-fade|image|element|paint|src|expression)\s*\(/gi, "none(")
+      .replace(/(java|vb)script\s*:/gi, "")
+      .replace(/!\s*important/gi, "");
+  }
+
+  /**
+   * The custom CSS as it goes into the page: nested inside #np-main, so its
+   * rules can only reach the sections — never the disclosure label, the
+   * variant tabs, the chapter menu or the footer, which all live outside
+   * <main>. "&" is removed (it would let a nested selector climb out again)
+   * and stray closing braces are dropped, so the nesting cannot be closed early.
+   */
+  function scopeCss(css) {
+    var src = sanitizeCss(css).replace(/&/g, "");
+    if (!src.trim()) return "";
+    var out = "";
+    var depth = 0;
+    for (var i = 0; i < src.length; i++) {
+      var ch = src[i];
+      if (ch === "{") depth++;
+      if (ch === "}") {
+        if (!depth) continue;
+        depth--;
+      }
+      out += ch;
+    }
+    while (depth-- > 0) out += "}";
+    return "#np-main{" + out + "}";
+  }
+
+  function normalizeExtras(raw, ctx) {
+    var src = raw && typeof raw === "object" ? raw : {};
+    var out = {};
+    S.EXTRA_FIELDS.forEach(function (f) {
+      out[f.key] = normalizeField(f, src[f.key], ctx);
+    });
+    out.customCss = sanitizeCss(out.customCss);
+    return out;
   }
 
   function normalizeAssets(raw) {
@@ -545,6 +605,7 @@
         noindex: meta.noindex !== false,
       },
       tracking: {
+        clickPrefix: /^https:\/\/[^\s<>"]+$/.test(str(tracking.clickPrefix).trim()) ? str(tracking.clickPrefix).trim().slice(0, 600) : "",
         headHtml: cleanText(tracking.headHtml, 20000, true),
         bodyHtml: cleanText(tracking.bodyHtml, 20000, true),
         utm: {
@@ -555,6 +616,9 @@
         },
       },
       variantNav: src.variantNav !== false,
+      // Projects saved before page options existed keep looking the same:
+      // no progress bar or credit line appears on a page someone approved.
+      extras: normalizeExtras(src.extras && typeof src.extras === "object" ? src.extras : { progress: false, credit: false }, ctx),
       pages: normalizedPages,
       assets: assets,
       status: STATUSES.indexOf(src.status) >= 0 ? src.status : "draft",
@@ -618,6 +682,7 @@
   function createProject(opts) {
     var o = opts || {};
     return normalizeProject({
+      extras: o.extras || {},
       name: o.name || "Ny Native Premium",
       advertiser: o.advertiser || {},
       theme: o.theme || S.DEFAULT_THEME,
@@ -658,7 +723,9 @@
         });
       }
     });
-    if (section.style && section.style.bgImage) fn(section.style.bgImage);
+    S.STYLE_FIELDS.forEach(function (f) {
+      if ((f.type === "image" || f.type === "video") && section.style && section.style[f.key]) fn(section.style[f.key]);
+    });
   }
 
   /** Every asset id the project's content refers to (videos bring their poster). */
@@ -729,6 +796,9 @@
     usedAssets: usedAssets,
     findSection: findSection,
     styleFor: styleFor,
+    sanitizeCss: sanitizeCss,
+    scopeCss: scopeCss,
+    normalizeExtras: normalizeExtras,
     defaultValue: defaultValue,
   };
 });

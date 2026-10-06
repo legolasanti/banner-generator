@@ -420,6 +420,7 @@
         if (isOpen) {
           var body = h("div.nx-list__body");
           f.item.forEach(function (sub) {
+            if (!visible(sub, item)) return;
             body.appendChild(
               control(sub, item[sub.key], function (v, o) {
                 items = items.map(function (x) {
@@ -488,7 +489,8 @@
   function visible(f, values) {
     if (!f.when) return true;
     return Object.keys(f.when).every(function (k) {
-      return values[k] === f.when[k];
+      var want = f.when[k];
+      return Array.isArray(want) ? want.indexOf(values[k]) !== -1 : values[k] === want;
     });
   }
 

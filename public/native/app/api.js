@@ -104,6 +104,7 @@
     saveBrandKit: function (kit) { return request("POST", P + "/brandkits", kit); },
     deleteBrandKit: function (id) { return request("DELETE", P + "/brandkits/" + enc(id)); },
     library: function () { return request("GET", P + "/library"); },
+    demo: function () { return request("GET", P + "/demo"); },
     saveLibrary: function (item) { return request("POST", P + "/library", item); },
     deleteLibrary: function (id) { return request("DELETE", P + "/library/" + enc(id)); },
     settings: function () { return request("GET", P + "/settings"); },

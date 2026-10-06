@@ -193,11 +193,42 @@ looks right on desktop, tablet and mobile by itself:
 
 | Group | Blocks |
 | --- | --- |
-| Top | **Hero** — photo or video (separate portrait files for mobile), kicker, H1, ingress; overlay, split or photo-above |
-| Text | **Body text** (sub-headings, lists, quotes, links), **Fact box** (folds open), **Quote**, **Numbers** (count up), **Q&A**, **Bar chart**, **Divider** |
-| Media | **Image** (one or two), **Image + text**, **Video** (player or silent ambient loop, 16:9/9:16 per device), **Gallery** (carousel/grid), **Embed** (YouTube, Vimeo, Flourish, Datawrapper, Spotify, Google Maps) |
-| Action | **CTA** (band, button or arrow link — UTM tags and `rel="sponsored"` added automatically), **Product cards** (image, price, before-price, badge) |
-| Effects | **Scroll story** (the photo/video stays while cards scroll over it), **Scroll video** (plays as you scroll), **Parallax image**, **Before / after**, **Quiz** |
+| Top | **Hero** — photo or video (separate portrait files for mobile), kicker, H1, ingress; overlay, split, photo-above, **framed**, **zoom** (the photo grows to full bleed as you scroll) or **typographic**; title size up to "gigantic", title animation (word / line / letter), slow zoom; **Chapter** (part label, title, intro; centred, big left or huge number) |
+| Text | **Body text** (sub-headings, lists, quotes, links, ==highlight==, lead paragraph, two columns), **Statement** (one big sentence; words light up as you scroll, word by word, typewriter, gradient or outline), **Fact box**, **Quote**, **People** (portrait or portrait video, quote, name, role), **Numbers** (plain, cards, lines or one gigantic), **Top list** (ranked, countdown, full-screen scenes with huge numerals, specs and "Visste du?"), **Steps**, **Cards** (boxed, plain, text-over-photo, link tiles; optional 3D tilt), **Tabs**, **Timeline**, **Table / comparison** (up to 3 columns, one highlighted), **Q&A**, **Chart** (bars, columns, donut), **Marquee**, **Sources**, **Divider** |
+| Media | **Image** (one or two; 21:9 … 4:5; zoom-on-scroll, curtain reveal, slow zoom; photo credit), **Image + text**, **Video**, **Gallery** (carousel, grid, masonry, slideshow; fullscreen lightbox), **Hotspots** (numbered points on a photo — drag them in the preview, double-click to add), **Embed** |
+| Action | **CTA** (band, **card with photo**, button or arrow link), **Product cards** (grid or carousel), **Poll** (results counted on pages hosted here), **Countdown** (Norwegian time, with button) |
+| Effects | **Scroll story** (overlay or **split screen**; fade, zoom, slide, stack, blur, curtain or circle transitions; white, glass, dark or plain cards; progress dots; a photo or video per card), **Scroll video**, **Horizontal scroll** (panels slide sideways while you scroll down), **Parallax image**, **Flip cards**, **Before / after**, **Quiz** (progress bar, result texts by score, button) |
+
+Every section also has a **style**: background (theme colour, own colour,
+**gradient** — linear, radial or soft "aurora" —, **photo** or **video**, separate
+mobile photo/video), background effect (fixed, slow zoom, parallax), film grain,
+text tone, spacing and **minimum height** (per device), **shaped edges** (wave,
+slant, curve, zigzag), entrance animation (fade, slide, zoom, blur, mask reveal,
+rise, **one item at a time**) with speed and delay, **scroll-linked effects**
+(fade out, grow in, depth, pinned scene change) and a name for the **chapter menu**.
+
+**Page options (Side):** reading-progress bar, **chapter menu** (bar under the
+disclosure or dots at the side), reading time in the hero, a **floating button**
+that appears after a set share of the page (hidden over CTAs and the footer),
+"Likte du denne saken? Ja/Nei" at the end, the "Annonsørinnhold for … / Produsert
+av …" credit line, and custom CSS (which can never hide the disclosure).
+
+**Ready-made designs:** "Add section" opens 43 designed sections with live
+thumbnails (openings, chapters, statements, numbers, lists, cards, scroll
+stories, calls to action) — search by word. Sections and their style can be
+copied and pasted, also between projects (Ctrl+C / Ctrl+V, Alt for style only).
+
+**Templates:** besides the five workhorses there are seven **premium templates**,
+each with its own fonts, colours and page options, dressed in a demo photo kit
+(Unsplash): **Car launch premium**, **Top 5 countdown**, **"Wrapped" year in
+numbers**, **Immersive travel**, **Interactive explorer** (tabs per room/audience),
+**Report & insight** and **Food & taste**. The gallery in "Ny Native Premium"
+shows each one live and opens a full-size preview (desktop/mobile) with all
+effects running. Demo photos and sample copy are flagged in **Check** until replaced.
+
+**Theme:** besides colours, fonts and logo: page background colour (light or
+dark pages), heading size scale (up to "Magazine"), letter spacing, uppercase
+headings/buttons and seven ready-made looks.
 
 The **disclosure** is not a block and cannot be removed: every page starts with a
 sticky "Annonsørinnhold fra {advertiser}" bar with the publisher's and the
@@ -216,7 +247,8 @@ in **Settings**.
 - **Left:** Sections (drag to reorder) · Media (upload, **import from a Google
   Drive folder**, from a link, or **generate with AI**; alt text, focal point) ·
   Theme (colours with contrast check, Google or uploaded brand fonts, logo,
-  button style; **brand kits** per advertiser) · Project (advertiser, **audience
+  button style, type scale, ready-made looks; **brand kits** per advertiser) ·
+  Side (page options) · Project (advertiser, **audience
   variants** like "For menn"/"For kvinner" with tabs, sharing image and text,
   final address, UTM, per-project scripts) · Check (everything to fix before the
   advertiser sees it) · Review.
@@ -281,7 +313,11 @@ for Drive folders; without it, the folder's public view is read.
   pages run inside a CSP sandbox.
 - **Measurement:** pages push `np_view`, `np_scroll` (25/50/75/100), `np_time`,
   `np_cta_click`, `np_video` (play/25/50/75/complete), `np_factbox_open`,
-  `np_share` and `np_quiz_*` to `window.dataLayer` and as a `np:track` DOM event.
+  `np_share`, `np_quiz_*`, `np_tab`, `np_hotspot`, `np_flip`, `np_poll`,
+  `np_feedback`, `np_chapter`, `np_gallery` and `np_lightbox` to
+  `window.dataLayer` and as a `np:track` DOM event. An optional **click tracker**
+  (DoubleClick, Adform …) can be put in front of every advertiser link
+  (Project → Measurement).
   Put Kilkaya / Mixpanel / GTM snippets once in Settings; ad-server pixels with
   `[timestamp]`/`[cachebuster]` get a fresh number per view.
 - Pages work **without JavaScript** (everything visible; motion is an extra),
@@ -822,8 +858,10 @@ banner-generator/
 ├── data/                Native Premium projects, settings, users (created on first use)
 ├── lib/
 │   ├── native/            Native Premium: projects + versions, assets, pages/export,
-│   │                      review + published routes, sources/ (Docs, Drive, docx,
-│   │                      web pages), ai/ (OpenRouter client, prompts, schemas, pipeline)
+│   │                      review + published routes, polls.js (votes on published
+│   │                      pages), demo/ (the templates' demo photos + credits),
+│   │                      sources/ (Docs, Drive, docx, web pages), ai/ (OpenRouter
+│   │                      client, prompts, schemas, pipeline)
 │   ├── auth.js            Optional logins (AUTH=on)
 │   ├── image.js           Downscaling + the per-file byte budget (sharp)
 │   ├── html5.js           Campaign Manager 360 package builder
@@ -838,9 +876,11 @@ banner-generator/
 │   ├── style.css          App styling (chrome only)
 │   ├── app.js             Frontend logic
 │   ├── bulk/              The Bulk tab (state, fitting, grid, editor, rules, run)
-│   ├── native/            Native Premium: schema.js (the blocks), doc.js (model +
-│   │                      sanitiser), render.js (ONE renderer for editor, review
-│   │                      links and export), runtime/ (np.css + np.js of the
+│   ├── native/            Native Premium: schema.js (the blocks, style and page
+│   │                      options), doc.js (model + sanitiser), render.js (ONE
+│   │                      renderer for editor, review links and export),
+│   │                      templates.js + presets.js (templates and ready-made
+│   │                      sections), runtime/ (np.css + np.js of the
 │   │                      published page), app/ (the editor), review/ (the
 │   │                      advertiser's review overlay)
 │   └── assets/
@@ -900,6 +940,7 @@ look in one place and both change — the preview is a faithful copy of the resu
 | `/api/native/…`                  | Native Premium: projects, versions, review, comments, export, publish, assets, brand kits, library, settings, sources, AI — see the header of [lib/native/routes.js](lib/native/routes.js), [sources/routes.js](lib/native/sources/routes.js) and [ai/routes.js](lib/native/ai/routes.js) |
 | `GET  /p/:token/`, `/api/review/:token…` | The advertiser's review link (no login)      |
 | `GET  /n/:slug/`                 | A page published by ABC design                       |
+| `POST /n-api/vote/:slug/:section`| A poll / "Likte du saken?" vote from a published page (any origin, text/plain) |
 | `GET  /np-assets/:file`          | Native Premium images (+ WebP variants), videos, fonts (immutable) |
 
 All four formats are rendered and saved on every generate; `downloadSet` only

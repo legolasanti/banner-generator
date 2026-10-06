@@ -92,6 +92,12 @@
     return ids;
   }
 
+  // The chapter menu lists sections by their "Navn i kapittelmenyen", so a
+  // change there needs the page chrome redrawn, not just the section.
+  function chapterKey(project) {
+    return project.pages.map(function (p) { return p.sections.map(function (s) { return s.style.chapter || ""; }).join("\u0001"); }).join("|");
+  }
+
   function structureKey(project) {
     return project.pages.map(function (p) { return p.id + ":" + p.sections.map(function (s) { return s.id; }).join(","); }).join("|");
   }
@@ -122,7 +128,12 @@
       sections: changedSections(before, after),
       structure: structureKey(before) !== structureKey(after),
       theme: before.theme !== after.theme || before.assets !== after.assets,
-      shell: before.advertiser !== after.advertiser || before.pages.length !== after.pages.length || before.variantNav !== after.variantNav,
+      shell:
+        before.advertiser !== after.advertiser ||
+        before.pages.length !== after.pages.length ||
+        before.variantNav !== after.variantNav ||
+        before.extras !== after.extras ||
+        chapterKey(before) !== chapterKey(after),
       from: o.from || null,
     });
   }

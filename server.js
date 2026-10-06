@@ -851,6 +851,9 @@ app.use((req, res, next) => {
 const READ_ONLY_METHODS = ["GET", "HEAD", "OPTIONS"];
 app.use((req, res, next) => {
   if (READ_ONLY_METHODS.includes(req.method)) return next();
+  // Votes from published pages (sandboxed, Origin "null"); they can only
+  // count a vote on a poll that exists in a published page.
+  if (req.path.startsWith("/n-api/vote/")) return next();
   const origin = req.get("origin");
   if (!origin) return next();
   let originHost;

@@ -177,7 +177,14 @@
       if (!once(story, "story")) return;
       var layers = $all("[data-np-layer]", story);
       var cards = $all("[data-np-card]", story);
-      if (layers.length < 2 || !io) return;
+      if (!io) return;
+      if (layers.length < 2) {
+        // One background: still mark the card being read (split layouts).
+        cards.forEach(function (card) {
+          onVisible(card, function (el, visible) { el.classList.toggle("is-on", visible); }, { threshold: 0, rootMargin: "-40% 0px -40% 0px" });
+        });
+        return;
+      }
       // The layer each card shows: its own image, else the last one before it.
       var current = 0;
       var targets = cards.map(function (card) {
@@ -185,16 +192,20 @@
         if (own !== null) current = Number(own);
         return current;
       });
-      function activate(index) {
+      var dots = $all(".np-story__dots i", story);
+      function activate(index, cardIndex) {
         layers.forEach(function (l, i) {
           l.classList.toggle("is-active", i === index);
+          l.classList.toggle("is-past", i < index);
         });
+        dots.forEach(function (d, i) { d.classList.toggle("is-on", i === cardIndex); });
+        cards.forEach(function (c, i) { c.classList.toggle("is-on", i === cardIndex); });
       }
       cards.forEach(function (card, i) {
         onVisible(
           card,
           function (el, visible) {
-            if (visible) activate(targets[i]);
+            if (visible) activate(targets[i], i);
           },
           { threshold: 0, rootMargin: "-45% 0px -45% 0px" }
         );
@@ -375,6 +386,8 @@
             if (pick !== correct) btn.classList.add("is-wrong");
             else right++;
             answered++;
+            var bar = quiz.querySelector(".np-quiz__bar i");
+            if (bar) bar.style.width = (answered / questions.length) * 100 + "%";
             var ex = q.querySelector(".np-quiz__ex");
             if (ex) {
               ex.classList.add("is-on");
@@ -383,6 +396,19 @@
             track("np_quiz_answer", { np_question: qi + 1, np_correct: pick === correct });
             if (answered === questions.length && score) {
               score.textContent = "Du fikk " + right + " av " + questions.length + " riktige.";
+              // The result with the highest threshold the score reaches.
+              var best = null;
+              var bestMin = -1;
+              $all(".np-quiz__res", quiz).forEach(function (r) {
+                var min = Number(r.getAttribute("data-np-min"));
+                if (min <= right && min > bestMin) {
+                  best = r;
+                  bestMin = min;
+                }
+              });
+              if (best) best.hidden = false;
+              var cta = quiz.querySelector(".np-quiz__cta");
+              if (cta) cta.hidden = false;
               track("np_quiz_complete", { np_score: right, np_total: questions.length });
             }
           });
@@ -433,6 +459,490 @@
     });
   }
 
+
+  // ---- hero that zooms out to full bleed ----------------------------------------
+  function bindHeroZoom(scope) {
+    $all("[data-np-zoom]", scope).forEach(function (track_) {
+      if (!once(track_, "zoom")) return;
+      var hero = track_.closest(".np-hero");
+      if (reduced || EDITOR) {
+        track_.style.setProperty("--np-z", "1");
+        if (hero) hero.classList.add("is-zoomed");
+        return;
+      }
+      // The picture starts just below the title block.
+      var textBox = track_.querySelector(".np-wrap");
+      function measure() {
+        if (textBox) track_.style.setProperty("--np-zt", textBox.offsetHeight + 24 + "px");
+      }
+      measure();
+      window.addEventListener("resize", measure);
+      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(measure);
+      scrollers.push(function (vh) {
+        var r = track_.getBoundingClientRect();
+        var total = r.height - vh;
+        var p = total > 0 ? Math.min(1, Math.max(0, -r.top / (total * 0.75))) : 1;
+        var eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+        track_.style.setProperty("--np-z", eased.toFixed(4));
+        if (hero) hero.classList.toggle("is-zoomed", eased > 0.55);
+      });
+      requestFrame();
+    });
+  }
+
+  // ---- statement: words light up with the scroll, typewriter -------------------
+  function bindStatements(scope) {
+    $all("[data-np-words]", scope).forEach(function (el) {
+      if (!once(el, "words")) return;
+      var words = $all(".np-sw", el);
+      if (!words.length) return;
+      if (reduced || EDITOR) {
+        words.forEach(function (w) { w.classList.add("is-lit"); });
+        return;
+      }
+      scrollers.push(function (vh) {
+        var r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > vh) return;
+        // From the text's top reaching 85 % of the screen to its bottom at 45 %.
+        var start = vh * 0.85;
+        var end = vh * 0.45;
+        var p = (start - r.top) / (start - end + r.height);
+        var lit = Math.round(Math.min(1, Math.max(0, p)) * words.length);
+        for (var i = 0; i < words.length; i++) words[i].classList.toggle("is-lit", i < lit);
+      });
+      requestFrame();
+    });
+    $all("[data-np-typewriter]", scope).forEach(function (el) {
+      if (!once(el, "tw") || reduced || EDITOR) return;
+      var text = el.getAttribute("data-text") || el.textContent;
+      el.textContent = "";
+      var obs = onVisible(el, function (t, visible) {
+        if (!visible) return;
+        obs && obs.unobserve(t);
+        var i = 0;
+        (function type() {
+          i++;
+          t.textContent = text.slice(0, i);
+          if (i < text.length) setTimeout(type, 28 + Math.random() * 50);
+        })();
+      }, { threshold: 0.5 });
+    });
+  }
+
+  // ---- marquee that follows the scroll -------------------------------------------
+  function bindMarquees(scope) {
+    $all("[data-np-mqscroll]", scope).forEach(function (el) {
+      if (!once(el, "mq") || reduced) return;
+      var dir = el.classList.contains("np-mq--right") ? 1 : -1;
+      scrollers.push(function (vh) {
+        var r = el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > vh + 200) return;
+        var shift = (vh - r.top) * 0.6 * dir;
+        el.style.setProperty("--np-mqx", (dir < 0 ? shift : shift - el.scrollWidth / 2).toFixed(1) + "px");
+      });
+      requestFrame();
+    });
+  }
+
+  // ---- tabs ------------------------------------------------------------------------------
+  function bindTabs(scope) {
+    $all("[data-np-tabs]", scope).forEach(function (box) {
+      if (!once(box, "tabs") || EDITOR) return;
+      var tabs = $all('[role="tab"]', box);
+      var panels = $all('[role="tabpanel"]', box);
+      function select(i, focus) {
+        tabs.forEach(function (t, k) {
+          var on = k === i;
+          t.setAttribute("aria-selected", on ? "true" : "false");
+          t.tabIndex = on ? 0 : -1;
+          panels[k].hidden = !on;
+        });
+        if (focus) tabs[i].focus();
+        track("np_tab", { np_label: tabs[i].textContent });
+      }
+      tabs.forEach(function (t, i) {
+        t.addEventListener("click", function () { select(i); });
+        t.addEventListener("keydown", function (e) {
+          if (e.key === "ArrowRight") { e.preventDefault(); select((i + 1) % tabs.length, true); }
+          if (e.key === "ArrowLeft") { e.preventDefault(); select((i - 1 + tabs.length) % tabs.length, true); }
+          if (e.key === "Home") { e.preventDefault(); select(0, true); }
+          if (e.key === "End") { e.preventDefault(); select(tabs.length - 1, true); }
+        });
+      });
+    });
+  }
+
+  // ---- hotspots --------------------------------------------------------------------------
+  function bindHotspots(scope) {
+    $all("[data-np-hotspots]", scope).forEach(function (box) {
+      if (!once(box, "hs")) return;
+      var pts = $all(".np-hs__pt", box);
+      function close(except) {
+        pts.forEach(function (p) {
+          if (p === except) return;
+          p.classList.remove("is-open");
+          p.querySelector(".np-hs__dot").setAttribute("aria-expanded", "false");
+        });
+      }
+      pts.forEach(function (p) {
+        var dot = p.querySelector(".np-hs__dot");
+        dot.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var open = !p.classList.contains("is-open");
+          close(p);
+          p.classList.toggle("is-open", open);
+          dot.setAttribute("aria-expanded", open ? "true" : "false");
+          if (open) track("np_hotspot", { np_label: (p.querySelector("strong") || {}).textContent || "" });
+        });
+      });
+      box.__np_close = close;
+    });
+    // One page-wide listener (not one per block, nor per editor re-render).
+    if (!hotspotDocBound) {
+      hotspotDocBound = true;
+      var closeAll = function () {
+        $all("[data-np-hotspots]", doc).forEach(function (b) { if (b.__np_close) b.__np_close(null); });
+      };
+      doc.addEventListener("click", closeAll);
+      doc.addEventListener("keydown", function (e) { if (e.key === "Escape") closeAll(); });
+    }
+  }
+  var hotspotDocBound = false;
+
+  // ---- flip cards -----------------------------------------------------------------------
+  function bindFlips(scope) {
+    $all("[data-np-flip]", scope).forEach(function (btn) {
+      if (!once(btn, "flip") || EDITOR) return;
+      var front = btn.querySelector(".np-flip__f");
+      var back = btn.querySelector(".np-flip__b");
+      function faces(on) {
+        if (front) front.setAttribute("aria-hidden", on ? "true" : "false");
+        if (back) back.setAttribute("aria-hidden", on ? "false" : "true");
+      }
+      faces(false);
+      btn.addEventListener("click", function () {
+        var on = btn.getAttribute("aria-pressed") !== "true";
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        faces(on);
+        if (on) track("np_flip", {});
+      });
+    });
+  }
+
+  // ---- timeline progress line ------------------------------------------------------
+  function bindTimelines(scope) {
+    $all("[data-np-timeline]", scope).forEach(function (tl) {
+      if (!once(tl, "tl")) return;
+      if (reduced || EDITOR) return tl.style.setProperty("--np-tlp", "1");
+      scrollers.push(function (vh) {
+        var r = tl.getBoundingClientRect();
+        var p = (vh * 0.6 - r.top) / r.height;
+        tl.style.setProperty("--np-tlp", Math.min(1, Math.max(0, p)).toFixed(3));
+      });
+      requestFrame();
+    });
+  }
+
+  // ---- horizontal scroll ----------------------------------------------------------------
+  function bindHScroll(scope) {
+    $all("[data-np-hscroll]", scope).forEach(function (sec) {
+      if (!once(sec, "hx") || EDITOR) return;
+      var trackEl = sec.querySelector(".np-hx__track");
+      var pin = sec.querySelector(".np-hx__pin");
+      var dist = 0;
+      function measure() {
+        dist = Math.max(0, trackEl.scrollWidth - pin.clientWidth);
+        sec.style.height = pin.clientHeight + dist + window.innerHeight * 0.25 + "px";
+      }
+      measure();
+      window.addEventListener("resize", measure);
+      window.addEventListener("load", measure);
+      scrollers.push(function (vh) {
+        var r = sec.getBoundingClientRect();
+        if (r.bottom < -vh || r.top > vh * 2) return;
+        var total = r.height - pin.clientHeight;
+        var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+        if (reduced) p = 0;
+        trackEl.style.setProperty("--np-hxx", (-p * dist).toFixed(1) + "px");
+        sec.style.setProperty("--np-hxp", p.toFixed(3));
+      });
+      if (reduced) {
+        sec.style.height = "auto";
+        trackEl.style.overflowX = "auto";
+      }
+      requestFrame();
+    });
+  }
+
+  // ---- 3D tilt on cards -----------------------------------------------------------------
+  function bindTilt(scope) {
+    if (reduced || !window.matchMedia("(hover: hover)").matches) return;
+    $all("[data-np-tilt] .np-card", scope).forEach(function (card) {
+      if (!once(card, "tilt")) return;
+      card.addEventListener("mousemove", function (e) {
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5;
+        var y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = "perspective(900px) rotateY(" + (x * 10).toFixed(2) + "deg) rotateX(" + (-y * 10).toFixed(2) + "deg) translateY(-4px)";
+      });
+      card.addEventListener("mouseleave", function () { card.style.transform = ""; });
+    });
+  }
+
+  // ---- slideshow + lightbox -----------------------------------------------------------
+  function bindSlideshows(scope) {
+    $all("[data-np-slideshow]", scope).forEach(function (box) {
+      if (!once(box, "slides")) return;
+      var slides = $all("[data-np-slide]", box);
+      var count = box.querySelector(".np-gal__count");
+      var at = 0;
+      function go(i) {
+        at = (i + slides.length) % slides.length;
+        slides.forEach(function (sl, k) { sl.classList.toggle("is-on", k === at); });
+        if (count) count.textContent = at + 1 + " / " + slides.length;
+      }
+      var prev = box.querySelector("[data-np-prev]");
+      var next = box.querySelector("[data-np-next]");
+      if (prev) prev.addEventListener("click", function () { go(at - 1); });
+      if (next) next.addEventListener("click", function () { go(at + 1); track("np_gallery", { np_action: "next" }); });
+      var x0 = null;
+      box.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+      box.addEventListener("touchend", function (e) {
+        if (x0 === null) return;
+        var dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 40) go(at + (dx < 0 ? 1 : -1));
+        x0 = null;
+      });
+    });
+  }
+
+  function bindLightbox(scope) {
+    $all("[data-np-lightbox]", scope).forEach(function (gal) {
+      if (!once(gal, "lb") || EDITOR) return;
+      var btns = $all("[data-np-full]", gal);
+      btns.forEach(function (b, i) {
+        b.addEventListener("click", function () { open(i); });
+      });
+      function open(i) {
+        var at = i;
+        var last = doc.activeElement;
+        var lb = doc.createElement("div");
+        lb.className = "np-lb";
+        lb.setAttribute("role", "dialog");
+        lb.setAttribute("aria-modal", "true");
+        lb.setAttribute("aria-label", "Bilde i fullskjerm");
+        lb.innerHTML = '<img alt=""><p class="np-lb__c"></p><button class="np-lb__x" aria-label="Lukk">×</button><button class="np-lb__p" aria-label="Forrige">‹</button><button class="np-lb__n" aria-label="Neste">›</button>';
+        var im = lb.querySelector("img");
+        var cap = lb.querySelector(".np-lb__c");
+        function show() {
+          var b = btns[at];
+          var inner = b.querySelector("img");
+          im.src = b.getAttribute("data-np-full");
+          im.alt = (inner && inner.alt) || "";
+          var fc = b.parentNode.querySelector("figcaption");
+          cap.textContent = fc ? fc.textContent : "";
+        }
+        // Everything behind the dialog is inert while it is open.
+        var behind = Array.prototype.slice.call(doc.body.children);
+        function close() {
+          doc.removeEventListener("keydown", key);
+          lb.remove();
+          behind.forEach(function (n) { n.inert = false; });
+          doc.documentElement.style.overflow = "";
+          if (last && last.focus) last.focus();
+        }
+        function key(e) {
+          if (e.key === "Tab") {
+            var f = $all("button", lb);
+            var at_ = f.indexOf(doc.activeElement);
+            e.preventDefault();
+            f[(at_ + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+          }
+          if (e.key === "Escape") close();
+          if (e.key === "ArrowRight") { at = (at + 1) % btns.length; show(); }
+          if (e.key === "ArrowLeft") { at = (at - 1 + btns.length) % btns.length; show(); }
+        }
+        lb.querySelector(".np-lb__x").onclick = close;
+        lb.querySelector(".np-lb__p").onclick = function () { at = (at - 1 + btns.length) % btns.length; show(); };
+        lb.querySelector(".np-lb__n").onclick = function () { at = (at + 1) % btns.length; show(); };
+        lb.addEventListener("click", function (e) { if (e.target === lb) close(); });
+        doc.addEventListener("keydown", key);
+        show();
+        behind.forEach(function (n) { n.inert = true; });
+        doc.body.appendChild(lb);
+        doc.documentElement.style.overflow = "hidden";
+        requestAnimationFrame(function () { lb.classList.add("is-on"); });
+        lb.querySelector(".np-lb__x").focus();
+        track("np_lightbox", {});
+      }
+    });
+  }
+
+  // ---- poll + feedback --------------------------------------------------------------------
+  var API = (doc.body && doc.body.getAttribute("data-np-api")) || "";
+
+  function store(key, value) {
+    try {
+      if (value === undefined) return window.localStorage.getItem(key);
+      window.localStorage.setItem(key, value);
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  function vote(id, option) {
+    if (!API || EDITOR || !window.fetch) return Promise.resolve(null);
+    return fetch(API + "/" + encodeURIComponent(id), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ option: option }),
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+
+  function bindPolls(scope) {
+    $all("[data-np-poll]", scope).forEach(function (box) {
+      if (!once(box, "poll")) return;
+      var id = box.getAttribute("data-np-poll");
+      var key = "np-poll-" + info.np_project + "-" + id;
+      var btns = $all("[data-np-vote]", box);
+      var msg = box.querySelector(".np-poll__msg");
+      function showCounts(counts, mine) {
+        var total = 0;
+        btns.forEach(function (b) { total += (counts && counts[b.getAttribute("data-np-vote")]) || 0; });
+        btns.forEach(function (b) {
+          var o = b.getAttribute("data-np-vote");
+          b.disabled = true;
+          b.classList.toggle("is-mine", o === mine);
+          if (!counts || !total) return;
+          var pct = Math.round((((counts[o] || 0) / total) * 100));
+          b.querySelector(".np-poll__pct").textContent = pct + " %";
+          b.querySelector(".np-poll__bar").style.width = pct + "%";
+        });
+      }
+      var prev = store(key);
+      if (prev && !EDITOR) {
+        btns.forEach(function (b) { b.disabled = true; b.classList.toggle("is-mine", b.getAttribute("data-np-vote") === prev); });
+        if (msg) msg.textContent = box.getAttribute("data-np-thanks") || "";
+      }
+      btns.forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (EDITOR || b.disabled) return;
+          var o = b.getAttribute("data-np-vote");
+          store(key, o);
+          btns.forEach(function (x) { x.disabled = true; });
+          if (msg) msg.textContent = box.getAttribute("data-np-thanks") || "";
+          track("np_poll", { np_option: (b.querySelector(".np-poll__l") || b).textContent });
+          vote(id, o).then(function (res) {
+            if (box.hasAttribute("data-np-results") && res && res.counts) showCounts(res.counts, o);
+            else showCounts(null, o);
+          });
+        });
+      });
+    });
+  }
+
+  function bindFeedback() {
+    $all("[data-np-feedback]", doc).forEach(function (box) {
+      if (!once(box, "fb") || EDITOR) return;
+      var thanks = box.querySelector(".np-fb__thanks");
+      $all("[data-np-fb]", box).forEach(function (b) {
+        b.addEventListener("click", function () {
+          var v = b.getAttribute("data-np-fb");
+          box.classList.add("is-done");
+          if (thanks) thanks.textContent = "Takk for tilbakemeldingen!";
+          track("np_feedback", { np_answer: v });
+          vote("feedback", v);
+        });
+      });
+    });
+  }
+
+  // ---- countdown ------------------------------------------------------------------------------
+  function bindCountdowns(scope) {
+    $all("[data-np-countdown]", scope).forEach(function (el) {
+      if (!once(el, "cd")) return;
+      var at = Number(el.getAttribute("data-np-countdown"));
+      if (!at) return;
+      var cells = {};
+      $all("[data-u]", el).forEach(function (c) { cells[c.getAttribute("data-u")] = c; });
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+      function tick() {
+        var left = Math.max(0, at - Date.now());
+        if (!left) {
+          el.classList.add("is-done");
+          if (!el.querySelector(".np-cd__over")) {
+            var p = doc.createElement("p");
+            p.className = "np-cd__over";
+            p.textContent = el.getAttribute("data-done") || "";
+            el.insertBefore(p, el.firstChild);
+          }
+          return;
+        }
+        var s = Math.floor(left / 1000);
+        cells.d.textContent = pad(Math.floor(s / 86400));
+        cells.h.textContent = pad(Math.floor((s % 86400) / 3600));
+        cells.m.textContent = pad(Math.floor((s % 3600) / 60));
+        cells.s.textContent = pad(s % 60);
+        setTimeout(tick, 1000 - (Date.now() % 1000));
+      }
+      tick();
+    });
+  }
+
+  // ---- chapter menu, progress, floating button ------------------------------------------------
+  function bindChrome() {
+    var nav = doc.querySelector("[data-np-chapnav]");
+    if (nav && io) {
+      var links = $all("a", nav);
+      var map = {};
+      links.forEach(function (a) { map[a.getAttribute("href").slice(1)] = a; });
+      var current = null;
+      Object.keys(map).forEach(function (id) {
+        var sec = doc.getElementById(id);
+        if (!sec) return;
+        onVisible(sec, function (el, visible) {
+          if (!visible) return;
+          if (current) current.classList.remove("is-on");
+          current = map[el.id];
+          current.classList.add("is-on");
+          if (nav.classList.contains("np-chapnav--top") && current.scrollIntoView && current.parentNode.parentNode.scrollWidth > nav.clientWidth) {
+            var list = current.parentNode.parentNode;
+            list.scrollTo({ left: current.offsetLeft - list.clientWidth / 2 + current.clientWidth / 2, behavior: "smooth" });
+          }
+        }, { threshold: 0, rootMargin: "-45% 0px -50% 0px" });
+      });
+      links.forEach(function (a) {
+        a.addEventListener("click", function () { track("np_chapter", { np_label: a.textContent }); });
+      });
+    }
+    var bar = doc.querySelector(".np-progress i");
+    var css = window.CSS && CSS.supports && CSS.supports("animation-timeline: scroll()");
+    if (bar && !css) {
+      persistent.push(function (vh) {
+        var h = doc.documentElement.scrollHeight - vh;
+        bar.style.setProperty("--np-p", h > 0 ? Math.min(1, (window.scrollY || window.pageYOffset) / h).toFixed(4) : "0");
+      });
+    }
+    var sticky = doc.querySelector("[data-np-sticky]");
+    if (sticky && !EDITOR) {
+      var after = Number(sticky.getAttribute("data-np-sticky")) / 100;
+      var foot = doc.querySelector(".np-footer");
+      persistent.push(function (vh) {
+        var h = doc.documentElement.scrollHeight - vh;
+        var p = h > 0 ? (window.scrollY || window.pageYOffset) / h : 0;
+        var footVisible = foot && foot.getBoundingClientRect().top < vh;
+        var ctaVisible = $all(".np-t-cta", doc).some(function (c) {
+          var r = c.getBoundingClientRect();
+          return r.top < vh && r.bottom > 0;
+        });
+        sticky.classList.toggle("is-on", p >= after && !footVisible && !ctaVisible);
+      });
+    }
+  }
+
   // ---- measurement hooks ----------------------------------------------------------
   function bindTracking() {
     if (EDITOR) return;
@@ -478,6 +988,19 @@
     bindCompare(scope);
     bindQuiz(scope);
     bindShare(scope);
+    bindHeroZoom(scope);
+    bindStatements(scope);
+    bindMarquees(scope);
+    bindTabs(scope);
+    bindHotspots(scope);
+    bindFlips(scope);
+    bindTimelines(scope);
+    bindHScroll(scope);
+    bindTilt(scope);
+    bindSlideshows(scope);
+    bindLightbox(scope);
+    bindPolls(scope);
+    bindCountdowns(scope);
     requestFrame();
   }
 
@@ -499,7 +1022,10 @@
     persistent.push(function () {
       root.classList.toggle("np-scrolled", (window.scrollY || window.pageYOffset) > 80);
     });
+    API = body.getAttribute("data-np-api") || "";
     bind(doc);
+    bindChrome();
+    bindFeedback();
     bindTracking();
   }
 

@@ -148,6 +148,38 @@
     );
   }
 
+  // Curated looks: colours + fonts that work together. A starting point for
+  // advertisers without a brand kit; the logo and everything else stay.
+  var PRESETS = [
+    { name: "Nordisk lys", colors: { primary: "#1f3a5f", accent: "#e4572e", dark: "#0f1c2e", soft: "#f3efe7", text: "#1c2430", link: "#1f5fa8", page: "#fbf9f5" }, heading: "Fraunces", body: "Inter", scale: "large", tracking: "tight" },
+    { name: "Natt og neon", colors: { primary: "#7c5cff", accent: "#00e0b8", dark: "#07070c", soft: "#16161f", text: "#14141c", link: "#7c5cff", page: "#0c0c12" }, heading: "Space Grotesk", body: "Inter", scale: "display", tracking: "tight" },
+    { name: "Skandinavisk skog", colors: { primary: "#2f5d4e", accent: "#d9a441", dark: "#13261f", soft: "#eef2ec", text: "#1d2a24", link: "#2f6d57", page: "#ffffff" }, heading: "DM Serif Display", body: "DM Sans", scale: "large", tracking: "normal" },
+    { name: "Luksus", colors: { primary: "#111111", accent: "#b8945a", dark: "#0a0a0a", soft: "#f4f1ec", text: "#161616", link: "#8a6a35", page: "#ffffff" }, heading: "Playfair Display", body: "Inter", scale: "display", tracking: "tight" },
+    { name: "Sterk kampanje", colors: { primary: "#d7263d", accent: "#ffd23f", dark: "#1b1b1e", soft: "#fff4e6", text: "#1b1b1e", link: "#c11f33", page: "#ffffff" }, heading: "Archivo Black", body: "Archivo", scale: "large", tracking: "tight" },
+    { name: "Finans og innsikt", colors: { primary: "#0b3c5d", accent: "#1fa37a", dark: "#082436", soft: "#edf3f7", text: "#14222e", link: "#0b5f99", page: "#ffffff" }, heading: "Source Serif 4", body: "Source Sans 3", scale: "normal", tracking: "normal" },
+    { name: "Wrapped", colors: { primary: "#024950", accent: "#ff7b22", dark: "#012e33", soft: "#fcf8ea", text: "#10282b", link: "#0b6f78", page: "#fcf8ea" }, heading: "Archivo Black", body: "DM Sans", scale: "display", tracking: "tight" },
+  ];
+
+  function presets(adapter, redraw) {
+    var row = h("div.nx-presets");
+    PRESETS.forEach(function (pr) {
+      var sw = h("span.nx-preset__sw", null,
+        h("i", { style: "background:" + pr.colors.page }), h("i", { style: "background:" + pr.colors.primary }),
+        h("i", { style: "background:" + pr.colors.accent }), h("i", { style: "background:" + pr.colors.dark }));
+      row.appendChild(h("button.nx-preset", { type: "button", title: "Bruk «" + pr.name + "»", on: { click: function () {
+        var t = adapter.get();
+        var fonts = {
+          heading: Object.assign({}, t.fonts.heading, { family: pr.heading, source: "google", weight: /Black|Display/.test(pr.heading) ? 400 : 700 }),
+          body: Object.assign({}, t.fonts.body, { family: pr.body, source: "google", weight: 400 }),
+        };
+        adapter.set(Object.assign({}, t, { colors: Object.assign({}, t.colors, pr.colors), fonts: fonts, scale: pr.scale, tracking: pr.tracking }));
+        redraw();
+        ui.toast("Utseendet «" + pr.name + "» er brukt – angre med Ctrl+Z", "ok");
+      } } }, sw, h("span", null, pr.name)));
+    });
+    return h("div.nx-field", null, h("div.nx-field__head", null, h("span.nx-field__label", null, "Ferdige utseender"), h("span.nx-muted", null, "farger og skrift")), row);
+  }
+
   /**
    * The theme editor. adapter:
    *   get() → theme, set(theme), assets() → map, addAssets(list),
@@ -248,6 +280,27 @@
         adapter.set(Object.assign({}, adapter.get(), { headingCase: upper.checked ? "upper" : "none" }));
       });
       root.appendChild(h("label.nx-switch", null, upper, h("span.nx-switch__track"), h("span", null, "Titler med store bokstaver")));
+      var btnUpper = h("input", { type: "checkbox", checked: theme.buttonCase === "upper" });
+      btnUpper.addEventListener("change", function () {
+        adapter.set(Object.assign({}, adapter.get(), { buttonCase: btnUpper.checked ? "upper" : "none" }));
+      });
+      root.appendChild(h("label.nx-switch", null, btnUpper, h("span.nx-switch__track"), h("span", null, "Knappetekst med store bokstaver")));
+
+      // typography scale
+      var scaleSel = h("select.nx-input.nx-select");
+      S.TYPE_SCALES.forEach(function (o) { scaleSel.appendChild(h("option", { value: o[0], selected: o[0] === theme.scale }, o[1])); });
+      scaleSel.addEventListener("change", function () { adapter.set(Object.assign({}, adapter.get(), { scale: scaleSel.value })); });
+      root.appendChild(h("div.nx-field", null, h("div.nx-field__head", null, h("span.nx-field__label", null, "Størrelse på titler")), scaleSel,
+        h("p.nx-help", null, "«Magasin» gir store, redaksjonelle titler – fint med en sterk overskriftsskrift.")));
+      root.appendChild(
+        h("div.nx-field", null, h("div.nx-field__head", null, h("span.nx-field__label", null, "Bokstavavstand i titler")),
+          ui.segmented([["tight", "Tett"], ["normal", "Normal"], ["wide", "Luftig"]], theme.tracking || "normal", function (v) {
+            adapter.set(Object.assign({}, adapter.get(), { tracking: v }));
+          }, { small: true }))
+      );
+
+      // ready-made looks
+      root.appendChild(presets(adapter, redraw));
     }
 
     redraw();
@@ -331,5 +384,5 @@
     return root;
   }
 
-  NP.theme = { editor: editor, panel: panel, contrastNotes: contrastNotes };
+  NP.theme = { editor: editor, panel: panel, contrastNotes: contrastNotes, PRESETS: PRESETS };
 })();

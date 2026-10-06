@@ -9,7 +9,9 @@
      right     the selected section's properties (props.js)
 
    Keyboard: Ctrl+Z / Ctrl+Shift+Z undo/redo, Ctrl+S save now,
-   Delete removes the selected section, Escape deselects, 1/2/3 switch device.
+   Delete removes the selected section, Escape deselects, 1/2/3 switch device,
+   Ctrl+C / Ctrl+V copy and paste a section (with Alt: only its style),
+   Ctrl+D duplicates, Alt+↑/↓ moves the selected section.
    ========================================================================= */
 (function () {
   "use strict";
@@ -23,6 +25,7 @@
     ["sections", "Seksjoner", "layers"],
     ["media", "Medier", "images"],
     ["theme", "Tema", "palette"],
+    ["extras", "Side", "panels-top-left"],
     ["project", "Prosjekt", "settings"],
     ["check", "Kontroll", "list-checks"],
     ["review", "Gjennomgang", "message-square"],
@@ -123,6 +126,7 @@
       if (nameKey === "sections") panelNode = NP.sections.panel();
       if (nameKey === "media") panelNode = NP.media.grid({});
       if (nameKey === "theme") panelNode = NP.theme.panel();
+      if (nameKey === "extras") panelNode = NP.extras.panel();
       if (nameKey === "project") panelNode = NP.projectPanel.panel();
       if (nameKey === "check") panelNode = NP.preflight.panel();
       if (nameKey === "review") panelNode = NP.review.panel();
@@ -210,6 +214,31 @@
         return;
       }
       var sel = NP.store.get().selected;
+      if (mod && e.key.toLowerCase() === "c" && sel && !hasTextSelection()) {
+        e.preventDefault();
+        if (e.altKey) NP.sections.copyStyle(sel);
+        else NP.sections.copy(sel);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        if (e.altKey && sel) NP.sections.pasteStyle(sel);
+        else NP.sections.paste(sel);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "d" && sel) {
+        e.preventDefault();
+        NP.store.duplicateSection(sel);
+        return;
+      }
+      if (sel && e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        e.preventDefault();
+        var secs = NP.store.page().sections;
+        var at = secs.findIndex(function (x) { return x.id === sel; });
+        var to = at + (e.key === "ArrowUp" ? -1 : 1);
+        if (to >= 0 && to < secs.length) NP.store.moveSection(sel, to);
+        return;
+      }
       if ((e.key === "Delete" || e.key === "Backspace") && sel) {
         e.preventDefault();
         NP.sections.remove(sel);
@@ -233,6 +262,11 @@
     NP.editor.openPanel = openPanel;
     NP.editor.setBadge = setBadge;
     NP.editor.canvas = canvas;
+  }
+
+  function hasTextSelection() {
+    var sel = window.getSelection && window.getSelection();
+    return !!(sel && String(sel).length);
   }
 
   function close() {

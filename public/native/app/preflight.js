@@ -25,7 +25,13 @@
     "Første poeng", "Andre poeng", "Tredje poeng", "nøkkeltall fra kildene", "Kort beskrivelse", "Et ordrett sitat",
     "Mellomtittel som deler opp", "Åpningsavsnittet setter scenen", "Første faktapunkt", "Andre faktapunkt", "Spørsmål leseren lurer på",
     "Utdyp med konkrete detaljer", "Tekst ved siden av bildet", "Forklar én egenskap", "En kort setning om hva som skjer",
+    // the sample copy of the premium templates and the ready-made designs
+    "Eksempeltall i malen", "eksempelpris i malen", "eksempeltekst", "Kort forklaring.", "Hvorfor den er med.", "Ordrett sitat.",
+    "Nordvei", "Fjellro", "Fjordbank", "Kino Nord", "Kari Nordmann", "Line Berg", "Ida Haugen", "Navn på kilden",
+    "Én setning som oppsummerer hele saken", "Tittel på kapitlet", "Første punkt", "Første kapittel",
   ];
+
+  var DEMO_NAME = /^Demo – /;
 
   function sectionText(s) {
     var parts = [];
@@ -46,6 +52,53 @@
       out.push({ level: level, text: text, page: page ? page.id : null, section: section ? section.id : null, pageLabel: page ? page.label : "" });
     };
     var assets = project.assets;
+
+    // Photos inside lists (cards, galleries, products …) need alt text too,
+    // unless the block shows a text that describes them anyway.
+    function checkListImages(s, name, page) {
+      S.fieldsOf(s.type).forEach(function (f) {
+        if (f.type !== "list") return;
+        var missing = 0;
+        (s.props[f.key] || []).forEach(function (item) {
+          f.item.forEach(function (sub) {
+            var v = item[sub.key];
+            if (sub.type !== "image" || !v || !assets[v]) return;
+            var described = item.alt || item.title || item.name || item.front;
+            if (!assets[v].alt && !described) missing++;
+          });
+        });
+        if (missing) add("warn", name + ": " + missing + " bilde(r) i «" + f.label + "» mangler alt-tekst.", page, s);
+      });
+    }
+
+    function checkBlock(s, name, page) {
+      var p = s.props;
+      if (s.type === "poll" && p.options.filter(function (o) { return o.label; }).length < 2) add("error", name + ": avstemningen trenger minst to svaralternativer.", page, s);
+      if (s.type === "poll") add("info", name + ": resultatet telles bare når siden publiseres på /n/. I ZIP-eksport går svaret bare til målingen.", page, s);
+      if (s.type === "countdown") {
+        var at = window.NativeRender.osloTime(p.date);
+        if (!at) add("error", name + ": datoen «" + p.date + "» er ugyldig (bruk ÅÅÅÅ-MM-DD TT:MM).", page, s);
+        else if (at < Date.now()) add("warn", name + ": datoen er passert – siden viser «" + p.done + "».", page, s);
+        if (p.ctaLabel && !p.ctaUrl) add("error", name + ": knappen mangler lenke.", page, s);
+      }
+      if (s.type === "hotspots") {
+        var untitled = p.items.filter(function (it) { return !it.title; }).length;
+        if (untitled) add("warn", name + ": " + untitled + " punkt(er) mangler tittel.", page, s);
+      }
+      if (s.type === "tabs" && p.items.some(function (it) { return !it.label; })) add("warn", name + ": en fane mangler navn.", page, s);
+      if (s.type === "tabs" && p.items.some(function (it) { return it.ctaLabel && !it.ctaUrl; })) add("error", name + ": en lenke i fanene mangler adresse.", page, s);
+      if (s.type === "cards") {
+        if ((p.look === "overlay" || p.look === "tile") && p.items.some(function (it) { return !it.image; })) add("warn", name + ": «" + (p.look === "tile" ? "Bildefliser" : "Tekst over bildet") + "» trenger bilde på alle kort.", page, s);
+        if (p.items.some(function (it) { return it.linkLabel && !it.url; })) add("error", name + ": en lenke i kortene mangler adresse.", page, s);
+        if (p.look === "tile" && p.items.some(function (it) { return !it.url; })) add("warn", name + ": lenkefliser uten lenke kan ikke klikkes.", page, s);
+      }
+      if (s.type === "quiz" && p.ctaLabel && !p.ctaUrl) add("error", name + ": knappen etter quizen mangler lenke.", page, s);
+      if (s.type === "specTable" && p.rows.some(function (r) { return !r.label; })) add("warn", name + ": en rad mangler navn.", page, s);
+      if (s.type === "flipCards" && p.items.some(function (it) { return !it.back; })) add("warn", name + ": et kort har tom bakside.", page, s);
+      if (s.type === "rankList" && p.layout === "scenes" && p.items.some(function (it) { return !it.image; })) add("warn", name + ": «Scener i hel skjerm» ser best ut med bilde på hver plass.", page, s);
+      if (s.type === "stickyStory" && p.layout !== "overlay" && !p.image && !p.video) add("warn", name + ": delt skjerm trenger et bilde eller en video.", page, s);
+      if (s.type === "statement" && p.accent && String(p.text).toLowerCase().indexOf(String(p.accent).toLowerCase().split(/\s+/)[0]) === -1) add("warn", name + ": ordet «" + p.accent + "» som skal utheves, står ikke i teksten.", page, s);
+    }
 
     if (!project.advertiser.name) add("error", "Annonsørens navn mangler – merkingen øverst blir «" + (settings.disclosureLabel || "").replace("{annonsør}", "annonsør") + "». (Prosjekt → Annonsør)");
     if (!project.advertiser.logo) add("info", "Ingen annonsørlogo – navnet vises i stedet. (Tema → Annonsørens logo)");
@@ -101,8 +154,25 @@
         if (s.hide.desktop && s.hide.tablet && s.hide.mobile) add("warn", name + ": er skjult på alle skjermer.", page, s);
         if (s.style.bg === "image" && !s.style.bgImage) add("warn", name + ": bakgrunn er satt til bilde, men ingen er valgt.", page, s);
         if (s.type === "embed" && p.url && !window.NativeRender.embedUrl(p.url)) add("error", name + ": lenken kan ikke bygges inn.", page, s);
+        if (s.style.bg === "video" && !s.style.bgVideo) add("warn", name + ": bakgrunn er satt til video, men ingen er valgt.", page, s);
+        checkListImages(s, name, page);
+        checkBlock(s, name, page);
       });
     });
+
+    // Page-level options (Side).
+    var x = project.extras || {};
+    if (x.stickyCta && !x.stickyUrl && !project.advertiser.url) add("error", "Den flytende knappen har ingen lenke, og annonsørens nettside er ikke fylt ut. (Side → Flytende knapp)");
+    if (x.chapterNav && x.chapterNav !== "none") {
+      var chapters = 0;
+      project.pages.forEach(function (pg) { pg.sections.forEach(function (sec) { if (sec.style.chapter) chapters++; }); });
+      if (chapters < 2) add("warn", "Kapittelmenyen er slått på, men bare " + chapters + " seksjon(er) har kapittelnavn. (Seksjon → Stil → Navigasjon)");
+    }
+    if (x.customCss) add("info", "Siden bruker egen CSS. Sjekk den på mobil før eksport.");
+    if (project.tracking.clickPrefix) add("info", "Alle annonsørlenker går via klikksporingen " + project.tracking.clickPrefix.slice(0, 50) + "…");
+
+    var demoUsed = D.usedAssets(project).filter(function (id) { return assets[id] && DEMO_NAME.test(assets[id].name || ""); });
+    if (demoUsed.length) add("warn", demoUsed.length + " demobilde(r) fra malen er fortsatt i bruk. Bytt dem ut med annonsørens egne bilder.");
 
     NP.theme.contrastNotes(project.theme).forEach(function (n) { add("warn", "Tema: " + n); });
 

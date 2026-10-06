@@ -196,6 +196,14 @@
       }));
     });
     root.appendChild(
+      text("Klikksporing foran alle annonsørlenker (valgfritt)", p.tracking.clickPrefix, function (v) {
+        setDirect(function (x) { return { tracking: Object.assign({}, x.tracking, { clickPrefix: v.trim() }) }; }, "click");
+      }, {
+        placeholder: "https://ad.doubleclick.net/ddm/clk/…;?",
+        help: "Fra annonsørens byrå (DoubleClick, Adform …). Lenken legges etter, URL-kodet – eller der det står %%DEST_URL%% eller {url}. Må starte med https://.",
+      })
+    );
+    root.appendChild(
       h(
         "details.nx-details",
         null,

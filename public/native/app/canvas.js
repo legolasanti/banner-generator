@@ -107,6 +107,14 @@
       frame.srcdoc = html;
     }
 
+    // Page-level options (typed into the Side panel) rebuild the whole frame;
+    // wait for a pause in the typing so it does not flicker on every key.
+    var fullTimer = null;
+    function fullSoon() {
+      clearTimeout(fullTimer);
+      fullTimer = setTimeout(full, 280);
+    }
+
     function sectionEl(id) {
       return docu && docu.getElementById("np-" + id);
     }
@@ -179,7 +187,7 @@
       if (change.kind === "select") return decorateAll();
       if (change.kind === "device") return fit();
       if (change.kind !== "project") return;
-      if (change.shell) return full();
+      if (change.shell) return fullSoon();
       if (change.theme) return themeUpdate();
       if (change.structure) return rebuildMain();
       var ids = change.sections || [];
@@ -295,7 +303,7 @@
         NP.store.select(id);
         // A second click on an image of the selected section opens the picker.
         var info = fieldOf(e.target);
-        if (wasSelected && info && e.target.tagName === "IMG") {
+        if (wasSelected && info && e.target.tagName === "IMG" && !e.target.closest("[data-np-hs-edit]")) {
           var def = fieldDef(id, info.field);
           if (def && def.type === "image") {
             NP.media.pick({ kind: "image" }).then(function (asset) { if (asset) NP.store.setField(id, info.field, asset); });
@@ -303,7 +311,64 @@
         }
         if (info) NP.props && NP.props.focusField && NP.props.focusField(info.field);
       });
+      // Hotspots: drag a numbered dot to move it, double-click the picture to
+      // add a new one there.
+      function hsPos(box, ev) {
+        var r = box.getBoundingClientRect();
+        return {
+          x: Math.round(Math.max(0, Math.min(100, ((ev.clientX - r.left) / r.width) * 100))),
+          y: Math.round(Math.max(0, Math.min(100, ((ev.clientY - r.top) / r.height) * 100))),
+        };
+      }
+      docu.addEventListener("pointerdown", function (e) {
+        var dot = e.target.closest && e.target.closest("[data-np-hs-edit] .np-hs__dot");
+        if (!dot) return;
+        e.preventDefault();
+        // Capture: the drag keeps reporting even when the pointer leaves the frame.
+        if (dot.setPointerCapture) dot.setPointerCapture(e.pointerId);
+        var box = dot.closest("[data-np-hs-edit]");
+        var sec = dot.closest("[data-np-section]");
+        var id = sec.getAttribute("data-np-section");
+        var found = D.findSection(st().project, id);
+        var item = found && found.section.props.items[Number(dot.getAttribute("data-np-hs-i"))];
+        if (!item) return;
+        var pt = dot.parentNode;
+        var moved = null;
+        function move(ev) {
+          moved = hsPos(box, ev);
+          pt.style.left = moved.x + "%";
+          pt.style.top = moved.y + "%";
+        }
+        function up() {
+          dot.removeEventListener("pointermove", move);
+          dot.removeEventListener("pointerup", up);
+          dot.removeEventListener("pointercancel", up);
+          if (!moved) return;
+          // x and y in one step: one undo, one re-render.
+          NP.store.updateSection(id, function (sec) {
+            var items = sec.props.items.map(function (it) {
+              return it.id === item.id ? Object.assign({}, it, { x: moved.x, y: moved.y }) : it;
+            });
+            return Object.assign({}, sec, { props: Object.assign({}, sec.props, { items: items }) });
+          });
+        }
+        dot.addEventListener("pointermove", move);
+        dot.addEventListener("pointerup", up);
+        dot.addEventListener("pointercancel", up);
+      });
       docu.addEventListener("dblclick", function (e) {
+        var hsBox = e.target.closest && e.target.closest("[data-np-hs-edit]");
+        if (hsBox && !e.target.closest(".np-hs__pt")) {
+          e.preventDefault();
+          var sid = hsBox.closest("[data-np-section]").getAttribute("data-np-section");
+          var f = S.field("hotspots", "items");
+          var cur = D.findSection(st().project, sid).section.props.items;
+          if (cur.length >= f.maxItems) return ui.toast("Maks " + f.maxItems + " punkter", "err");
+          var pos = hsPos(hsBox, e);
+          var fresh = D.normalizeField(f, [{ x: pos.x, y: pos.y, title: "Nytt punkt", text: "" }], null)[0];
+          NP.store.setField(sid, "items", cur.concat([fresh]));
+          return;
+        }
         var info = fieldOf(e.target);
         if (!info) return;
         var def = fieldDef(info.sectionId, info.field);
@@ -427,6 +492,7 @@
       window: function () { return win; },
       destroy: function () {
         if (unsub) unsub();
+        clearTimeout(fullTimer);
         ro.disconnect();
         stage.remove();
       },

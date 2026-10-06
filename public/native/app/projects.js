@@ -23,8 +23,8 @@
     var kitSel = h("select.nx-input.nx-select");
     kitSel.appendChild(h("option", { value: "" }, "Standard (ingen merkevare)"));
     var start = "ai";
-    var template = "lansering";
-    var tplBox = h("div.nx-tplgrid");
+    var template = "bil-premium";
+    var tplBox = h("div");
     var kits = [];
 
     NP.api.brandKits().then(function (r) {
@@ -37,27 +37,35 @@
       if (k && !url.value) url.value = k.advertiser.url || "";
     });
 
-    function tplCard(id, title, desc, types) {
-      var b = h(
-        "button.nx-tpl",
-        { type: "button", "aria-pressed": String(template === id), on: { click: function () {
-          template = id;
-          Array.prototype.forEach.call(tplBox.children, function (n) { n.setAttribute("aria-pressed", String(n === b)); });
-        } } },
-        h("strong", null, title),
-        h("span.nx-muted", null, desc),
-        h("span.nx-tpl__types", null, types.map(function (t) { return ui.icon(S.BLOCKS[t] ? S.BLOCKS[t].icon : "square", 14); }))
-      );
-      return b;
-    }
-
-    T.TEMPLATES.forEach(function (t) {
-      tplBox.appendChild(tplCard(t.id, t.name, t.description, t.sections.map(function (s) { return s.type; })));
+    var demoOn = h("input", { type: "checkbox", checked: true });
+    var gal = NP.tplGallery.gallery({
+      selected: template,
+      onSelect: function (id) { template = id; },
+      onUse: function () { create.click(); },
+      useDemo: function () { return demoOn.checked; },
     });
+    tplBox.appendChild(gal);
+    // Pages saved to the library are templates too (no thumbnail).
     NP.api.library().then(function (r) {
-      (r.items || []).filter(function (x) { return x.kind === "page"; }).forEach(function (it) {
-        tplBox.appendChild(tplCard(it.id, it.name, it.description || it.category, it.sections.map(function (s) { return s.type; })));
+      var pages = (r.items || []).filter(function (x) { return x.kind === "page"; });
+      if (!pages.length) return;
+      var row = h("div.nx-tplgrid");
+      pages.forEach(function (it) {
+        var b = h(
+          "button.nx-tpl",
+          { type: "button", on: { click: function () {
+            template = it.id;
+            gal.select(null);
+            Array.prototype.forEach.call(row.children, function (n) { n.setAttribute("aria-pressed", String(n === b)); });
+          } } },
+          h("strong", null, it.name),
+          h("span.nx-muted", null, it.description || it.category),
+          h("span.nx-tpl__types", null, it.sections.map(function (sec) { return ui.icon(S.BLOCKS[sec.type] ? S.BLOCKS[sec.type].icon : "square", 14); }))
+        );
+        row.appendChild(b);
       });
+      tplBox.appendChild(h("h4.nx-group", null, "Fra biblioteket"));
+      tplBox.appendChild(row);
     });
 
     var startSeg = ui.segmented(
@@ -68,7 +76,13 @@
         tplWrap.hidden = v !== "template";
       }
     );
-    var tplWrap = h("div.nx-field", { hidden: true }, h("span.nx-field__label", null, "Mal"), tplBox);
+    var tplWrap = h(
+      "div.nx-field",
+      { hidden: true },
+      h("div.nx-field__head", null, h("span.nx-field__label", null, "Mal"),
+        h("label.nx-switch.nx-switch--sm", null, demoOn, h("span.nx-switch__track"), h("span", null, "Med demobilder"))),
+      tplBox
+    );
 
     var create = ui.button("Opprett", { kind: "primary", onClick: function () {
       var n = name.value.trim() || (adv.value.trim() ? adv.value.trim() + " – Native Premium" : "Ny Native Premium");
@@ -78,6 +92,7 @@
         advertiser: { name: adv.value.trim(), url: D.safeUrl(url.value.trim()) },
         brandKit: kitSel.value || undefined,
         template: start === "template" ? template : undefined,
+        demo: start === "template" ? demoOn.checked : undefined,
       }).then(function (r) {
         var p = r.project;
         // "Tom side" and "Med AI" start without the template's sections.

@@ -192,11 +192,42 @@ og ser riktig ut på desktop, nettbrett og mobil av seg selv:
 
 | Gruppe | Blokker |
 | --- | --- |
-| Topp | **Hero** — bilde eller video (egne stående filer for mobil), stikktittel, H1, ingress; tekst over bildet, side om side eller bilde over |
-| Tekst | **Brødtekst** (mellomtitler, lister, sitater, lenker), **Faktaboks** (kan lukkes), **Sitat**, **Tall** (teller opp), **Spørsmål og svar**, **Søylediagram**, **Skillelinje** |
-| Media | **Bilde** (ett eller to), **Bilde + tekst**, **Video** (med avspiller eller lydløs stemningsvideo, 16:9/9:16 per skjerm), **Galleri**, **Innbygging** (YouTube, Vimeo, Flourish, Datawrapper, Spotify, Google Maps) |
-| Handling | **CTA** (bånd, knapp eller pil-lenke — UTM og `rel="sponsored"` legges på automatisk), **Produktkort** (bilde, pris, før-pris, merke) |
-| Effekter | **Scrollfortelling** (bildet/videoen står mens kortene ruller over), **Scroll-video**, **Parallakse-bilde**, **Før / etter**, **Quiz** |
+| Topp | **Hero** — bilde eller video (egne stående filer for mobil), stikktittel, H1, ingress; tekst over bildet, side om side, bilde over, **bilde i ramme**, **zoom** (bildet vokser til full bredde når man scroller) eller **typografisk**; tittelstørrelse opp til «gigantisk», tittel-animasjon (ord / linje / bokstav), langsom zoom; **Kapittel** (merke, tittel, innledning; midtstilt, stor til venstre eller stort tall) |
+| Tekst | **Brødtekst** (mellomtitler, lister, sitater, lenker, utheving, ingress-avsnitt, to spalter), **Stor tekst** (én stor setning; ordene lyser opp ved scroll, ord for ord, skrivemaskin, fargeovergang eller kontur), **Faktaboks**, **Sitat**, **Personer og sitater** (portrett eller portrettvideo), **Tall** (rent, kort, linjer eller ett gigantisk), **Topp-liste** (rangert, nedtelling, scener i hel skjerm med store tall, fakta og «Visste du?»), **Steg for steg**, **Kort / rutenett** (bokser, rent, tekst over bilde, lenkefliser; valgfri 3D-vipping), **Faner**, **Tidslinje**, **Tabell / sammenligning** (opptil 3 kolonner, én uthevet), **Spørsmål og svar**, **Diagram** (liggende, stående, smultring), **Løpende tekst**, **Kilder**, **Skillelinje** |
+| Media | **Bilde** (ett eller to; 21:9 … 4:5; zoom ved scroll, gardin, langsom zoom; fotokreditering), **Bilde + tekst**, **Video**, **Galleri** (karusell, rutenett, mosaikk, lysbildeserie; fullskjerm ved klikk), **Bilde med punkter** (dra punktene i forhåndsvisningen, dobbeltklikk for å legge til), **Innbygging** |
+| Handling | **CTA** (bånd, **kort med bilde**, knapp eller pil-lenke), **Produktkort** (rutenett eller karusell), **Avstemning** (resultatet telles på sider som publiseres her), **Nedtelling** (norsk tid, med knapp) |
+| Effekter | **Scrollfortelling** (over bildet eller **delt skjerm**; ton, zoom, skyv, stabling, uskarp, gardin eller sirkel; hvite, glass-, mørke eller rene kort; fremdriftsprikker; eget bilde eller video per kort), **Scroll-video**, **Sidelengs scroll**, **Parallakse-bilde**, **Snu-kort**, **Før / etter**, **Quiz** (fremdrift, resultattekster etter poeng, knapp) |
+
+Hver seksjon har også **stil**: bakgrunn (temafarge, egen farge, **fargeovergang**
+— lineær, fra midten eller myk «aurora» —, **bilde** eller **video**, eget bilde/video
+for mobil), bakgrunnseffekt (står fast, langsom zoom, parallakse), filmkorn,
+tekstfarge, luft og **minimum høyde** (per skjerm), **formede kanter** (bølge, skrå,
+bue, sagtann), animasjon inn (ton, skli, zoom, uskarp, maske, løft, **ett og ett
+element**) med tempo og forsinkelse, **effekter som følger scrollingen** (tones ut,
+vokser inn, dybde, scene-skifte) og navn i **kapittelmenyen**.
+
+**Side-panelet:** lesefremdrift, **kapittelmeny** (stripe under merkingen eller
+prikker i siden), lesetid i hero, **flytende knapp** som dukker opp etter en
+valgt andel av siden (skjules over CTA-er og bunnteksten), «Likte du denne saken?
+Ja/Nei» nederst, linjen «Annonsørinnhold for … / Produsert av …» og egen CSS (som
+aldri kan skjule merkingen).
+
+**Ferdige design:** «Legg til seksjon» viser 43 ferdig designede seksjoner med
+levende miniatyrer (åpninger, kapitler, store tekster, tall, lister, kort,
+scrollfortellinger, handling) — med søk. Seksjoner og stil kan kopieres og limes
+inn, også mellom prosjekter (Ctrl+C / Ctrl+V, med Alt bare stilen).
+
+**Maler:** i tillegg til de fem arbeidshestene finnes sju **premium-maler**, hver
+med egne skrifter, farger og sideinnstillinger, kledd i et demosett med bilder
+(Unsplash): **Bil-lansering premium**, **Topp 5 – nedtelling**, **Året i tall
+(«Wrapped»)**, **Reise – immersiv**, **Interaktiv guide («utforsker»)**, **Rapport og
+innsikt** og **Mat og smak**. Galleriet i «Ny Native Premium» viser hver mal levende
+og åpner en forhåndsvisning i full størrelse (desktop/mobil) med alle effektene.
+Demobilder og eksempeltekst flagges i **Kontroll** til de er byttet ut.
+
+**Tema:** i tillegg til farger, skrifter og logo: sidebakgrunn (lyse eller mørke
+sider), størrelse på titler (opp til «Magasin»), bokstavavstand, store bokstaver i
+titler/knapper og sju ferdige utseender.
 
 **Merkingen** er ikke en blokk og kan ikke fjernes: hver side starter med en fast
 «Annonsørinnhold fra {annonsør}»-linje med utgivers og annonsørens logo, og slutter
@@ -212,8 +243,9 @@ med den faste bunnteksten. Ordlyden settes én gang i **Innstillinger**.
   per skjerm) og synlighet per skjerm.
 - **Venstre:** Seksjoner (dra for å flytte) · Medier (last opp, **importer fra en
   Google Drive-mappe**, fra lenke, eller **lag med AI**; alt-tekst, fokuspunkt) ·
-  Tema (farger med kontrastsjekk, Google- eller egne skrifter, logo, knappestil;
-  **merkevarer** per annonsør) · Prosjekt (annonsør, **varianter** som «For menn» /
+  Tema (farger med kontrastsjekk, Google- eller egne skrifter, logo, knappestil,
+  tittelstørrelse, ferdige utseender; **merkevarer** per annonsør) · Side
+  (sideinnstillinger) · Prosjekt (annonsør, **varianter** som «For menn» /
   «For kvinner» med faner, delingsbilde og -tekst, endelig adresse, UTM, egne
   skript) · Kontroll (alt som bør rettes før annonsøren ser siden) · Gjennomgang.
 - Angre/gjør om (Ctrl+Z / Ctrl+Shift+Z), lagrer automatisk, en versjon hvert 10.
@@ -273,7 +305,10 @@ størrelser for Drive-mapper; uten den leses mappens offentlige visning.
   sider kjøres i en CSP-sandkasse.
 - **Måling:** sidene sender `np_view`, `np_scroll` (25/50/75/100), `np_time`,
   `np_cta_click`, `np_video` (start/25/50/75/ferdig), `np_factbox_open`,
-  `np_share` og `np_quiz_*` til `window.dataLayer` og som DOM-hendelsen `np:track`.
+  `np_share`, `np_quiz_*`, `np_tab`, `np_hotspot`, `np_flip`, `np_poll`,
+  `np_feedback`, `np_chapter`, `np_gallery` og `np_lightbox` til `window.dataLayer`
+  og som DOM-hendelsen `np:track`. En valgfri **klikksporing** (DoubleClick, Adform …)
+  kan legges foran alle annonsørlenker (Prosjekt → Måling).
   Legg inn Kilkaya / Mixpanel / GTM én gang i Innstillinger; piksler fra annonseservere
   med `[timestamp]`/`[cachebuster]` får nytt tall ved hver visning.
 - Sidene virker **uten JavaScript** (alt synlig; bevegelse er et tillegg),
