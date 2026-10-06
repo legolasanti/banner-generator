@@ -858,3 +858,9 @@ input[type="range"]:focus-visible { box-shadow: 0 0 0 3px var(--green-ring); }
 /* Wallpaper exports are 1920×850 — show the whole strip, not a crop of it. */
 .hcard__thumb--wide { object-fit: contain; background: #eef0ea; }
 .hcard__actions .btn-ghost { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+
+/* Signed-in user (only when logins are on; see shared/session.js). */
+.session { display: flex; align-items: center; gap: 8px; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); flex: none; }
+.session__name { font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.session__out { border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 8px; padding: 6px 10px; font: 600 12.5px/1 var(--font); cursor: pointer; }
+.session__out:hover { color: var(--ink); border-color: var(--ink-3); }

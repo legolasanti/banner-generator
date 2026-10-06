@@ -112,3 +112,7 @@ html.np-editor .np-sec a { cursor: inherit; }
 
 /* an empty page */
 .nx-frame-empty { padding: 120px 24px; text-align: center; font: 600 16px/1.5 system-ui, sans-serif; color: #6b7380; }
+
+/* A hero waiting for its picture: the placeholder fills the whole area. */
+.np-hero__media > .np-ph { position: absolute; inset: 0; min-height: 0; border-radius: 0; color: #c9ced8; background: repeating-linear-gradient(-45deg, #1d2433, #1d2433 14px, #222a3b 14px, #222a3b 28px); font-size: 16px; }
+.np-hero--split .np-hero__media > .np-ph, .np-hero--below .np-hero__media > .np-ph { position: relative; min-height: 320px; height: 100%; }

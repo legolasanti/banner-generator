@@ -461,3 +461,4 @@ p { margin: 0; }
 .nx-edbar .nx-seg { flex-wrap: nowrap; }
 .nx-edbar .nx-seg__btn { padding: 6px 8px; }
 .nx-kitbar .nx-row { flex-direction: column; align-items: stretch; }
+.nx-wiz__wrap { flex: 1; min-width: 0; }

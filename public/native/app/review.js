@@ -66,7 +66,11 @@
         "div.nx-comment__head",
         null,
         h("strong", null, c.author),
-        h("span.nx-tag" + (c.from === "client" ? ".nx-tag--client" : ""), null, c.from === "client" ? "Kunde" : "Teamet"),
+        c.from === "client"
+          ? h("span.nx-tag.nx-tag--client", null, "Kunde")
+          : c.author === "AI-assistent"
+            ? h("span.nx-tag.nx-tag--ai", null, "AI")
+            : c.author !== "Teamet" ? h("span.nx-tag", null, "Teamet") : null,
         h("span.nx-muted", null, "Runde " + c.round + " · " + ui.when(c.at)),
         h("label.nx-check.nx-comment__done", { title: "Løst" }, resolved, " Løst")
       ),

@@ -681,7 +681,7 @@
           if (!asComments.checked || !warnings.length) return;
           var round = project().review ? project().review.round : 0;
           return Promise.all(warnings.slice(0, 40).map(function (w) {
-            return NP.api.addComment(project().id, { text: "AI: " + w.text, round: round, anchor: { section: w.section, page: pageId } });
+            return NP.api.addComment(project().id, { text: w.text, author: "AI-assistent", round: round, anchor: { section: w.section, page: pageId } });
           }));
         }).then(function () {
           ui.toast("Siden er skrevet (" + ui.money(st.cost) + "). Les gjennom – AI-en kan ta feil.", "ok");

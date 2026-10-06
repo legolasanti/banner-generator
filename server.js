@@ -49,6 +49,7 @@ const bulkDeliver = require("./lib/bulk/deliver");
 const bulkLinks = require("./lib/bulk/links");
 const { registerBulkRoutes } = require("./lib/bulk/routes");
 const { createNative } = require("./lib/native");
+const { createAuth } = require("./lib/auth");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -854,6 +855,12 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Logins (off unless AUTH=on in .env). Before every route and static file, so
+// nothing but the public review/published paths is reachable without one.
+const auth = createAuth({ dataDir: DATA_DIR });
+app.use(auth.middleware());
+auth.routes(app);
 
 // A wallpaper design travels as JSON (images are uploaded separately and
 // referred to by id), but hundreds of elements with icon geometry can pass the
