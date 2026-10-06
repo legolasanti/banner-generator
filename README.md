@@ -2,10 +2,18 @@
 
 🇬🇧 English · [🇳🇴 Norsk](README.no.md)
 
-An internal tool that turns **one photo + a few text fields into a whole set of
-ad banners at once**, then downloads them as a ZIP — either as images or as
-upload-ready **Campaign Manager 360 HTML5 packages**. It replaces the manual
-Canva workflow.
+ABC Nyheter's internal design tool, in two areas (switch at the top left):
+
+- **Annonser** — turns **one photo + a few text fields into a whole set of ad
+  banners at once**, then downloads them as a ZIP — either as images or as
+  upload-ready **Campaign Manager 360 HTML5 packages**. It replaces the manual
+  Canva workflow. Norsk Tipping, ReadPeak, Houseads, Bulk and Wallpaper live here.
+- **Native Premium** — builds long-form advertiser content pages ("annonsørinnhold")
+  like the ones ABC BrandStudio used to make in Vev: scroll storytelling, video,
+  fact boxes, product cards, review links for the advertiser, ZIP export — and an
+  **AI mode** that reads the Google Docs brief and the Drive folder, asks the few
+  questions that matter and writes a first draft.
+  See [Native Premium](#native-premium).
 
 Three products, picked with the tabs at the top. Each has its own formats, its
 own form fields and its own furniture on the banner:
@@ -173,6 +181,134 @@ browser — or upload a finished design and put live text and buttons on top.
 - Autosaved in the browser; save/open a self-contained project file; every
   export lands in **History** with its design, so it can be reopened and
   edited.
+
+## Native Premium
+
+Open it with **Native Premium** at the top left (or `http://localhost:4050/native/`).
+
+### What a page is made of
+
+A page is a list of **sections** (blocks). Each block type has its own fields and
+looks right on desktop, tablet and mobile by itself:
+
+| Group | Blocks |
+| --- | --- |
+| Top | **Hero** — photo or video (separate portrait files for mobile), kicker, H1, ingress; overlay, split or photo-above |
+| Text | **Body text** (sub-headings, lists, quotes, links), **Fact box** (folds open), **Quote**, **Numbers** (count up), **Q&A**, **Bar chart**, **Divider** |
+| Media | **Image** (one or two), **Image + text**, **Video** (player or silent ambient loop, 16:9/9:16 per device), **Gallery** (carousel/grid), **Embed** (YouTube, Vimeo, Flourish, Datawrapper, Spotify, Google Maps) |
+| Action | **CTA** (band, button or arrow link — UTM tags and `rel="sponsored"` added automatically), **Product cards** (image, price, before-price, badge) |
+| Effects | **Scroll story** (the photo/video stays while cards scroll over it), **Scroll video** (plays as you scroll), **Parallax image**, **Before / after**, **Quiz** |
+
+The **disclosure** is not a block and cannot be removed: every page starts with a
+sticky "Annonsørinnhold fra {advertiser}" bar with the publisher's and the
+advertiser's logos, and ends with the fixed footer text. The wording is set once
+in **Settings**.
+
+### The editor
+
+- **Middle:** the real page, exactly as it will be published, at desktop, tablet
+  or mobile width (keys 1/2/3). Click a section to select it; **double-click a
+  text to type right on the page**.
+- **Right:** the selected section's fields (with character counters against the
+  editorial limits), its style (background, spacing, alignment, entrance
+  animation — spacing and alignment can differ per device) and visibility per
+  device.
+- **Left:** Sections (drag to reorder) · Media (upload, **import from a Google
+  Drive folder**, from a link, or **generate with AI**; alt text, focal point) ·
+  Theme (colours with contrast check, Google or uploaded brand fonts, logo,
+  button style; **brand kits** per advertiser) · Project (advertiser, **audience
+  variants** like "For menn"/"For kvinner" with tabs, sharing image and text,
+  final address, UTM, per-project scripts) · Check (everything to fix before the
+  advertiser sees it) · Review.
+- Undo/redo (Ctrl+Z / Ctrl+Shift+Z), autosave every second, an automatic version
+  every 10 minutes, named versions and restore. If a colleague saved in the
+  meantime, the editor says so instead of overwriting their work.
+
+### AI mode (OpenRouter)
+
+**AI** in the editor (or "Med AI" when creating a project) opens a four-step wizard:
+
+1. **Sources** — paste the **Google Docs** brief link (shared as "Anyone with the
+   link"; or upload it as .docx), the advertiser's **product pages**, import the
+   **Drive folder** with the photos/videos, and add a few lines yourself.
+   Comments in the doc come along as editorial notes; pictures inside the doc can
+   be imported with one click.
+2. **Questions** — the AI reads everything (photos included) and shows its
+   reading: summary, the facts it found (with the ones to double-check flagged:
+   prices, conflicting numbers), quotes, what each photo shows and where it fits.
+   Then it asks **at most eight questions** — only what the material does not
+   answer: conflicting facts, a missing CTA link, unclear quotes, legal points;
+   angle/tone/audience only when the brief is silent. Its best guess is
+   pre-selected, so most answers are a click.
+3. **Plan** — three headline options, the ingress and the section plan, all
+   editable.
+4. **Write** — each section is written (in parallel), checked against the
+   character limits (one automatic repair round), and placed on the page. The
+   AI's warnings ("price must be confirmed by Ford") are saved as comments on
+   the sections they concern.
+
+Every text field also has a ✨ menu: shorter, longer, simpler, warmer, more
+formal, new angle, three headlines, fix language — always three alternatives.
+
+Rules the AI follows: Norwegian bokmål (sentence-case headlines, Norwegian
+typography), facts and quotes **only** from the sources (each claim tied to a
+fact id), no superlatives without documentation (markedsføringsloven § 3),
+never writes the disclosure itself. Prompts are versioned in
+`lib/native/ai/prompts.js`; the cost of every call is logged per project.
+
+**Setup:** copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`. Models are
+chosen in **Settings** (default `anthropic/claude-sonnet-5.5`, fallbacks on other
+providers, a vision model for photos, an image model for illustrations). Every
+request is sent with **zero data retention** and "no training on prompts". Run
+your own blind test with real briefs before settling on a model.
+
+Optional: `GOOGLE_API_KEY` (Drive API enabled) gives exact file types and sizes
+for Drive folders; without it, the folder's public view is read.
+
+### Review, export, publishing
+
+- **Review (Share):** "Send to review" freezes the current state as round 1, 2, …
+  and copies a link (`/p/<random token>/`). The advertiser opens it without a
+  login, **pins comments directly on the page** and **approves with their name**.
+  Edits made afterwards do not show until the next round. Links can be revoked.
+- **Export:** a ZIP with `index.html` (plus one folder per variant), WebP images
+  in several sizes, the page's fonts **subset to the characters it uses** and
+  self-hosted (no request to Google from readers — GDPR), video, the runtime and
+  a `LES-MEG.txt`. All paths are relative: upload the folder anywhere, or open it
+  from disk.
+- **Publish here:** ABC design can also host the page at `/n/<slug>/` (for
+  testing, or when the tool runs on a server with its own domain). Published
+  pages run inside a CSP sandbox.
+- **Measurement:** pages push `np_view`, `np_scroll` (25/50/75/100), `np_time`,
+  `np_cta_click`, `np_video` (play/25/50/75/complete), `np_factbox_open`,
+  `np_share` and `np_quiz_*` to `window.dataLayer` and as a `np:track` DOM event.
+  Put Kilkaya / Mixpanel / GTM snippets once in Settings; ad-server pixels with
+  `[timestamp]`/`[cachebuster]` get a fresh number per view.
+- Pages work **without JavaScript** (everything visible; motion is an extra),
+  respect `prefers-reduced-motion`, and load only the image size the screen needs.
+
+### Logins (for a shared server)
+
+Off by default. To require a login for everyone, add `AUTH=on` to `.env` and
+create users:
+
+```bash
+npm run user:add -- kari --admin   # asks for name and password
+npm run user:add -- ola
+npm run user:list
+npm run user:passwd -- ola
+npm run user:remove -- ola
+```
+
+Review links (`/p/…`), published pages (`/n/…`) and their files stay open.
+Only administrators can change Native Premium settings.
+
+### Where things are stored
+
+`data/native/` (projects, versions, comments, AI log, settings, brand kits,
+library; deleted projects go to `data/native/trash/`), `uploads/native/` (images
+with their WebP variants, videos, fonts) and `data/users.json`. Back up `data/`
+and `uploads/` together.
 
 ## Features
 
@@ -683,7 +819,12 @@ After this, anyone can clone it with the command in **Quick start** above.
 banner-generator/
 ├── server.js              Express API + Puppeteer (one shared browser, queue)
 ├── settings.json          Created automatically on first run
+├── data/                Native Premium projects, settings, users (created on first use)
 ├── lib/
+│   ├── native/            Native Premium: projects + versions, assets, pages/export,
+│   │                      review + published routes, sources/ (Docs, Drive, docx,
+│   │                      web pages), ai/ (OpenRouter client, prompts, schemas, pipeline)
+│   ├── auth.js            Optional logins (AUTH=on)
 │   ├── image.js           Downscaling + the per-file byte budget (sharp)
 │   ├── html5.js           Campaign Manager 360 package builder
 │   ├── safe-fetch.js      "Fetch from link" without reaching inside the network
@@ -697,6 +838,11 @@ banner-generator/
 │   ├── style.css          App styling (chrome only)
 │   ├── app.js             Frontend logic
 │   ├── bulk/              The Bulk tab (state, fitting, grid, editor, rules, run)
+│   ├── native/            Native Premium: schema.js (the blocks), doc.js (model +
+│   │                      sanitiser), render.js (ONE renderer for editor, review
+│   │                      links and export), runtime/ (np.css + np.js of the
+│   │                      published page), app/ (the editor), review/ (the
+│   │                      advertiser's review overlay)
 │   └── assets/
 │       ├── formats.js     ONE source of truth for the products and their
 │       │                  formats — loaded by the server AND the browser
@@ -707,7 +853,8 @@ banner-generator/
 │       ├── norsktipping-icon.svg   The mark in the 18+ badge
 │       ├── abc-shopping.png        The Houseads mark
 │       └── placeholder.svg
-├── scripts/               ensure-browser.js — guarantees Puppeteer has a browser
+├── scripts/               ensure-browser.js — guarantees Puppeteer has a browser;
+│                          user.js — manage logins
 ├── test/                  node --test suites (npm test)
 ├── references/            Source artwork + real ads to compare against
 ├── history/               Saved packages (max 30)
@@ -750,6 +897,10 @@ look in one place and both change — the preview is a faithful copy of the resu
 | `DELETE /api/bulk/jobs/:id`      | Cancel (finished rows are kept)                      |
 | `GET  /bulk-assets/:file`        | A stored bulk photo (immutable)                      |
 | `GET  /api/health`               | Status (browser connected?)                          |
+| `/api/native/…`                  | Native Premium: projects, versions, review, comments, export, publish, assets, brand kits, library, settings, sources, AI — see the header of [lib/native/routes.js](lib/native/routes.js), [sources/routes.js](lib/native/sources/routes.js) and [ai/routes.js](lib/native/ai/routes.js) |
+| `GET  /p/:token/`, `/api/review/:token…` | The advertiser's review link (no login)      |
+| `GET  /n/:slug/`                 | A page published by ABC design                       |
+| `GET  /np-assets/:file`          | Native Premium images (+ WebP variants), videos, fonts (immutable) |
 
 All four formats are rendered and saved on every generate; `downloadSet` only
 picks what the response streams. Writes are rejected when they arrive with a
@@ -795,6 +946,10 @@ connecting the GitHub repo:
 - Build: `npm install`
 - Start: `npm start`
 - The app reads `process.env.PORT`.
+- Put secrets in environment variables (or `.env`): `OPENROUTER_API_KEY`,
+  optionally `GOOGLE_API_KEY`, and `AUTH=on` + users for a shared server
+  (see [Logins](#logins-for-a-shared-server)). Keep `data/` and `uploads/` on a
+  persistent disk.
 
 Puppeteer needs Chromium's system libraries. On a "missing shared libraries"
 error, use an image with Chrome dependencies installed, or set

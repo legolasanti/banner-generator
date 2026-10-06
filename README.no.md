@@ -2,10 +2,18 @@
 
 [🇬🇧 English](README.md) · 🇳🇴 Norsk
 
-Et internt verktøy som gjør **ett bilde + noen tekstfelt om til et helt sett
-annonse­bannere på én gang**, og laster dem ned som en ZIP — enten som bilder
-eller som opplastingsklare **HTML5-pakker til Campaign Manager 360**. Det
-erstatter den manuelle Canva-flyten.
+ABC Nyheters interne designverktøy, i to områder (bytt øverst til venstre):
+
+- **Annonser** — gjør **ett bilde + noen tekstfelt om til et helt sett
+  annonse­bannere på én gang**, og laster dem ned som en ZIP — enten som bilder
+  eller som opplastingsklare **HTML5-pakker til Campaign Manager 360**. Det
+  erstatter den manuelle Canva-flyten. Her ligger Norsk Tipping, ReadPeak,
+  Houseads, Bulk og Wallpaper.
+- **Native Premium** — lager lange annonsørinnholdssider slik ABC BrandStudio
+  tidligere laget i Vev: scrollfortelling, video, faktabokser, produktkort,
+  gjennomgangslenker til annonsøren, ZIP-eksport — og en **AI-modus** som leser
+  Google Docs-briefen og Drive-mappen, stiller de få spørsmålene som betyr noe og
+  skriver et første utkast. Se [Native Premium](#native-premium).
 
 Tre produkter, valgt med fanene øverst. Hvert produkt har sine egne formater,
 sine egne felt og sitt eget faste innhold på banneret:
@@ -172,6 +180,126 @@ i to deler: en **bakgrunn på 1920 × 850** bak hele siden og et **toppbanner p�
 - Lagres automatisk i nettleseren; lagre/åpne en selvstendig prosjektfil; alle
   eksporter havner i **Historikk** sammen med designet, så de kan åpnes og
   redigeres igjen.
+
+## Native Premium
+
+Åpnes med **Native Premium** øverst til venstre (eller `http://localhost:4050/native/`).
+
+### Hva en side består av
+
+En side er en liste med **seksjoner** (blokker). Hver blokktype har sine egne felt
+og ser riktig ut på desktop, nettbrett og mobil av seg selv:
+
+| Gruppe | Blokker |
+| --- | --- |
+| Topp | **Hero** — bilde eller video (egne stående filer for mobil), stikktittel, H1, ingress; tekst over bildet, side om side eller bilde over |
+| Tekst | **Brødtekst** (mellomtitler, lister, sitater, lenker), **Faktaboks** (kan lukkes), **Sitat**, **Tall** (teller opp), **Spørsmål og svar**, **Søylediagram**, **Skillelinje** |
+| Media | **Bilde** (ett eller to), **Bilde + tekst**, **Video** (med avspiller eller lydløs stemningsvideo, 16:9/9:16 per skjerm), **Galleri**, **Innbygging** (YouTube, Vimeo, Flourish, Datawrapper, Spotify, Google Maps) |
+| Handling | **CTA** (bånd, knapp eller pil-lenke — UTM og `rel="sponsored"` legges på automatisk), **Produktkort** (bilde, pris, før-pris, merke) |
+| Effekter | **Scrollfortelling** (bildet/videoen står mens kortene ruller over), **Scroll-video**, **Parallakse-bilde**, **Før / etter**, **Quiz** |
+
+**Merkingen** er ikke en blokk og kan ikke fjernes: hver side starter med en fast
+«Annonsørinnhold fra {annonsør}»-linje med utgivers og annonsørens logo, og slutter
+med den faste bunnteksten. Ordlyden settes én gang i **Innstillinger**.
+
+### Editoren
+
+- **Midten:** den ekte siden, akkurat slik den publiseres, i desktop-, nettbrett-
+  eller mobilbredde (tastene 1/2/3). Klikk på en seksjon for å velge den;
+  **dobbeltklikk på en tekst for å skrive rett på siden**.
+- **Høyre:** feltene til seksjonen (med tegnteller mot anbefalt lengde), stil
+  (bakgrunn, luft, justering, animasjon — luft og justering kan være forskjellig
+  per skjerm) og synlighet per skjerm.
+- **Venstre:** Seksjoner (dra for å flytte) · Medier (last opp, **importer fra en
+  Google Drive-mappe**, fra lenke, eller **lag med AI**; alt-tekst, fokuspunkt) ·
+  Tema (farger med kontrastsjekk, Google- eller egne skrifter, logo, knappestil;
+  **merkevarer** per annonsør) · Prosjekt (annonsør, **varianter** som «For menn» /
+  «For kvinner» med faner, delingsbilde og -tekst, endelig adresse, UTM, egne
+  skript) · Kontroll (alt som bør rettes før annonsøren ser siden) · Gjennomgang.
+- Angre/gjør om (Ctrl+Z / Ctrl+Shift+Z), lagrer automatisk, en versjon hvert 10.
+  minutt, navngitte versjoner og gjenoppretting. Har en kollega lagret i mellomtiden,
+  sier editoren fra i stedet for å skrive over.
+
+### AI-modus (OpenRouter)
+
+**AI** i editoren (eller «Med AI» når du lager et prosjekt) åpner en veiviser i fire steg:
+
+1. **Kilder** — lim inn lenken til **Google Docs**-briefen (delt som «Alle med
+   lenken»; eller last den opp som .docx), annonsørens **produktsider**, importer
+   **Drive-mappen** med bilder/video, og skriv noen linjer selv. Kommentarer i
+   dokumentet blir med som notater; bilder i dokumentet kan importeres med ett klikk.
+2. **Spørsmål** — AI-en leser alt (også bildene) og viser hvordan den forstår
+   oppdraget: sammendrag, faktaene den fant (med de som må sjekkes merket: priser,
+   tall som ikke stemmer), sitater, hva hvert bilde viser og hvor det passer.
+   Så stiller den **maks åtte spørsmål** — bare det kildene ikke svarer på:
+   motstridende fakta, manglende CTA-lenke, uklare sitater, juridiske punkter;
+   vinkel/tone/målgruppe bare hvis briefen er taus. Forslaget er forhåndsvalgt,
+   så de fleste svar er ett klikk.
+3. **Plan** — tre tittelforslag, ingress og seksjonsplan, alt kan endres.
+4. **Skriv** — seksjonene skrives (samtidig), sjekkes mot tegngrensene (én
+   automatisk rettingsrunde) og settes inn på siden. AI-ens advarsler («prisen må
+   bekreftes av Ford») lagres som kommentarer på seksjonene det gjelder.
+
+Hvert tekstfelt har også en ✨-meny: kortere, lengre, enklere, varmere, mer
+saklig, ny vinkel, tre titler, rett språkfeil — alltid tre alternativer.
+
+AI-en følger disse reglene: norsk bokmål (titler med liten forbokstav etter første
+ord, norsk typografi), fakta og sitater **bare** fra kildene (hver påstand knyttet
+til en fakta-ID), ingen superlativer uten dokumentasjon (markedsføringsloven § 3),
+skriver aldri merkingen selv. Promptene er versjonert i `lib/native/ai/prompts.js`;
+kostnaden for hvert kall logges per prosjekt.
+
+**Oppsett:** kopier `.env.example` til `.env` og fyll inn `OPENROUTER_API_KEY`.
+Modellene velges i **Innstillinger** (standard `anthropic/claude-sonnet-5.5`,
+reserver hos andre leverandører, egen modell for bilder og for illustrasjoner).
+Alle forespørsler sendes med **zero data retention** og «ingen trening på
+innholdet». Test gjerne flere modeller med ekte briefer før dere bestemmer dere.
+
+Valgfritt: `GOOGLE_API_KEY` (med Drive API slått på) gir nøyaktige filtyper og
+størrelser for Drive-mapper; uten den leses mappens offentlige visning.
+
+### Gjennomgang, eksport, publisering
+
+- **Gjennomgang (Del):** «Send til gjennomgang» låser siden som runde 1, 2, … og
+  kopierer en lenke (`/p/<tilfeldig nøkkel>/`). Annonsøren åpner den uten
+  innlogging, **fester kommentarer rett på siden** og **godkjenner med navnet sitt**.
+  Endringer etterpå vises først i neste runde. Lenken kan trekkes tilbake.
+- **Eksport:** en ZIP med `index.html` (og én mappe per variant), WebP-bilder i
+  flere størrelser, sidens skrifter **redusert til tegnene den bruker** og lagt ved
+  (ingen kall til Google fra leserne — GDPR), video, skript og en `LES-MEG.txt`.
+  Alle stier er relative: last opp mappen hvor som helst, eller åpne den fra disken.
+- **Publiser her:** ABC design kan også vise siden selv på `/n/<adresse>/` (for
+  testing, eller når verktøyet ligger på en server med eget domene). Publiserte
+  sider kjøres i en CSP-sandkasse.
+- **Måling:** sidene sender `np_view`, `np_scroll` (25/50/75/100), `np_time`,
+  `np_cta_click`, `np_video` (start/25/50/75/ferdig), `np_factbox_open`,
+  `np_share` og `np_quiz_*` til `window.dataLayer` og som DOM-hendelsen `np:track`.
+  Legg inn Kilkaya / Mixpanel / GTM én gang i Innstillinger; piksler fra annonseservere
+  med `[timestamp]`/`[cachebuster]` får nytt tall ved hver visning.
+- Sidene virker **uten JavaScript** (alt synlig; bevegelse er et tillegg),
+  respekterer `prefers-reduced-motion` og laster bare bildestørrelsen skjermen trenger.
+
+### Innlogging (for en felles server)
+
+Av som standard. For å kreve innlogging for alle: legg `AUTH=on` i `.env` og lag brukere:
+
+```bash
+npm run user:add -- kari --admin   # spør om navn og passord
+npm run user:add -- ola
+npm run user:list
+npm run user:passwd -- ola
+npm run user:remove -- ola
+```
+
+Gjennomgangslenker (`/p/…`), publiserte sider (`/n/…`) og filene deres er åpne.
+Bare administratorer kan endre innstillingene for Native Premium.
+
+### Hvor ting lagres
+
+`data/native/` (prosjekter, versjoner, kommentarer, AI-logg, innstillinger,
+merkevarer, bibliotek; slettede prosjekter havner i `data/native/trash/`),
+`uploads/native/` (bilder med WebP-versjoner, video, skrifter) og
+`data/users.json`. Ta backup av `data/` og `uploads/` sammen.
 
 ## Funksjoner
 
