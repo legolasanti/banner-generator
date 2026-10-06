@@ -563,7 +563,38 @@
       updatedAt: isIsoDate(src.updatedAt) ? src.updatedAt : "",
       owner: cleanText(src.owner, 80, false),
       notes: cleanText(src.notes, 4000, true),
+      ai: normalizeAi(src.ai),
     };
+  }
+
+  /**
+   * The AI wizard's working state (sources, analysis, answers, plan), kept
+   * with the project so the user can come back to it. Plain JSON only, size
+   * capped; it is never rendered.
+   */
+  var MAX_AI_BYTES = 400000;
+  function normalizeAi(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var keep = {};
+    ["brief", "advertiser", "length", "title", "ingress", "angle", "at"].forEach(function (k) {
+      if (typeof raw[k] === "string") keep[k] = cleanText(raw[k], 20000, true);
+    });
+    ["sources", "analysis", "answers", "outline", "imageMap", "selectedImages"].forEach(function (k) {
+      if (raw[k] && typeof raw[k] === "object") keep[k] = raw[k];
+    });
+    var json;
+    try {
+      json = JSON.stringify(keep);
+    } catch (_) {
+      return null;
+    }
+    if (json.length > MAX_AI_BYTES) {
+      // Drop the bulky source texts first; the analysis already holds the facts.
+      delete keep.sources;
+      json = JSON.stringify(keep);
+      if (json.length > MAX_AI_BYTES) return null;
+    }
+    return JSON.parse(json);
   }
 
   function slugish(v, dflt) {

@@ -294,7 +294,7 @@
   }
 
   // ---- sections ------------------------------------------------------------------
-  function sectionClasses(section, extra) {
+  function sectionClasses(section, extra, mode) {
     var st = section.style;
     var cls = ["np-sec", "np-t-" + section.type];
     var bg = st.bg || "none";
@@ -311,8 +311,10 @@
       if (o.align) cls.push("np-align-" + p + "-" + o.align);
     });
     if (st.anim && st.anim !== "none") cls.push("np-anim-" + st.anim);
+    // The editor keeps hidden sections on screen (faded, labelled), so they
+    // can still be selected and switched back on.
     ["desktop", "tablet", "mobile"].forEach(function (d) {
-      if (section.hide[d]) cls.push("np-hide-" + d);
+      if (section.hide[d]) cls.push((mode === "editor" ? "np-edh-" : "np-hide-") + d);
     });
     return cls.concat(extra || []).join(" ");
   }
@@ -335,8 +337,7 @@
       style.push("--np-overlay:" + (st.overlay / 100).toFixed(2));
       bgLayer = '<div class="np-bgimg" aria-hidden="true">' + img(ctx, st.bgImage, { alt: "", sizes: "100vw" }) + "</div>";
     }
-    var cls = sectionClasses(section, o.cls) + brandTextFix(ctx, section);
-    if (ctx.mode === "editor" && (section.hide.desktop || section.hide.tablet || section.hide.mobile)) cls += " np-ed-hidable";
+    var cls = sectionClasses(section, o.cls, ctx.mode) + brandTextFix(ctx, section);
     var anchor = st.anchor ? '<span class="np-anchor" id="' + esc(D.slugify(st.anchor, "")) + '"></span>' : "";
     return (
       "<" + (o.tag || "section") +
@@ -843,6 +844,27 @@
     return s.props.image && ctx.assets[s.props.image] ? s.props.image : "";
   }
 
+  /**
+   * Ad-server pixels carry a cache-buster macro ([timestamp], [cachebuster],
+   * %%CACHEBUSTER%%) that must be a fresh number on every view. A static page
+   * cannot do that in its HTML, so each such <img> becomes a tiny script that
+   * fills the number in when the page is opened (with the plain <img> kept
+   * in <noscript>).
+   */
+  var MACRO_RE = /\[(?:timestamp|cachebuster|random)\]|%%CACHEBUSTER%%|\$\{CACHEBUSTER\}/gi;
+  function expandMacros(html) {
+    return String(html || "").replace(/<img\b[^>]*\bsrc\s*=\s*"([^"]*)"[^>]*>/gi, function (tag, src) {
+      if (!MACRO_RE.test(src)) return tag;
+      MACRO_RE.lastIndex = 0;
+      var js = JSON.stringify(D.decodeEntities(src)).replace(/</g, "\\u003c");
+      return (
+        "<script>(function(){var i=new Image(1,1);i.alt=\"\";i.src=" + js +
+        ".replace(/\\[(?:timestamp|cachebuster|random)\\]|%%CACHEBUSTER%%|\\$\\{CACHEBUSTER\\}/gi,String(Date.now())+Math.floor(Math.random()*1e6));})();</script>" +
+        "<noscript>" + tag.replace(MACRO_RE, String(Date.now())) + "</noscript>"
+      );
+    });
+  }
+
   /** The `<main>` content of a page: every section in order. */
   function renderMain(ctx) {
     return ctx.page.sections.map(function (s, i) { return renderSection(ctx, s, i); }).join("\n");
@@ -863,11 +885,11 @@
       metaTags(ctx),
       hero ? '<link rel="preload" as="image" imagesrcset="' + esc(srcset(ctx, hero)) + '" imagesizes="100vw" href="' + esc(bestSrc(ctx, hero, 1280)) + '">' : "",
       ctx.fontLinks || "",
-      "<style>" + themeCss(p.theme, { hasVariants: hasVariants }) + (ctx.fontCss || "") + "</style>",
+      '<style id="np-theme">' + themeCss(p.theme, { hasVariants: hasVariants }) + (ctx.fontCss || "") + "</style>",
       ctx.cssText ? "<style>" + ctx.cssText + "</style>" : '<link rel="stylesheet" href="' + esc(ctx.cssHref) + '">',
       "<script>document.documentElement.classList.add('np-js')</script>",
-      tracking && ctx.settings.headHtml ? ctx.settings.headHtml : "",
-      tracking && p.tracking.headHtml ? p.tracking.headHtml : "",
+      tracking && ctx.settings.headHtml ? expandMacros(ctx.settings.headHtml) : "",
+      tracking && p.tracking.headHtml ? expandMacros(p.tracking.headHtml) : "",
       ctx.extraHead || "",
       "</head>",
     ].filter(Boolean).join("\n");
@@ -879,8 +901,8 @@
         "data-np-advertiser": p.advertiser.name || null,
         "data-np-mode": ctx.mode,
       }) + ">",
-      tracking && ctx.settings.bodyHtml ? ctx.settings.bodyHtml : "",
-      tracking && p.tracking.bodyHtml ? p.tracking.bodyHtml : "",
+      tracking && ctx.settings.bodyHtml ? expandMacros(ctx.settings.bodyHtml) : "",
+      tracking && p.tracking.bodyHtml ? expandMacros(p.tracking.bodyHtml) : "",
       disclosure(ctx),
       variantNav(ctx),
       '<main id="np-main">',
@@ -937,6 +959,7 @@
     variantNav: variantNav,
     footer: footer,
     embedUrl: embedUrl,
+    expandMacros: expandMacros,
     outbound: outbound,
     pageText: pageText,
   };

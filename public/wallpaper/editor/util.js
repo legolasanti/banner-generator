@@ -13,7 +13,7 @@
 
   function loadIcons() {
     if (iconSet) return Promise.resolve(iconSet);
-    return fetch("wallpaper/icons.json")
+    return fetch("/wallpaper/icons.json")
       .then(function (r) {
         if (!r.ok) throw new Error("icons " + r.status);
         return r.json();

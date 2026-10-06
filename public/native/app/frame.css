@@ -1,0 +1,114 @@
+/* =========================================================================
+   frame.css — editor-only styles inside the preview iframe: selection,
+   hover, in-place editing, the section toolbar, placeholders and sections
+   hidden on the current device. Never part of a published page.
+   ========================================================================= */
+html.np-editor { scroll-behavior: auto; }
+html.np-editor body { cursor: default; }
+html.np-editor .np-sec { cursor: pointer; }
+html.np-editor .np-sec::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  box-shadow: inset 0 0 0 0 transparent;
+  transition: box-shadow 0.12s;
+}
+html.np-editor .np-sec.nx-hover::after { box-shadow: inset 0 0 0 2px rgba(34, 133, 42, 0.45); }
+html.np-editor .np-sec.nx-sel::after { box-shadow: inset 0 0 0 3px #22852a; }
+html.np-editor [data-np-field] { cursor: text; border-radius: 3px; }
+html.np-editor .nx-sel [data-np-field]:hover { outline: 1px dashed rgba(34, 133, 42, 0.7); outline-offset: 3px; }
+html.np-editor img[data-np-field] { cursor: pointer; }
+html.np-editor [contenteditable] { outline: 2px solid #22852a !important; outline-offset: 4px; cursor: text; }
+html.np-editor .np-ed-empty:empty::before { content: "Klikk to ganger for å skrive …"; opacity: 0.45; font-style: italic; }
+html.np-editor .np-ed-empty:empty { display: block; min-height: 1em; }
+
+/* section toolbar */
+.nx-ftool {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: #15180f;
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  font: 600 12.5px/1 "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: default;
+}
+.nx-ftool__name { padding: 0 8px 0 6px; white-space: nowrap; opacity: 0.85; }
+.nx-ftool button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.nx-ftool button:hover { background: rgba(255, 255, 255, 0.16); }
+.nx-ftool button:disabled { opacity: 0.3; cursor: default; background: transparent; }
+.nx-ftool svg { width: 16px; height: 16px; }
+.nx-ftool__add { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); z-index: 41; }
+.nx-addbtn {
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  transform: translateX(-50%);
+  z-index: 41;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #22852a;
+  color: #fff;
+  font: 700 12.5px/1 "Schibsted Grotesk", system-ui, sans-serif;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.nx-addbtn svg { width: 15px; height: 15px; }
+
+/* sections hidden on the device being previewed */
+.nx-hidden-label {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 35;
+  background: #fff4c2;
+  color: #3d3300;
+  font: 700 12px/1 system-ui, sans-serif;
+  padding: 6px 9px;
+  border-radius: 6px;
+}
+@media (min-width: 1024px) {
+  .np-edh-desktop { opacity: 0.35; filter: grayscale(1); }
+  .np-edh-desktop > .nx-hidden-label { display: block; }
+}
+@media (min-width: 600px) and (max-width: 1023px) {
+  .np-edh-tablet { opacity: 0.35; filter: grayscale(1); }
+  .np-edh-tablet > .nx-hidden-label { display: block; }
+}
+@media (max-width: 599px) {
+  .np-edh-mobile { opacity: 0.35; filter: grayscale(1); }
+  .np-edh-mobile > .nx-hidden-label { display: block; }
+}
+
+/* the fixed parts are not editable here */
+html.np-editor .np-disclosure, html.np-editor .np-footer, html.np-editor .np-variants { cursor: not-allowed; }
+html.np-editor .np-disclosure a, html.np-editor .np-footer a, html.np-editor .np-variants a { pointer-events: none; }
+html.np-editor .np-sec a { cursor: inherit; }
+
+/* an empty page */
+.nx-frame-empty { padding: 120px 24px; text-align: center; font: 600 16px/1.5 system-ui, sans-serif; color: #6b7380; }
