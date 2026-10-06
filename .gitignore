@@ -9,3 +9,7 @@ npm-debug.log*
 
 history.json
 settings.json
+
+# Native Premium data (projects, settings, brand kits) and secrets
+data/
+.env

@@ -23,6 +23,16 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const { pathToFileURL } = require("url");
 
+// Optional .env next to this file (OPENROUTER_API_KEY, GOOGLE_API_KEY, AUTH …).
+// Never committed; see .env.example.
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(path.join(__dirname, ".env"));
+  } catch (err) {
+    if (err && err.code !== "ENOENT") console.warn("[env] kunne ikke lese .env: " + err.message);
+  }
+}
+
 const express = require("express");
 const multer = require("multer");
 const archiver = require("archiver");
@@ -38,6 +48,7 @@ const { createBulkJobs } = require("./lib/bulk/jobs");
 const bulkDeliver = require("./lib/bulk/deliver");
 const bulkLinks = require("./lib/bulk/links");
 const { registerBulkRoutes } = require("./lib/bulk/routes");
+const { createNative } = require("./lib/native");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -61,6 +72,9 @@ const WP_FONT_DIR = path.join(UPLOADS_DIR, "wallpaper-fonts");
 const WP_MAX_ASSET_BYTES = 25 * 1024 * 1024;
 // Bulk photos: a render master and a preview per photo, content-addressed.
 const BULK_DIR = path.join(UPLOADS_DIR, "bulk");
+// Native Premium: projects, settings, brand kits and the library (JSON), kept
+// apart from uploads so a backup of data/ is a backup of all the work.
+const DATA_DIR = path.join(ROOT, "data");
 // Optional replacement for the Norsk Tipping mark in the 18+ badge. When none
 // of these exist, banner.js draws its built-in inline SVG. Only types Campaign
 // Manager 360 accepts inside a creative ZIP — a WEBP mark would be copied into
@@ -809,7 +823,7 @@ const app = express();
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
   // The download filename and the per-file size report travel as headers, so
   // they have to be readable by the page that asked for them.
@@ -848,6 +862,15 @@ app.use((req, res, next) => {
 app.use("/api/wallpaper", express.json({ limit: "8mb" }));
 // A pasted sheet or a 300-row run can pass 1 MB too.
 app.use("/api/bulk", express.json({ limit: "6mb" }));
+// Native Premium registers its own parsers (projects can be several MB).
+const native = createNative({
+  dataDir: path.join(DATA_DIR, "native"),
+  uploadsDir: UPLOADS_DIR,
+  fontCacheDir: WP_FONT_DIR,
+  getSharp: imageTools.getSharp,
+  safeFetch,
+});
+native.register(app);
 app.use(express.json({ limit: "1mb" }));
 
 // Static: app frontend + history (read-only, for thumbnails / re-download)

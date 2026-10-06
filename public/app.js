@@ -1492,7 +1492,16 @@
   // -------- tabs ------------------------------------------------------------
   // Three of the four tabs open the builder on a different product; the fourth
   // is the history log.
+  // The open tab lives in the URL (#/houseads), so a reload or a shared link
+  // lands on the same tab.
+  const TAB_IDS = () => F.ORDER.concat("bulk", "wallpaper", "history");
+  function tabFromHash() {
+    const m = /^#\/([\w-]+)/.exec(location.hash || "");
+    return m && TAB_IDS().includes(m[1]) ? m[1] : null;
+  }
+
   function switchTab(tab, focusTab) {
+    if (location.hash !== "#/" + tab) history.replaceState(null, "", "#/" + tab);
     const isHistory = tab === "history";
     const isWallpaper = tab === "wallpaper";
     const isBulk = tab === "bulk";
@@ -1537,7 +1546,7 @@
   function initTabs() {
     el.tabs.forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     // WAI-ARIA tablist keyboard support: Arrow / Home / End move + select.
-    const order = F.ORDER.concat("bulk", "wallpaper", "history");
+    const order = TAB_IDS();
     const tablist = document.querySelector(".tabs");
     tablist.addEventListener("keydown", (e) => {
       const activeBtn = document.querySelector(".tab.is-active");
@@ -1553,6 +1562,10 @@
       }
     });
     $$("[data-goto]").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.goto)));
+    window.addEventListener("hashchange", () => {
+      const tab = tabFromHash();
+      if (tab) switchTab(tab);
+    });
   }
 
   // -------- settings --------------------------------------------------------
@@ -1870,6 +1883,8 @@
     // Builds the previews, the size sliders and the packages for the product
     // whose tab is open, then renders everything.
     applyProduct(state.product);
+    const startTab = tabFromHash();
+    if (startTab && startTab !== state.product) switchTab(startTab);
     loadHistory();
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);

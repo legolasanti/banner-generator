@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ABC design</title>
-    <meta name="description" content="ABC design — ABC Nyheters verktøy for annonser." />
+    <meta name="description" content="ABC design — ABC Nyheters verktøy for annonser og Native Premium." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6b1a'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='15' width='18' height='9' rx='1.5' fill='%23bfe3bf'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,6 +30,13 @@
         </span>
         <span class="brand__text"><strong>ABC</strong> design</span>
       </div>
+
+      <!-- The two work areas. Annonser is this page; Native Premium is its own
+           page (native/index.html) with the same bar. -->
+      <nav class="areas" aria-label="Område">
+        <a class="area is-active" href="/#/" aria-current="page">Annonser</a>
+        <a class="area" href="/native/">Native Premium</a>
+      </nav>
 
       <!-- Three products share the builder panel; the fourth tab is the log.
            Which product is selected decides the formats, the form fields and

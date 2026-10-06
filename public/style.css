@@ -109,6 +109,28 @@ button { font-family: inherit; }
 .brand__text { font-size: 17px; color: var(--ink); letter-spacing: -0.02em; }
 .brand__text strong { font-weight: 800; }
 
+/* Annonser | Native Premium — the two work areas, left of the product tabs. */
+.areas {
+  display: flex;
+  gap: 2px;
+  padding-left: 14px;
+  margin-left: 2px;
+  border-left: 1px solid var(--border);
+}
+.area {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: 7px 11px;
+  border-radius: 8px;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+  white-space: nowrap;
+}
+.area:hover { color: var(--ink); background: var(--surface-3); }
+.area.is-active { color: var(--green-deep); background: var(--green-soft); }
+.area:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
 .tabs {
   margin: 0 auto;
   display: flex;
