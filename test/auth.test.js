@@ -97,3 +97,9 @@ test("with logins off, nothing is blocked", async () => {
     server.close();
   }
 });
+
+test("encoded traversal never counts as a public path; a broken cookie is ignored", () => {
+  const auth = setup();
+  ["/p/..%2fapp.js", "/p/%2e%2e/app.js", "/n/../index.html", "/np-assets/..\\x"].forEach((p) => assert.ok(!auth._isPublic(p), p));
+  assert.equal(auth._unsign("%E0%A4%A"), null);
+});

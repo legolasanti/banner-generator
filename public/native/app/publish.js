@@ -105,6 +105,9 @@
         h("div.nx-row", null, dl),
         status,
         h("h3.nx-panel__h", null, "Publiser fra ABC design"),
+        p.status !== "approved" && p.status !== "published"
+          ? h("p.nx-note.nx-note--warn", null, ui.icon("circle-alert", 15), " Denne versjonen er ikke godkjent av annonsøren" + (p.review ? " – den er endret etter runde " + p.review.round : "") + ".")
+          : null,
         h("p.nx-muted", null, "ABC design kan også vise siden selv, på /n/<adresse>/. Nyttig for testing og når verktøyet ligger på en server med eget domene."),
         pubStatus
       ),

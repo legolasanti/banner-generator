@@ -822,13 +822,22 @@ async function sendHtmlDownload(res, ctx) {
 // --------------------------------------------------------------------------
 const app = express();
 
+// Behind a reverse proxy (TRUST_PROXY=1, or a hop count / subnet), so req.ip
+// and req.secure reflect the real client — the login rate limit and the
+// Secure cookie flag depend on it.
+if (process.env.TRUST_PROXY) {
+  const tp = process.env.TRUST_PROXY;
+  app.set("trust proxy", /^\d+$/.test(tp) ? Number(tp) : tp === "true" ? true : tp);
+}
+
+// The UI and its API are same-origin, so no CORS is needed — and none is sent,
+// so another website open in the same browser cannot read the API. The one
+// exception: Native Premium files, which published pages (served in a CSP
+// sandbox, i.e. an opaque origin) load as fonts and must be allowed to.
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  // The download filename and the per-file size report travel as headers, so
-  // they have to be readable by the page that asked for them.
-  res.header("Access-Control-Expose-Headers", "Content-Disposition, X-Entry-Id, X-Banner-Report");
+  if (req.path.startsWith("/np-assets/") || req.path.startsWith("/native/runtime/")) {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });

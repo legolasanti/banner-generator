@@ -104,3 +104,27 @@ test("the AI log sums the cost of every call", async () => {
   assert.equal(u.calls, 2);
   assert.ok(Math.abs(u.cost - 0.016) < 1e-9);
 });
+
+test("status and review bookkeeping never change the revision the editor saves against", async () => {
+  const { s } = store();
+  const rec = await s.create(D.createProject({ name: "Rev" }));
+  await s.startReview(rec.id);
+  await s.setStatus(rec.id, "published");
+  await s.revokeReview(rec.id);
+  const cur = await s.findById(rec.id);
+  assert.equal(cur.rev, 1);
+  const saved = await s.update(rec.id, cur, { baseRev: 1 });
+  assert.equal(saved.rev, 2);
+  assert.equal(saved.status, "published", "a live page stays published while it is edited");
+});
+
+test("an approval of an old round does not mark an edited project approved", async () => {
+  const { s } = store();
+  const rec = await s.create(D.createProject({ name: "Gammel runde" }));
+  const r = await s.startReview(rec.id);
+  await s.update(rec.id, Object.assign({}, r, { name: "Endret" }), { baseRev: r.rev });
+  assert.equal((await s.findById(rec.id)).status, "draft");
+  await s.approve(rec.id, { name: "Kari Kunde", round: 1 });
+  assert.equal((await s.findById(rec.id)).status, "draft");
+  assert.equal((await s.listComments(rec.id)).approvals.length, 1, "the approval itself is kept");
+});

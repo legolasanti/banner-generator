@@ -743,7 +743,7 @@
         ui.clear(out);
         r.variants.forEach(function (v) {
           var preview = opts.rich ? h("div.nx-rw__rich") : h("span", null, v.value);
-          if (opts.rich) preview.innerHTML = v.value;
+          if (opts.rich) preview.innerHTML = D.sanitizeRich(v.value, S.HARD_MAX.rich);
           out.appendChild(h("button.nx-rw__var" + (v.over ? ".is-over" : ""), { type: "button", on: { click: function () {
             opts.apply(v.value);
             ui.closePopover();
