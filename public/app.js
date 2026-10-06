@@ -1,5 +1,5 @@
 /* =========================================================================
-   app.js — Banner Generator frontend.
+   app.js — ABC design frontend.
    No framework. Talks to the Express API, drives the live previews via the
    shared window.renderBanner(), handles upload + drag-to-reframe, history and
    settings. Live previews use the SAME renderer as the final PNG output.

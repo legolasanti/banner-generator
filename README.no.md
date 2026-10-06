@@ -1,4 +1,4 @@
-# Banner Generator
+# ABC design
 
 [🇬🇧 English](README.md) · 🇳🇴 Norsk
 
@@ -263,7 +263,7 @@ omtrent ett minutt. Følg de fire stegene i rekkefølge.
 Kjører appen, viser Terminal-vinduet den ble startet i noe slikt:
 
 ```
-  Banner Generator kjører på  http://localhost:4050
+  ABC design kjører på  http://localhost:4050
 
 [puppeteer] browser ready (pid 10080)
 ```
@@ -317,7 +317,7 @@ Hva hver av dem gjør, og hvordan «det gikk bra» ser ut:
 | -------- | ------------ | ---------- |
 | `git pull` | Henter den nye versjonen fra GitHub | En liste med endrede filer, som ender på noe slikt som `21 files changed` |
 | `npm install` | Installerer det den nye versjonen trenger | `added / changed N packages` (advarsler om `npm audit` er normalt) |
-| `npm start` | Starter appen | `Banner Generator kjører på  http://localhost:4050` |
+| `npm start` | Starter appen | `ABC design kjører på  http://localhost:4050` |
 
 Kjør dem én om gangen, og vent til hver er ferdig før du skriver den neste.
 `npm install` er den trege — gi den et minutt.
@@ -414,7 +414,7 @@ oppdateringer bare én `git pull`.
    ```
    Du skal se:
    ```
-   Banner Generator kjører på  http://localhost:4050
+   ABC design kjører på  http://localhost:4050
    ```
 
 6. **Åpne appen** på <http://localhost:4050>.

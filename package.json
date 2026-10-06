@@ -1,7 +1,7 @@
 {
-  "name": "banner-generator",
+  "name": "abc-design",
   "version": "1.0.0",
-  "description": "Genererer annonsebannere i 3 størrelser (ReadPeak, Desktop, Mobil) fra ett bilde og noen tekstfelt. Erstatter manuell Canva-flyt.",
+  "description": "ABC design — ABC Nyheters interne verktøy for annonser: bannere, Houseads, Bulk og Wallpaper.",
   "private": true,
   "type": "commonjs",
   "engines": {

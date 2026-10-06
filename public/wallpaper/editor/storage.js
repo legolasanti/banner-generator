@@ -19,7 +19,9 @@
 
   var MAX_BYTES = 25 * 1024 * 1024;
   var TYPES = /^image\/(jpeg|png|webp|avif|gif)$/;
-  var FILE_APP = "banner-generator-wallpaper";
+  var FILE_APP = "abc-design-wallpaper";
+  // Project files saved before the rename to ABC design still open.
+  var LEGACY_FILE_APPS = ["banner-generator-wallpaper"];
 
   // ---- IndexedDB (tiny key/value) -----------------------------------------------
   var dbPromise = null;
@@ -279,7 +281,7 @@
         } catch (_) {
           throw new Error("Filen er ikke et gyldig prosjekt");
         }
-        if (!data || data.app !== FILE_APP || !data.doc) throw new Error("Filen er ikke et Wallpaper-prosjekt");
+        if (!data || (data.app !== FILE_APP && LEGACY_FILE_APPS.indexOf(data.app) === -1) || !data.doc) throw new Error("Filen er ikke et Wallpaper-prosjekt");
         var entries = Object.keys(data.assets || {}).filter(function (id) {
           return typeof data.assets[id] === "string" && /^data:image\//.test(data.assets[id]);
         });

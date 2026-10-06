@@ -1,4 +1,4 @@
-# Banner Generator
+# ABC design
 
 🇬🇧 English · [🇳🇴 Norsk](README.no.md)
 
@@ -264,7 +264,7 @@ If the app is running, the Terminal window it was started in is showing
 something like this:
 
 ```
-  Banner Generator kjører på  http://localhost:4050
+  ABC design kjører på  http://localhost:4050
 
 [puppeteer] browser ready (pid 10080)
 ```
@@ -318,7 +318,7 @@ What each one does, and what "it worked" looks like:
 | ------- | ------------ | -------------- |
 | `git pull` | Downloads the new version from GitHub | A list of changed files, ending in something like `21 files changed` |
 | `npm install` | Installs anything the new version needs | `added / changed N packages` (warnings about `npm audit` are normal) |
-| `npm start` | Starts the app | `Banner Generator kjører på  http://localhost:4050` |
+| `npm start` | Starts the app | `ABC design kjører på  http://localhost:4050` |
 
 Run them one at a time and wait for each to finish before typing the next.
 `npm install` is the slow one — give it a minute.
@@ -416,7 +416,7 @@ Anyone who wants to run this on their own machine can follow these steps.
    ```
    You should see:
    ```
-   Banner Generator kjører på  http://localhost:4050
+   ABC design kjører på  http://localhost:4050
    ```
 
 6. **Open the app** at <http://localhost:4050>.

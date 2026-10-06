@@ -1,7 +1,7 @@
 "use strict";
 
 /* =========================================================================
- * Banner Generator — Express + Puppeteer backend
+ * ABC design — Express + Puppeteer backend
  *
  * Generates ad banners in 4 fixed sizes (ReadPeak 308×380, Desktop 580×500,
  * Mobile 320×400, Nyhetsgrid 190×190) from one uploaded photo + a few text
@@ -1626,7 +1626,7 @@ async function start() {
   }
 
   const server = app.listen(PORT, () => {
-    console.log(`\n  Banner Generator kjører på  http://localhost:${PORT}\n`);
+    console.log(`\n  ABC design kjører på  http://localhost:${PORT}\n`);
   });
 
   // Warm up the browser in the background so the first generation is fast.
