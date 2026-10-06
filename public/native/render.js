@@ -211,7 +211,9 @@
         sizes: srcset(ctx, id) ? o.sizes || "100vw" : null,
         width: meta.w || null,
         height: meta.h || null,
-        alt: o.alt !== undefined ? o.alt : meta.alt || "",
+        // The field's own alt text wins, then the asset's; decorative
+        // images (backgrounds, a second copy) get an empty alt on purpose.
+        alt: o.decorative ? "" : o.alt || meta.alt || "",
         loading: o.eager ? "eager" : "lazy",
         fetchpriority: o.eager ? "high" : null,
         decoding: "async",
@@ -335,7 +337,7 @@
     var bgLayer = "";
     if (st.bg === "image" && st.bgImage && ctx.assets[st.bgImage]) {
       style.push("--np-overlay:" + (st.overlay / 100).toFixed(2));
-      bgLayer = '<div class="np-bgimg" aria-hidden="true">' + img(ctx, st.bgImage, { alt: "", sizes: "100vw" }) + "</div>";
+      bgLayer = '<div class="np-bgimg" aria-hidden="true">' + img(ctx, st.bgImage, { decorative: true, sizes: "100vw" }) + "</div>";
     }
     var cls = sectionClasses(section, o.cls, ctx.mode) + brandTextFix(ctx, section);
     var anchor = st.anchor ? '<span class="np-anchor" id="' + esc(D.slugify(st.anchor, "")) + '"></span>' : "";
@@ -486,7 +488,7 @@
     var p = s.props;
     var who = p.name || p.role
       ? '<figcaption class="np-quote__by">' +
-        (p.image && ctx.assets[p.image] ? img(ctx, p.image, { alt: "", sizes: "56px" }) : "") +
+        (p.image && ctx.assets[p.image] ? img(ctx, p.image, { decorative: true, sizes: "56px" }) : "") +
         "<span>" +
         (p.name ? '<span class="np-quote__name"' + ed(ctx, "name") + ">" + esc(p.name) + "</span>" : "") +
         (p.role ? '<span class="np-quote__role"' + ed(ctx, "role") + ">" + esc(p.role) + "</span>" : "") +
@@ -518,7 +520,7 @@
     layers.push('<div class="np-story__layer is-active" data-np-layer="0">' + (base || placeholder(ctx, "Velg bakgrunn")) + "</div>");
     var cards = p.slides.map(function (sl, i) {
       if (sl.image && ctx.assets[sl.image]) {
-        layers.push('<div class="np-story__layer" data-np-layer="' + (i + 1) + '">' + img(ctx, sl.image, { alt: "", sizes: "100vw" }) + "</div>");
+        layers.push('<div class="np-story__layer" data-np-layer="' + (i + 1) + '">' + img(ctx, sl.image, { decorative: true, sizes: "100vw" }) + "</div>");
       }
       var layerRef = sl.image && ctx.assets[sl.image] ? layers.length - 1 : null;
       return (
@@ -628,7 +630,7 @@
     var inner =
       '<div class="np-cmp" data-np-compare>' +
       img(ctx, p.before, { alt: p.alt, sizes: "(max-width: 1148px) 100vw, 1100px" }) +
-      '<div class="np-cmp__after">' + img(ctx, p.after, { alt: "", sizes: "(max-width: 1148px) 100vw, 1100px" }) + "</div>" +
+      '<div class="np-cmp__after">' + img(ctx, p.after, { decorative: true, sizes: "(max-width: 1148px) 100vw, 1100px" }) + "</div>" +
       '<span class="np-cmp__line"></span>' +
       '<span class="np-cmp__lab np-cmp__lab--b">' + esc(p.beforeLabel) + "</span>" +
       '<span class="np-cmp__lab np-cmp__lab--a">' + esc(p.afterLabel) + "</span>" +
