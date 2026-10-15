@@ -113,14 +113,18 @@
     var after = fn(before);
     if (!after || after === before) return;
     var now = Date.now();
-    if (o.group && lastGroup.key === o.group && now - lastGroup.at < GROUP_MS && past.length) {
+    if (o.history === false) {
+      // Bookkeeping (e.g. project.ai): saved, but not an undo step.
+    } else if (o.group && lastGroup.key === o.group && now - lastGroup.at < GROUP_MS && past.length) {
       // Same burst of typing: keep the step from before the burst.
     } else {
       past.push(before);
       if (past.length > MAX_UNDO) past.shift();
     }
-    lastGroup = { key: o.group || null, at: now };
-    future = [];
+    if (o.history !== false) {
+      lastGroup = { key: o.group || null, at: now };
+      future = [];
+    }
     state = Object.assign({}, state, { project: after });
     markDirty();
     emit({
@@ -138,11 +142,19 @@
     });
   }
 
+  /**
+   * The AI wizard's state and the assistant's conversation (project.ai) are
+   * not page edits: undo/redo restores the page but keeps them as they are.
+   */
+  function keepAi(target, current) {
+    return target.ai === current.ai ? target : Object.assign({}, target, { ai: current.ai });
+  }
+
   function undo() {
     if (!past.length) return;
     var before = state.project;
     future.push(before);
-    state = Object.assign({}, state, { project: past.pop() });
+    state = Object.assign({}, state, { project: keepAi(past.pop(), before) });
     lastGroup = { key: null, at: 0 };
     fixSelection();
     markDirty();
@@ -151,8 +163,9 @@
 
   function redo() {
     if (!future.length) return;
-    past.push(state.project);
-    state = Object.assign({}, state, { project: future.pop() });
+    var current = state.project;
+    past.push(current);
+    state = Object.assign({}, state, { project: keepAi(future.pop(), current) });
     lastGroup = { key: null, at: 0 };
     fixSelection();
     markDirty();

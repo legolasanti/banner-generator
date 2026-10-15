@@ -3,9 +3,11 @@
 
    A wizard in four steps, each one reviewable before the next:
 
-     1 Kilder    the material: a Google Docs brief (by link or .docx), the
-                 shared Drive folder with the shoot, the advertiser's product
-                 pages, a few lines from the user, and which photos to show
+     1 Kilder    the material: documents (PDF, Word, text – dropped or picked),
+                 a Google Docs link, the shared Drive folder with the shoot, the
+                 advertiser's product pages, everything the user knows pasted
+                 in, which photos to show — plus an optional template to follow
+                 and the quality level (Økonomi / Standard / Premium)
      2 Spørsmål  the AI's reading of it — summary, facts (with the ones to
                  double-check flagged), quotes, photo descriptions — and the
                  handful of questions it really needs answered, with its own
@@ -17,7 +19,10 @@
                  saved as comments on the sections they concern
 
    Its state lives in project.ai, so closing the wizard loses nothing.
-   Also here: the ✨ rewrite menu that text fields use.
+   After placing the page, the AI assistant panel (assistant.js) takes over
+   for changes in plain words.
+   Also here: the ✨ rewrite menu that text fields use, and the quality
+   picker shared with the assistant.
    ========================================================================= */
 (function () {
   "use strict";
@@ -34,6 +39,71 @@
   };
   var MAX_IMAGES = 14;
   var CONCURRENCY = 3;
+  var T = window.NativeTemplates;
+  var FILE_ACCEPT = ".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown";
+  var SOURCE_LABEL = { gdoc: "Google Docs", docx: "Word", pdf: "PDF", text: "Tekst", web: "Nettside" };
+
+  // ---- quality levels (shared with the assistant) -----------------------------------
+  var statusPromise = null;
+
+  function aiStatus() {
+    if (!statusPromise) {
+      statusPromise = NP.api.aiStatus().catch(function (err) {
+        statusPromise = null;
+        throw err;
+      });
+    }
+    return statusPromise;
+  }
+
+  /** The project's chosen tier, else the team default from Settings. */
+  function currentTier() {
+    var p = project();
+    return (p && p.ai && p.ai.tier) || null;
+  }
+
+  /**
+   * A segmented Økonomi / Standard / Premium picker. Loads the tier list
+   * (with model names) from the server; `onChange(tier)` on every change.
+   */
+  function tierPicker(current, onChange, opts) {
+    var o = opts || {};
+    var box = h("div.nx-tier");
+    var help = h("p.nx-help.nx-tier__help");
+    aiStatus().then(function (st) {
+      var tiers = st.tiers || [];
+      var value = current || (st.models && st.models.defaultTier) || "standard";
+      if (!current) onChange(value, true);
+      function describe(v) {
+        var t = tiers.filter(function (x) { return x.id === v; })[0];
+        help.textContent = t ? t.help + " Modell: " + t.model : "";
+      }
+      if (o.compact) {
+        // Narrow panels: a dropdown, with the explanation as its tooltip.
+        var sel = h("select.nx-input.nx-select.nx-select--sm", { "aria-label": "Kvalitet" });
+        tiers.forEach(function (t) { sel.appendChild(h("option", { value: t.id, selected: t.id === value }, "Kvalitet: " + t.label)); });
+        sel.addEventListener("change", function () {
+          describe(sel.value);
+          sel.title = help.textContent;
+          onChange(sel.value, false);
+        });
+        describe(value);
+        sel.title = help.textContent;
+        box.appendChild(sel);
+        return;
+      }
+      var seg = ui.segmented(tiers.map(function (t) { return [t.id, t.label]; }), value, function (v) {
+        describe(v);
+        onChange(v, false);
+      }, { small: !!o.small });
+      box.appendChild(seg);
+      box.appendChild(help);
+      describe(value);
+    }, function () {
+      box.appendChild(h("span.nx-muted", null, "Kunne ikke hente kvalitetsnivåene"));
+    });
+    return box;
+  }
 
   function project() {
     return NP.store.get().project;
@@ -42,7 +112,7 @@
   function saveAi(ai) {
     NP.store.update(function (p) {
       return Object.assign({}, p, { ai: Object.assign({}, p.ai || {}, ai, { at: new Date().toISOString() }) });
-    }, { group: "ai-state" });
+    }, { history: false });
   }
 
   function notConfigured() {
@@ -83,6 +153,8 @@
       title: saved.title || "",
       ingress: saved.ingress || "",
       length: saved.length || "normal",
+      tier: saved.tier || null,
+      templateId: saved.templateId && T.find(saved.templateId) ? saved.templateId : "",
       cost: 0,
       busy: false,
     };
@@ -106,6 +178,8 @@
         title: st.title,
         ingress: st.ingress,
         length: st.length,
+        tier: st.tier || undefined,
+        templateId: st.templateId,
       });
     }
 
@@ -147,7 +221,7 @@
 
     // ---- step 1: sources ------------------------------------------------------------
     function sourceCard(src, i) {
-      var label = src.kind === "gdoc" ? "Google Docs" : src.kind === "docx" ? "Word" : src.kind === "web" ? "Nettside" : "Kilde";
+      var label = SOURCE_LABEL[src.kind] || "Kilde";
       return h(
         "div.nx-src",
         null,
@@ -156,7 +230,10 @@
           h("strong", null, src.title || src.name || src.url || label),
           h("span.nx-muted", null, label + " · " + (src.words || 0) + " ord" +
             (src.notes && src.notes.length ? " · " + src.notes.length + " kommentarer" : "") +
-            (src.facts && src.facts.length ? " · " + src.facts.length + " produktdata" : "")),
+            (src.facts && src.facts.length ? " · " + src.facts.length + " produktdata" : "") +
+            (src.pages ? " · " + src.pages + " sider" : "") +
+            (src.ocr ? " · lest med tekstgjenkjenning" : "")),
+          src.warning ? h("span.nx-tag.nx-tag--warn", null, src.warning) : null,
           src.images && src.images.length
             ? ui.button("Importer " + src.images.length + " bilder fra dokumentet", { small: true, kind: "ghost", icon: "image-plus", onClick: function (e) {
                 var btn = e.currentTarget;
@@ -178,12 +255,20 @@
       );
     }
 
+    /** Photos that arrive with a document are shown to the AI too (up to the cap). */
+    function selectNewImages(list) {
+      var ids = list.filter(function (a) { return a.kind === "image"; }).map(function (a) { return a.id; });
+      st.selectedImages = (st.selectedImages || []).concat(ids.filter(function (id) { return (st.selectedImages || []).indexOf(id) === -1; })).slice(0, MAX_IMAGES);
+    }
+
     function addSource(promise, btn) {
       if (btn) btn.disabled = true;
       return promise.then(function (r) {
         st.sources.push(r.source);
+        if (r.cost) st.cost += r.cost;
         if (r.assets && r.assets.length) {
           NP.store.addAssets(r.assets);
+          selectNewImages(r.assets);
           ui.toast(r.assets.length + " bilder fra dokumentet er lagt til", "ok");
         }
         persist();
@@ -192,6 +277,82 @@
         ui.toast(err.message, "err");
         if (btn) btn.disabled = false;
       });
+    }
+
+    /** Drop zone + picker for PDF / Word / text files (several at once). */
+    function fileDrop() {
+      var input = h("input", { type: "file", accept: FILE_ACCEPT, multiple: true, hidden: true });
+      var label = h("span", null, h("strong", null, "Slipp filer her"), " eller ", h("u", null, "velg filer"));
+      var zone = h("button.nx-drop", { type: "button", on: { click: function () { input.click(); } } },
+        ui.icon("file-up", 22), label, h("span.nx-muted", null, "PDF, Word (.docx), .txt eller .md – maks 30 MB per fil"));
+      function take(files) {
+        var list = Array.prototype.slice.call(files || []);
+        if (!list.length) return;
+        zone.disabled = true;
+        ui.clear(label);
+        label.appendChild(ui.spinner());
+        label.appendChild(document.createTextNode(" Leser " + list.length + (list.length === 1 ? " fil" : " filer") + " …"));
+        list.reduce(function (chain, f) {
+          return chain.then(function () {
+            return NP.api.upload("/api/native/sources/file", f, { projectId: project().id }).then(function (r) {
+              st.sources.push(r.source);
+              if (r.cost) st.cost += r.cost;
+              if (r.assets && r.assets.length) {
+                NP.store.addAssets(r.assets);
+                selectNewImages(r.assets);
+                ui.toast(r.assets.length + " bilder fra «" + f.name + "» er lagt til", "ok");
+              }
+            }, function (err) { ui.toast(f.name + ": " + err.message, "err"); });
+          });
+        }, Promise.resolve()).then(function () {
+          persist();
+          draw();
+        });
+      }
+      input.addEventListener("change", function () { take(input.files); });
+      zone.addEventListener("dragover", function (e) { e.preventDefault(); zone.classList.add("is-over"); });
+      zone.addEventListener("dragleave", function () { zone.classList.remove("is-over"); });
+      zone.addEventListener("drop", function (e) {
+        e.preventDefault();
+        zone.classList.remove("is-over");
+        take(e.dataTransfer && e.dataTransfer.files);
+      });
+      return h("div", null, zone, input);
+    }
+
+    /** Template (optional) and quality level. */
+    function designCard() {
+      var tpl = st.templateId ? T.find(st.templateId) : null;
+      return h("div.nx-card-sec", null,
+        h("h3", null, "Design og kvalitet"),
+        h("div.nx-field", null, h("span.nx-field__label", null, "Mal"),
+          h("div.nx-row", null,
+            h("span.nx-tplchoice", null, tpl ? h("strong", null, tpl.name) : h("span", null, "Ingen mal – AI-en lager strukturen"), tpl ? h("span.nx-muted", null, " · " + (tpl.use || "")) : null),
+            ui.button(tpl ? "Bytt mal …" : "Velg mal …", { small: true, kind: "ghost", icon: "layout-template", onClick: pickTemplate }),
+            tpl ? ui.button("", { small: true, kind: "ghost", icon: "x", title: "Ingen mal", onClick: function () { st.templateId = ""; persist(); draw(); } }) : null),
+          h("p.nx-help", null, tpl ? "AI-en følger malens rekkefølge og design, og skriver eget innhold fra kildene." : "Velg en mal hvis siden skal ha et bestemt uttrykk (f.eks. Bil-lansering premium).")),
+        h("div.nx-field", null, h("span.nx-field__label", null, "Kvalitet"),
+          tierPicker(st.tier, function (v) { st.tier = v; persist(); })));
+    }
+
+    function pickTemplate() {
+      var chosen = st.templateId || T.TEMPLATES[0].id;
+      var grid = NP.tplGallery.gallery({ selected: chosen, onSelect: function (id) { chosen = id; }, onUse: function (id) { use(id); } });
+      var pm = ui.modal({
+        title: "Velg mal for AI-en",
+        wide: true,
+        body: h("div.nx-stack", null, h("p.nx-muted", null, "AI-en bruker malens struktur og design. Teksten skrives fra kildene dine – eksempelteksten i malen brukes aldri."), grid),
+        actions: [
+          ui.button("Avbryt", { kind: "ghost", onClick: function () { pm.close(); } }),
+          ui.button("Bruk malen", { kind: "primary", icon: "check", onClick: function () { use(chosen); } }),
+        ],
+      });
+      function use(id) {
+        st.templateId = id;
+        persist();
+        pm.close();
+        draw();
+      }
     }
 
     function stepSources() {
@@ -203,11 +364,8 @@
       var webBtn = ui.button("Les siden", { onClick: function () {
         if (web.value.trim()) addSource(NP.api.source("web", { url: web.value.trim() }), webBtn);
       } });
-      var docx = h("input", { type: "file", accept: ".docx", hidden: true });
-      docx.addEventListener("change", function () {
-        if (docx.files[0]) addSource(NP.api.upload("/api/native/sources/docx", docx.files[0], {}), null);
-      });
-      var brief = h("textarea.nx-input.nx-textarea", { rows: 5, placeholder: "Hva vet du om oppdraget? F.eks.: Ford vil nå småbarnsfamilier som vurderer elbil. Vinkel: hverdagen med én bil. Kampanje til 30. november. CTA: book prøvekjøring." });
+      var drop = fileDrop();
+      var brief = h("textarea.nx-input.nx-textarea", { rows: 8, placeholder: "Lim inn alt du har: briefen, e-posten fra annonsøren, fakta, priser, lenker, sitater …\n\nF.eks.: Ford vil nå småbarnsfamilier som vurderer elbil. Vinkel: hverdagen med én bil. Kampanje til 30. november. CTA: book prøvekjøring (https://www.ford.no/…)." });
       brief.value = st.brief;
       brief.addEventListener("input", function () { st.brief = brief.value; });
       brief.addEventListener("change", persist);
@@ -239,8 +397,11 @@
             null,
             h("h3", null, "Hva skal AI-en lese?"),
             h("p.nx-muted", null, "Jo bedre kildene er, jo bedre blir både spørsmålene og teksten. AI-en bruker bare fakta fra kildene."),
+            h("div.nx-field", null, h("span.nx-field__label", null, ui.icon("upload", 14), " Dokumenter (PDF, Word, tekst)"), drop),
+            h("label.nx-field", null, h("span.nx-field__label", null, "Alt du vet om oppdraget"), brief,
+              h("p.nx-help", null, "Ingen dokument? Lim inn teksten her. AI-en spør om det som mangler før den skriver.")),
             h("label.nx-field", null, h("span.nx-field__label", null, ui.icon("file-text", 14), " Brief i Google Docs"), h("div.nx-row", null, gdoc, gdocBtn),
-              h("p.nx-help", null, "Del dokumentet som «Alle med lenken kan lese». Går ikke det: Fil → Last ned → Word, og ", h("a", { href: "#", on: { click: function (e) { e.preventDefault(); docx.click(); } } }, "last opp .docx-filen"), "."), docx),
+              h("p.nx-help", null, "Del dokumentet som «Alle med lenken kan lese». Går ikke det: Fil → Last ned → Word eller PDF, og last opp filen over.")),
             h("label.nx-field", null, h("span.nx-field__label", null, ui.icon("globe", 14), " Annonsørens nettside / produktside"), h("div.nx-row", null, web, webBtn)),
             h("div.nx-field", null, h("span.nx-field__label", null, ui.icon("cloud-download", 14), " Bilder og video i Google Drive"),
               ui.button("Importer fra Drive-mappe …", { onClick: function () {
@@ -251,12 +412,12 @@
                   draw();
                 });
               } })),
-            h("label.nx-field", null, h("span.nx-field__label", null, "Annonsør"), adv),
-            h("label.nx-field", null, h("span.nx-field__label", null, "Din brief / notater"), brief)
+            h("label.nx-field", null, h("span.nx-field__label", null, "Annonsør"), adv)
           ),
           h(
             "div.nx-stack",
             null,
+            designCard(),
             h("h3", null, "Kilder (" + st.sources.length + ")"),
             st.sources.length ? h("div.nx-stack.nx-stack--sm", null, st.sources.map(sourceCard)) : h("p.nx-muted", null, "Ingen kilder ennå."),
             h("h3", null, "Bilder AI-en skal se på (" + (st.selectedImages || []).length + ")"),
@@ -296,6 +457,7 @@
           advertiser: st.advertiser,
           sources: st.sources,
           imageIds: st.selectedImages || [],
+          tier: st.tier,
         });
       }).then(function (r) {
         st.analysis = r.analysis;
@@ -457,6 +619,8 @@
           answers: st.answers,
           imageMap: st.imageMap,
           brief: st.brief,
+          tier: st.tier,
+          templateId: st.templateId,
           length: { kort: "kort, 4–6 seksjoner", normal: "normal, 7–10 seksjoner", lang: "lang, 11–14 seksjoner" }[st.length],
         }).then(function (r) {
           st.outline = r.outline;
@@ -501,7 +665,7 @@
         o.sections.forEach(function (sec, i) {
           var type = h("select.nx-input.nx-select.nx-select--sm");
           S.aiBlockTypes().forEach(function (t) { type.appendChild(h("option", { value: t, selected: t === sec.type }, S.BLOCKS[t].label)); });
-          type.addEventListener("change", function () { sec.type = type.value; });
+          type.addEventListener("change", function () { sec.type = type.value; sec.templateIndex = -1; drawList(); });
           var purpose = h("textarea.nx-input.nx-textarea", { rows: 2 });
           purpose.value = sec.purpose;
           purpose.addEventListener("input", function () { sec.purpose = purpose.value; });
@@ -531,6 +695,7 @@
               h("div.nx-plan__head", null,
                 h("span.nx-plan__n", null, String(i + 1)),
                 type,
+                sec.templateIndex >= 0 ? h("span.nx-tag", { title: "Får designet fra malen" }, "fra malen") : null,
                 h("span.nx-plan__acts", null,
                   ui.button("", { icon: "arrow-up", small: true, kind: "ghost", disabled: i === 0, title: "Flytt opp", onClick: function () { o.sections.splice(i - 1, 0, o.sections.splice(i, 1)[0]); drawList(); } }),
                   ui.button("", { icon: "arrow-down", small: true, kind: "ghost", disabled: i === o.sections.length - 1, title: "Flytt ned", onClick: function () { o.sections.splice(i + 1, 0, o.sections.splice(i, 1)[0]); drawList(); } }),
@@ -543,7 +708,7 @@
           );
         });
         list.appendChild(h("li", null, ui.button("Legg til seksjon i planen", { small: true, kind: "ghost", icon: "plus", onClick: function () {
-          o.sections.splice(o.sections.length - 1, 0, { type: "richText", purpose: "", imageIds: [] });
+          o.sections.splice(o.sections.length - 1, 0, { type: "richText", purpose: "", imageIds: [], templateIndex: -1 });
           drawList();
         } })));
       }
@@ -558,7 +723,8 @@
             titles,
             custom,
             h("label.nx-field", null, h("span.nx-field__label", null, "Ingress"), ingress),
-            h("p.nx-muted", null, "Vinkel: " + (o.angle || "–"))
+            h("p.nx-muted", null, "Vinkel: " + (o.angle || "–")),
+            st.templateId && T.find(st.templateId) ? h("p.nx-muted", null, "Følger malen «" + T.find(st.templateId).name + "».") : null
           ),
           h("div.nx-stack", null, h("h3", null, "Seksjoner"), h("p.nx-muted", null, "Endre rekkefølge, type eller beskrivelse. Beskrivelsen er instruksen til skribenten (med fakta-ID-er)."), list)
         )
@@ -586,13 +752,16 @@
       var mode = "replace";
       var modeSel = ui.segmented([["replace", "Erstatt siden"], ["append", "Legg til under"], ["variant", "Ny variant"]], mode, function (v) { mode = v; }, { small: true });
       var asComments = h("input", { type: "checkbox", checked: true });
+      var tplForLook = st.templateId ? T.find(st.templateId) : null;
+      var useLook = h("input", { type: "checkbox", checked: !!tplForLook && !project().brandKit });
       var apply = ui.button("Sett inn på siden", { kind: "primary", icon: "check", disabled: true, onClick: function () { place(); } });
       body.appendChild(h("div.nx-stack", null,
         h("h3", null, "Skriver «" + st.title + "»"),
         h("p.nx-muted", null, "Seksjonene skrives samtidig og kontrolleres mot tegngrensene. Over grensen → én runde med retting."),
         listBox,
         h("div.nx-field", null, h("span.nx-field__label", null, "Hvor skal teksten?"), modeSel),
-        h("label.nx-check", null, asComments, " Lagre AI-ens advarsler som kommentarer på seksjonene")
+        h("label.nx-check", null, asComments, " Lagre AI-ens advarsler som kommentarer på seksjonene"),
+        tplForLook ? h("label.nx-check", null, useLook, " Bruk malens farger, skrifter og sidevalg" + (project().brandKit ? " (prosjektet har merkevare – lar du stå av, beholdes den)" : "")) : null
       ));
       busy(true, "Skriver …");
       var next = 0;
@@ -614,6 +783,8 @@
           analysis: st.analysis,
           answers: st.answers,
           imageMap: st.imageMap,
+          tier: st.tier,
+          templateId: st.templateId,
           sourceText: st.sources.map(function (s) { return (s.title || s.url || "") + ":\n" + String(s.text || "").slice(0, 6000); }).join("\n\n").slice(0, 24000),
         }).then(function (r) {
           results[i] = r;
@@ -672,6 +843,12 @@
             return Object.assign({}, pg, { sections: mode === "append" ? pg.sections.concat(sections) : sections });
           });
         }
+        if (tplForLook && useLook.checked) {
+          NP.store.update(function (p) {
+            var probe = D.normalizeProject({ assets: p.assets, theme: tplForLook.theme ? T.themeOf(tplForLook) : p.theme, extras: Object.assign({}, p.extras, tplForLook.extras || {}) });
+            return Object.assign({}, p, { theme: probe.theme, extras: probe.extras });
+          });
+        }
         // The plan's title also names an empty project.
         if (/^(Ny Native Premium|Uten navn)$/.test(project().name)) {
           NP.store.update(function (p) { return Object.assign({}, p, { name: st.title.slice(0, 120) }); });
@@ -684,8 +861,8 @@
             return NP.api.addComment(project().id, { text: w.text, author: "AI-assistent", round: round, anchor: { section: w.section, page: pageId } });
           }));
         }).then(function () {
-          ui.toast("Siden er skrevet (" + ui.money(st.cost) + "). Les gjennom – AI-en kan ta feil.", "ok");
-          if (warnings.length) NP.editor.openPanel("review");
+          ui.toast("Siden er skrevet (" + ui.money(st.cost) + "). Les gjennom – AI-en kan ta feil. Be AI-assistenten om endringer.", "ok");
+          NP.editor.openPanel(warnings.length ? "review" : "assistant");
           m.close();
         });
       }
@@ -739,6 +916,7 @@
         custom: custom.value.trim(),
         context: pageContext(NP.store.get().selected),
         facts: facts,
+        tier: currentTier(),
       }).then(function (r) {
         ui.clear(out);
         r.variants.forEach(function (v) {
@@ -758,5 +936,5 @@
     ui.popover(anchor, h("div.nx-rw__wrap", null, h("strong", null, "Skriv om: " + opts.label), menu, custom, out), { className: "nx-rw-pop", align: "right" });
   }
 
-  NP.ai = { open: open, rewriteMenu: rewriteMenu, notConfigured: notConfigured };
+  NP.ai = { open: open, rewriteMenu: rewriteMenu, notConfigured: notConfigured, tierPicker: tierPicker, aiStatus: aiStatus };
 })();

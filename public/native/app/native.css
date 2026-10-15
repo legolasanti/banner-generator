@@ -506,3 +506,46 @@ p { margin: 0; }
 .nx-switch--sm { font-size: 12.5px; }
 .nx-tplprev { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; min-height: 0; }
 .nx-tplprev .nx-tplprev__stage { flex: 1; height: auto; min-height: 0; }
+
+/* ---- AI: sources drop zone, design card, quality picker ------------------------------ */
+.nx-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 22px 16px; border: 1.5px dashed var(--border-strong); border-radius: var(--r-lg); background: var(--surface-2, var(--surface)); color: var(--ink-2); font: inherit; font-size: 14px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.nx-drop:hover, .nx-drop.is-over { border-color: var(--nx-ai); background: var(--nx-ai-soft); color: var(--ink); }
+.nx-drop:disabled { cursor: progress; opacity: 0.8; }
+.nx-drop .nx-muted { font-size: 12px; }
+.nx-tier { display: flex; flex-direction: column; gap: 6px; }
+.nx-tier__help { margin: 0; }
+.nx-tplchoice { flex: 1; min-width: 0; font-size: 14px; }
+
+/* ---- AI assistant panel --------------------------------------------------------------- */
+.nx-asst { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 0; }
+.nx-asst__head { display: flex; align-items: center; gap: 4px; }
+.nx-asst__head .nx-tier { flex: 1; min-width: 0; }
+.nx-asst__log { flex: 1; min-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 2px 6px; }
+.nx-asst__empty { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; }
+.nx-asst__empty p { margin: 0; }
+.nx-asst__opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.nx-chip { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font: 500 12.5px/1.3 var(--font); text-align: left; cursor: pointer; }
+.nx-chip:hover { border-color: var(--nx-ai); color: var(--nx-ai); }
+.nx-chip.is-sug { border-color: var(--nx-ai); background: var(--nx-ai-soft); color: var(--nx-ai); }
+.nx-chip:disabled { opacity: 0.5; cursor: default; }
+.nx-msg { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
+.nx-msg p { margin: 0; overflow-wrap: anywhere; }
+.nx-msg--user { align-self: flex-end; max-width: 92%; background: var(--nx-ai); color: #fff; border-bottom-right-radius: 4px; white-space: pre-wrap; }
+.nx-msg--ai { background: var(--surface-3); color: var(--ink); border-bottom-left-radius: 4px; }
+.nx-msg--ai.is-busy { flex-direction: row; align-items: center; gap: 8px; }
+.nx-msg__who { display: inline-flex; align-items: center; gap: 4px; font: 700 11px/1 var(--font); text-transform: uppercase; letter-spacing: 0.04em; color: var(--nx-ai); }
+.nx-msg__meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.nx-msg__meta:empty { display: none; }
+.nx-asst__changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.nx-asst__change { display: flex; align-items: flex-start; gap: 6px; padding: 5px 7px; border-radius: 7px; background: var(--surface); font-size: 12.5px; }
+.nx-asst__change > svg { flex: none; margin-top: 2px; color: var(--nx-ai); }
+.nx-asst__change.is-link { cursor: pointer; }
+.nx-asst__change.is-link:hover { outline: 1px solid var(--nx-ai); }
+.nx-asst__q { display: flex; flex-direction: column; gap: 6px; padding: 9px 10px; border-radius: 9px; background: var(--surface); border: 1px solid var(--nx-ai-soft); }
+.nx-asst__compose { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); }
+.nx-asst__compose .nx-help { margin: 0; }
+.nx-asst__scope { display: flex; align-items: center; gap: 4px; font-size: 12.5px; min-height: 26px; }
+.nx-asst__scope strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nx-asst__input { resize: vertical; min-height: 72px; }
+.nx-asst__actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nx-code { max-height: 60vh; overflow: auto; margin: 0; padding: 14px; border-radius: 10px; background: #14161b; color: #e6e8ee; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; tab-size: 2; }

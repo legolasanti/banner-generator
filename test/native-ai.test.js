@@ -189,6 +189,11 @@ test("the OpenRouter client sends key, privacy flags, fallbacks and schema; maps
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", () => {
+      // The client looks up model capabilities (GET /models) before chatting.
+      if (req.method === "GET") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ data: [] }));
+      }
       seen = { headers: req.headers, body: JSON.parse(body), url: req.url };
       res.writeHead(status, { "Content-Type": "application/json" });
       if (status !== 200) return res.end(JSON.stringify({ error: { code: status, message: "nope" } }));
@@ -198,6 +203,7 @@ test("the OpenRouter client sends key, privacy flags, fallbacks and schema; maps
   await new Promise((r) => server.listen(0, r));
   process.env.OPENROUTER_BASE_URL = "http://127.0.0.1:" + server.address().port + "/api/v1";
   process.env.OPENROUTER_API_KEY = "sk-test";
+  openrouter.resetModelCache();
   try {
     const r = await openrouter.chat({ model: "a/b", fallbacks: ["c/d"], messages: [{ role: "user", content: "hei" }], json: { name: "t", schema: { type: "object" } } });
     assert.deepEqual(r.data, { ok: true });

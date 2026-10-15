@@ -637,6 +637,37 @@
    * capped; it is never rendered.
    */
   var MAX_AI_BYTES = 400000;
+  var MAX_CHAT = 40;
+
+  /** One message in the AI assistant's conversation (project.ai.chat). */
+  function normalizeChatMessage(m) {
+    if (!m || typeof m !== "object") return null;
+    var text = cleanText(m.text, 4000, true);
+    var out = { role: m.role === "assistant" ? "assistant" : "user", text: text };
+    if (isIsoDate(m.at)) out.at = m.at;
+    if (Array.isArray(m.changes)) {
+      out.changes = m.changes.slice(0, 40).map(function (c) {
+        c = c && typeof c === "object" ? c : {};
+        return { op: cleanText(c.op, 12, false), sectionId: cleanText(c.sectionId, 40, false), type: cleanText(c.type, 40, false), summary: cleanText(c.summary, 200, false) };
+      });
+    }
+    if (Array.isArray(m.warnings)) out.warnings = m.warnings.slice(0, 20).map(function (w) { return cleanText(w, 300, false); });
+    if (Array.isArray(m.questions)) {
+      out.questions = m.questions.slice(0, 3).map(function (q) {
+        q = q && typeof q === "object" ? q : {};
+        return {
+          question: cleanText(q.question, 300, false),
+          why: cleanText(q.why, 300, false),
+          options: (Array.isArray(q.options) ? q.options : []).slice(0, 4).map(function (o) { return cleanText(o, 200, false); }),
+          suggested: cleanText(q.suggested, 200, false),
+        };
+      });
+    }
+    if (typeof m.cost === "number" && isFinite(m.cost)) out.cost = Math.max(0, m.cost);
+    if (typeof m.model === "string") out.model = cleanText(m.model, 120, false);
+    return text || out.changes ? out : null;
+  }
+
   function normalizeAi(raw) {
     if (!raw || typeof raw !== "object") return null;
     var keep = {};
@@ -646,6 +677,9 @@
     ["sources", "analysis", "answers", "outline", "imageMap", "selectedImages"].forEach(function (k) {
       if (raw[k] && typeof raw[k] === "object") keep[k] = raw[k];
     });
+    if (typeof raw.templateId === "string" && /^[a-z0-9-]{1,60}$/.test(raw.templateId)) keep.templateId = raw.templateId;
+    if (["okonomi", "standard", "premium"].indexOf(raw.tier) >= 0) keep.tier = raw.tier;
+    if (Array.isArray(raw.chat)) keep.chat = raw.chat.slice(-MAX_CHAT).map(normalizeChatMessage).filter(Boolean);
     var json;
     try {
       json = JSON.stringify(keep);
@@ -656,6 +690,10 @@
       // Drop the bulky source texts first; the analysis already holds the facts.
       delete keep.sources;
       json = JSON.stringify(keep);
+      if (json.length > MAX_AI_BYTES && keep.chat) {
+        keep.chat = keep.chat.slice(-8);
+        json = JSON.stringify(keep);
+      }
       if (json.length > MAX_AI_BYTES) return null;
     }
     return JSON.parse(json);

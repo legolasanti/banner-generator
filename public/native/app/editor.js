@@ -3,7 +3,7 @@
 
      top bar   back, project name, save state, undo/redo, page switcher,
                device width, AI, preview, review, export
-     left      panels: Seksjoner · Medier · Tema · Prosjekt · Kontroll ·
+     left      panels: Seksjoner · AI-assistent · Medier · Tema · Prosjekt · Kontroll ·
                Gjennomgang
      middle    the live page (canvas.js)
      right     the selected section's properties (props.js)
@@ -23,6 +23,7 @@
 
   var PANELS = [
     ["sections", "Seksjoner", "layers"],
+    ["assistant", "AI-assistent", "sparkles"],
     ["media", "Medier", "images"],
     ["theme", "Tema", "palette"],
     ["extras", "Side", "panels-top-left"],
@@ -85,7 +86,11 @@
         h(
           "div.nx-edbar__right",
           null,
-          ui.button("AI", { icon: "sparkles", cls: "nx-btn--ai", title: "Lag eller skriv om siden med AI", onClick: function () { NP.ai.open(); } }),
+          ui.button("AI", { icon: "sparkles", cls: "nx-btn--ai", title: "Lag siden med AI, eller be AI-assistenten om endringer", onClick: function () {
+            // An empty page starts the wizard; a page with content opens the assistant.
+            if (NP.store.page().sections.length) openPanel("assistant");
+            else NP.ai.open();
+          } }),
           ui.button("Forhåndsvis", { icon: "eye", kind: "ghost", title: "Åpne siden i en ny fane", onClick: preview }),
           ui.button("Del", { icon: "send", kind: "ghost", title: "Send til gjennomgang", onClick: function () { openPanel("review"); } }),
           ui.button("Eksporter", { icon: "download", kind: "primary", onClick: function () { NP.publish.dialog(); } })
@@ -124,6 +129,7 @@
       var def = PANELS.filter(function (p) { return p[0] === nameKey; })[0];
       panelHead.textContent = def ? def[1] : "";
       if (nameKey === "sections") panelNode = NP.sections.panel();
+      if (nameKey === "assistant") panelNode = NP.assistant.panel();
       if (nameKey === "media") panelNode = NP.media.grid({});
       if (nameKey === "theme") panelNode = NP.theme.panel();
       if (nameKey === "extras") panelNode = NP.extras.panel();

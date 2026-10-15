@@ -254,12 +254,22 @@ med den faste bunnteksten. Ordlyden settes én gang i **Innstillinger**.
 
 ### AI-modus (OpenRouter)
 
-**AI** i editoren (eller «Med AI» når du lager et prosjekt) åpner en veiviser i fire steg:
+**AI** i editoren (eller «Med AI» når du lager et prosjekt) åpner en veiviser i fire
+steg når siden er tom. Har siden innhold, åpner **AI** i stedet **AI-assistenten**
+(se under).
 
-1. **Kilder** — lim inn lenken til **Google Docs**-briefen (delt som «Alle med
-   lenken»; eller last den opp som .docx), annonsørens **produktsider**, importer
-   **Drive-mappen** med bilder/video, og skriv noen linjer selv. Kommentarer i
-   dokumentet blir med som notater; bilder i dokumentet kan importeres med ett klikk.
+1. **Kilder** — slipp **dokumenter** i feltet (PDF, Word .docx, .txt/.md – flere om
+   gangen), lim inn **alt du vet** i tekstfeltet (briefen, e-posten fra annonsøren,
+   fakta, priser, lenker), lim inn lenken til en **Google Docs**-brief, annonsørens
+   **produktsider**, og importer **Drive-mappen** med bilder/video. Kommentarer i
+   dokumentet blir med som notater; bilder i Word-filer importeres og vises til AI-en.
+   Skannede PDF-er (uten tekst) leses med tekstgjenkjenning via OpenRouter.
+   Her velger du også:
+   - **Mal** (valgfritt) — f.eks. «Bil-lansering premium». AI-en følger malens
+     rekkefølge og design (oppsett, størrelser, bakgrunner, animasjoner) og
+     skriver eget innhold fra kildene; eksempelteksten i malen brukes aldri.
+     Uten mal lager AI-en strukturen selv.
+   - **Kvalitet** — Økonomi, Standard eller Premium (se tabellen under).
 2. **Spørsmål** — AI-en leser alt (også bildene) og viser hvordan den forstår
    oppdraget: sammendrag, faktaene den fant (med de som må sjekkes merket: priser,
    tall som ikke stemmer), sitater, hva hvert bilde viser og hvor det passer.
@@ -267,10 +277,22 @@ med den faste bunnteksten. Ordlyden settes én gang i **Innstillinger**.
    motstridende fakta, manglende CTA-lenke, uklare sitater, juridiske punkter;
    vinkel/tone/målgruppe bare hvis briefen er taus. Forslaget er forhåndsvalgt,
    så de fleste svar er ett klikk.
-3. **Plan** — tre tittelforslag, ingress og seksjonsplan, alt kan endres.
+3. **Plan** — tre tittelforslag, ingress og seksjonsplan, alt kan endres
+   (seksjoner som får designet fra malen er merket «fra malen»).
 4. **Skriv** — seksjonene skrives (samtidig), sjekkes mot tegngrensene (én
    automatisk rettingsrunde) og settes inn på siden. AI-ens advarsler («prisen må
-   bekreftes av Ford») lagres som kommentarer på seksjonene det gjelder.
+   bekreftes av Ford») lagres som kommentarer på seksjonene det gjelder. Med mal
+   kan du også ta med malens farger, skrifter og sidevalg.
+
+**AI-assistenten** (panelet «AI-assistent» til venstre) endrer siden etterpå med
+vanlige ord: «gjør ingressen kortere», «flytt sitatet opp under heroen», «legg til
+en FAQ om lading før CTA-en», «mørkegrønn primærfarge», «skjul testimonials på
+mobil». Den ser hele siden slik den er lagret — seksjonene med id, type, innhold og
+stil, temaet, sidevalgene og egen CSS — og endrer bare det du ber om. Velg en
+seksjon på siden for å si «denne». Mangler den fakta (en pris, en lenke) eller er
+noe uklart, gjør den det den kan og **spør om resten**, med klikkbare svar. Hver
+endring er ett steg: «Angre endringen» setter siden tilbake akkurat slik den var.
+**Vis koden** (‹›) viser det AI-en ser, hele det lagrede dokumentet og HTML-en.
 
 Hvert tekstfelt har også en ✨-meny: kortere, lengre, enklere, varmere, mer
 saklig, ny vinkel, tre titler, rett språkfeil — alltid tre alternativer.
@@ -278,14 +300,27 @@ saklig, ny vinkel, tre titler, rett språkfeil — alltid tre alternativer.
 AI-en følger disse reglene: norsk bokmål (titler med liten forbokstav etter første
 ord, norsk typografi), fakta og sitater **bare** fra kildene (hver påstand knyttet
 til en fakta-ID), ingen superlativer uten dokumentasjon (markedsføringsloven § 3),
+ingen produksjonsord («Native Premium», «målgruppe», «CTA») i teksten til leseren,
 skriver aldri merkingen selv. Promptene er versjonert i `lib/native/ai/prompts.js`;
-kostnaden for hvert kall logges per prosjekt.
+kostnaden for hvert kall logges per prosjekt (også kall som feilet, men ble betalt).
 
-**Oppsett:** kopier `.env.example` til `.env` og fyll inn `OPENROUTER_API_KEY`.
-Modellene velges i **Innstillinger** (standard `anthropic/claude-sonnet-5.5`,
-reserver hos andre leverandører, egen modell for bilder og for illustrasjoner).
-Alle forespørsler sendes med **zero data retention** og «ingen trening på
-innholdet». Test gjerne flere modeller med ekte briefer før dere bestemmer dere.
+**Kvalitetsnivåer** (målt 15.10.2026 på en ekte brief; en hel side = analyse,
+plan og ca. 10 seksjoner):
+
+| Nivå | Modell (standard) | Ca. pris per side | Passer til |
+| --- | --- | --- | --- |
+| Økonomi | `deepseek/deepseek-v4.1-flash` | 0,5 kr | utkast, mange varianter; godt norsk, men tregere |
+| Standard | `anthropic/claude-sonnet-5.5` | 3 kr | det meste – best tekst for pengene |
+| Premium | `anthropic/claude-opus-5.5` | 7 kr | viktige kunder; skarpest spørsmål og plan |
+
+Modellene og forvalgt nivå endres i **Innstillinger**. Appen sender
+`temperature` og tenke-innstillinger bare til modeller som støtter dem (nyere
+Claude- og Gemini-modeller avviser `temperature`).
+
+**Oppsett:** kopier `.env.example` til `.env` og fyll inn `OPENROUTER_API_KEY`
+(nøkkelen skal **bare** stå i `.env`, som aldri sjekkes inn – ikke i
+`.env.example`). Start appen på nytt etterpå. Alle forespørsler sendes med
+**zero data retention** og «ingen trening på innholdet».
 
 Valgfritt: `GOOGLE_API_KEY` (med Drive API slått på) gir nøyaktige filtyper og
 størrelser for Drive-mapper; uten den leses mappens offentlige visning.

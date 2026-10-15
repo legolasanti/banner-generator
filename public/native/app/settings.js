@@ -103,14 +103,27 @@
             ui.icon(status.configured ? "badge-check" : "circle-alert", 16),
             status.configured ? " API-nøkkelen er satt opp." : " OPENROUTER_API_KEY mangler i .env – AI-funksjonene er av."),
           h("div.nx-note", null, ui.icon("info", 15), " Google Drive leses " + (status.drive === "api" ? "via Drive API (GOOGLE_API_KEY)." : "via den offentlige mappevisningen. Med GOOGLE_API_KEY i .env får du sikrere lister med bildestørrelser.")),
-          modelInput("defaultModel", "Hovedmodell (skriving og planlegging)", "Bør skrive godt norsk og støtte strukturerte svar. Test gjerne flere med samme brief."),
+          h("p.nx-muted", null, "Brukeren velger kvalitet for hver jobb (veiviseren og AI-assistenten). Hvert nivå bruker modellen under. Testet 15.10.2026 på en ekte brief: Økonomi ≈ 0,5 kr, Standard ≈ 3 kr, Premium ≈ 7 kr for en hel side."),
+          h("div.nx-grid2", null,
+            modelInput("economyModel", "Økonomi", "Billigst. Standard: deepseek/deepseek-v4.1-flash."),
+            modelInput("defaultModel", "Standard", "Standard: anthropic/claude-sonnet-5.5.")),
+          h("div.nx-grid2", null,
+            modelInput("premiumModel", "Premium", "Standard: anthropic/claude-opus-5.5."),
+            field("Forvalgt nivå", (function () {
+              var sel = h("select.nx-input.nx-select");
+              [["okonomi", "Økonomi"], ["standard", "Standard"], ["premium", "Premium"]].forEach(function (o) {
+                sel.appendChild(h("option", { value: o[0], selected: ai.defaultTier === o[0] }, o[1]));
+              });
+              sel.addEventListener("change", function () { ai.defaultTier = sel.value; });
+              return sel;
+            })(), "Brukes når et prosjekt ikke har valgt nivå selv.")),
           field("Reservemodeller (kommaseparert)", input(null, {
             get: function () { return ai.fallbackModels.join(", "); },
             set: function (v) { ai.fallbackModels = v.split(",").map(function (x) { return x.trim(); }).filter(Boolean); },
             list: "nx-models",
           }), "Brukes automatisk hvis hovedmodellen er nede. Velg gjerne fra en annen leverandør."),
-          modelInput("visionModel", "Bildeanalyse (må kunne se bilder)"),
-          modelInput("fastModel", "Rask og billig modell"),
+          modelInput("visionModel", "Bildeanalyse (reserve når nivåets modell ikke ser bilder)"),
+          modelInput("fastModel", "Rask og billig modell (tekstgjenkjenning av skannede PDF-er)"),
           modelInput("imageModel", "Bildegenerering", "F.eks. google/gemini-3.1-flash-image."),
           (function () {
             var zdr = h("input", { type: "checkbox", checked: ai.zdr });

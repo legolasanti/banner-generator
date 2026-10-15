@@ -258,13 +258,22 @@ in **Settings**.
 
 ### AI mode (OpenRouter)
 
-**AI** in the editor (or "Med AI" when creating a project) opens a four-step wizard:
+**AI** in the editor (or "Med AI" when creating a project) opens a four-step
+wizard when the page is empty. When the page has content, **AI** opens the
+**AI assistant** instead (see below).
 
-1. **Sources** — paste the **Google Docs** brief link (shared as "Anyone with the
-   link"; or upload it as .docx), the advertiser's **product pages**, import the
-   **Drive folder** with the photos/videos, and add a few lines yourself.
-   Comments in the doc come along as editorial notes; pictures inside the doc can
-   be imported with one click.
+1. **Sources** — drop **documents** into the field (PDF, Word .docx, .txt/.md –
+   several at once), paste **everything you know** into the text box (the brief,
+   the advertiser's email, facts, prices, links), paste a **Google Docs** brief
+   link, the advertiser's **product pages**, and import the **Drive folder** with
+   photos/videos. Comments in the doc come along as notes; pictures inside Word
+   files are imported and shown to the AI. Scanned PDFs (no text layer) are read
+   with OCR through OpenRouter. Here you also pick:
+   - **Template** (optional) — e.g. "Bil-lansering premium". The AI follows the
+     template's order and design (layouts, sizes, backgrounds, animations) and
+     writes its own content from the sources; the template's sample copy is never
+     used. Without a template the AI builds the structure itself.
+   - **Quality** — Økonomi, Standard or Premium (see the table below).
 2. **Questions** — the AI reads everything (photos included) and shows its
    reading: summary, the facts it found (with the ones to double-check flagged:
    prices, conflicting numbers), quotes, what each photo shows and where it fits.
@@ -273,26 +282,52 @@ in **Settings**.
    angle/tone/audience only when the brief is silent. Its best guess is
    pre-selected, so most answers are a click.
 3. **Plan** — three headline options, the ingress and the section plan, all
-   editable.
+   editable (sections that take their design from the template are marked).
 4. **Write** — each section is written (in parallel), checked against the
    character limits (one automatic repair round), and placed on the page. The
    AI's warnings ("price must be confirmed by Ford") are saved as comments on
-   the sections they concern.
+   the sections they concern. With a template you can also take over its
+   colours, fonts and page options.
+
+The **AI assistant** (the "AI-assistent" panel on the left) changes the page
+afterwards in plain words: "shorter ingress", "move the quote up under the hero",
+"add a charging FAQ before the CTA", "dark green primary colour", "hide the
+testimonials on mobile". It sees the whole page as stored — sections with id,
+type, content and style, the theme, page options and custom CSS — and changes only
+what you ask. Select a section to say "this one". When a fact (a price, a link) is
+missing or something is unclear, it does what it can and **asks about the rest**,
+with clickable answers. Each change is one step: "Angre endringen" restores the
+page exactly as it was. **Vis koden** (‹›) shows what the AI sees, the full stored
+document and the HTML.
 
 Every text field also has a ✨ menu: shorter, longer, simpler, warmer, more
 formal, new angle, three headlines, fix language — always three alternatives.
 
 Rules the AI follows: Norwegian bokmål (sentence-case headlines, Norwegian
 typography), facts and quotes **only** from the sources (each claim tied to a
-fact id), no superlatives without documentation (markedsføringsloven § 3),
-never writes the disclosure itself. Prompts are versioned in
-`lib/native/ai/prompts.js`; the cost of every call is logged per project.
+fact id), no superlatives without documentation (markedsføringsloven § 3), no
+production jargon ("Native Premium", "target group", "CTA") in reader-facing
+copy, never writes the disclosure itself. Prompts are versioned in
+`lib/native/ai/prompts.js`; the cost of every call is logged per project
+(including failed calls that were still billed).
 
-**Setup:** copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`. Models are
-chosen in **Settings** (default `anthropic/claude-sonnet-5.5`, fallbacks on other
-providers, a vision model for photos, an image model for illustrations). Every
-request is sent with **zero data retention** and "no training on prompts". Run
-your own blind test with real briefs before settling on a model.
+**Quality levels** (measured 2026-10-15 on a real brief; one full page = analysis,
+plan and about 10 sections):
+
+| Level | Model (default) | Approx. cost per page | Use for |
+| --- | --- | --- | --- |
+| Økonomi | `deepseek/deepseek-v4.1-flash` | NOK 0.5 | drafts, many variants; good Norwegian, slower |
+| Standard | `anthropic/claude-sonnet-5.5` | NOK 3 | most work – best prose for the money |
+| Premium | `anthropic/claude-opus-5.5` | NOK 7 | key clients; sharpest questions and plans |
+
+Models and the default level are set in **Settings**. The app sends
+`temperature` and reasoning settings only to models that accept them (newer
+Claude and Gemini models reject `temperature`).
+
+**Setup:** copy `.env.example` to `.env` and set `OPENROUTER_API_KEY` (the key
+belongs **only** in `.env`, which is never committed – not in `.env.example`).
+Restart the app afterwards. Every request is sent with **zero data retention**
+and "no training on prompts".
 
 Optional: `GOOGLE_API_KEY` (Drive API enabled) gives exact file types and sizes
 for Drive folders; without it, the folder's public view is read.
