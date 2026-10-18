@@ -30,5 +30,17 @@
   },
   "optionalDependencies": {
     "sharp": "^0.35.3"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "history/*",
+      "history.json",
+      "settings.json",
+      "data/*",
+      "uploads/*",
+      "test/*",
+      "*.test.js"
+    ],
+    "ext": "js,json"
   }
 }
