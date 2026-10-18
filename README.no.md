@@ -16,7 +16,10 @@ ABC Nyheters interne designverktøy, i to områder (bytt øverst til venstre):
   skriver et første utkast. Se [Native Premium](#native-premium).
 
 Tre produkter, valgt med fanene øverst. Hvert produkt har sine egne formater,
-sine egne felt og sitt eget faste innhold på banneret:
+sine egne felt og sitt eget faste innhold på banneret. På alle tre **får
+overskriften en understrek når musa er over banneret** — samme signal som en
+artikkeltittel på abcnyheter.no — i forhåndsvisningen og i HTML5-kreativen (også
+ved tastaturfokus); bildeeksporten viser den aldri.
 
 ### Norsk Tipping
 
@@ -212,18 +215,30 @@ valgt andel av siden (skjules over CTA-er og bunnteksten), «Likte du denne sake
 Ja/Nei» nederst, linjen «Annonsørinnhold for … / Produsert av …» og egen CSS (som
 aldri kan skjule merkingen).
 
-**Ferdige design:** «Legg til seksjon» viser 43 ferdig designede seksjoner med
+**Ferdige design:** «Legg til seksjon» viser 51 ferdig designede seksjoner med
 levende miniatyrer (åpninger, kapitler, store tekster, tall, lister, kort,
-scrollfortellinger, handling) — med søk. Seksjoner og stil kan kopieres og limes
+scrollfortellinger, handling, og det bransjene trenger hver gang: eksempel på
+effektiv rente, forbehold for helseråd, faner per ukedag, pakketabell, ukens
+tilbud med førpris) — med søk. Seksjoner og stil kan kopieres og limes
 inn, også mellom prosjekter (Ctrl+C / Ctrl+V, med Alt bare stilen).
 
-**Maler:** i tillegg til de fem arbeidshestene finnes sju **premium-maler**, hver
+**Maler:** i tillegg til de fem arbeidshestene finnes femten **premium-maler**, hver
 med egne skrifter, farger og sideinnstillinger, kledd i et demosett med bilder
-(Unsplash): **Bil-lansering premium**, **Topp 5 – nedtelling**, **Året i tall
-(«Wrapped»)**, **Reise – immersiv**, **Interaktiv guide («utforsker»)**, **Rapport og
-innsikt** og **Mat og smak**. Galleriet i «Ny Native Premium» viser hver mal levende
-og åpner en forhåndsvisning i full størrelse (desktop/mobil) med alle effektene.
-Demobilder og eksempeltekst flagges i **Kontroll** til de er byttet ut.
+(Unsplash, rundt 80 bilder): **Bil-lansering premium**, **Topp 5 – nedtelling**,
+**Året i tall («Wrapped»)**, **Reise – immersiv**, **Interaktiv guide
+(«utforsker»)**, **Rapport og innsikt**, **Mat og smak** — og én per bransje ABC
+BrandStudio selger mye til: **Apotek og helse** (farmasøyten som ekspert, faner
+per hudtype, forbeholdene helsereklame krever), **Lokal produsent («fra kube til
+bord»)** (honning, meieri, bryggeri — produsentens år som scrollfortelling),
+**Bank – første bolig** (guide i steg, sammenligning av lån, eksempel på
+effektiv rente), **Energi og bærekraft** (klikkbart tak, forbruk i diagram),
+**Bolig – nytt prosjekt** (nabolaget, leilighetstyper, nedtelling til
+salgsstart), **Dagligvare – ukemeny** (middag per ukedag, tilbud med førpris,
+avstemning), **Arbeidsgiver og rekruttering** og **Trening og aktiv hverdag**
+(mørk, store bokstaver, medlemskap i tabell). Galleriet i «Ny Native Premium»
+filtrerer på bransje og søker på ord, viser hver mal levende og åpner en
+forhåndsvisning i full størrelse (desktop/mobil) med alle effektene. Demobilder
+og eksempeltekst flagges i **Kontroll** til de er byttet ut.
 
 **Tema:** i tillegg til farger, skrifter og logo: sidebakgrunn (lyse eller mørke
 sider), størrelse på titler (opp til «Magasin»), bokstavavstand, store bokstaver i
@@ -248,9 +263,23 @@ med den faste bunnteksten. Ordlyden settes én gang i **Innstillinger**.
   (sideinnstillinger) · Prosjekt (annonsør, **varianter** som «For menn» /
   «For kvinner» med faner, delingsbilde og -tekst, endelig adresse, UTM, egne
   skript) · Kontroll (alt som bør rettes før annonsøren ser siden) · Gjennomgang.
-- Angre/gjør om (Ctrl+Z / Ctrl+Shift+Z), lagrer automatisk, en versjon hvert 10.
-  minutt, navngitte versjoner og gjenoppretting. Har en kollega lagret i mellomtiden,
-  sier editoren fra i stedet for å skrive over.
+- **Flere seksjoner samtidig:** Shift- eller Cmd-klikk i seksjonslisten; en linje
+  flytter, dupliserer, kopierer eller sletter gruppen i ett steg.
+- **Tastatur:** `?` (eller tastatur-ikonet) viser alle snarveiene. De virker også
+  når fokus står i forhåndsvisningen.
+- **Redusert bevegelse:** en bryter i verktøylinjen viser siden slik lesere med
+  «reduser bevegelse» ser den.
+- Angre/gjør om (Ctrl+Z / Ctrl+Shift+Z; jevn skriving blir et steg med noen
+  sekunders mellomrom), lagrer automatisk, en versjon hvert 10. minutt, navngitte
+  versjoner og gjenoppretting. Har en kollega lagret i mellomtiden, sier editoren
+  fra i stedet for å skrive over, advarer til det er løst og tilbyr **Lagre min
+  versjon som kopi**. Publisering, ny runde og eksport kjører aldri på en kopi som
+  ikke er lagret.
+- **Kontroll** ser også på delingstittel, -beskrivelse og -bilde (med
+  forhåndsvisning av delingskortet under Prosjekt), doble ankere og døde
+  `#lenker`, hoppede overskriftsnivåer, gjentatte «Les mer»-lenker og sidens vekt
+  (med varsel om en tung første skjerm). Å publisere en versjon annonsøren ikke
+  har godkjent, krever en bekreftelse.
 
 ### AI-modus (OpenRouter)
 
@@ -331,6 +360,9 @@ størrelser for Drive-mapper; uten den leses mappens offentlige visning.
   kopierer en lenke (`/p/<tilfeldig nøkkel>/`). Annonsøren åpner den uten
   innlogging, **fester kommentarer rett på siden** og **godkjenner med navnet sitt**.
   Endringer etterpå vises først i neste runde. Lenken kan trekkes tilbake.
+  Annonsøren ser bare sine egne kommentarer, svar i sine tråder og kommentarer
+  teamet har merket **Synlig for annonsøren** — interne notater og AI-ens
+  advarsler når dem aldri.
 - **Eksport:** en ZIP med `index.html` (og én mappe per variant), WebP-bilder i
   flere størrelser, sidens skrifter **redusert til tegnene den bruker** og lagt ved
   (ingen kall til Google fra leserne — GDPR), video, skript og en `LES-MEG.txt`.

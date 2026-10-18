@@ -16,7 +16,10 @@ ABC Nyheter's internal design tool, in two areas (switch at the top left):
   See [Native Premium](#native-premium).
 
 Three products, picked with the tabs at the top. Each has its own formats, its
-own form fields and its own furniture on the banner:
+own form fields and its own furniture on the banner. On all three, **hovering
+the banner underlines the headline** — the same cue as an article title on
+abcnyheter.no — in the preview and in the HTML5 creative (keyboard focus too);
+image exports never show it.
 
 ### Norsk Tipping
 
@@ -213,18 +216,31 @@ that appears after a set share of the page (hidden over CTAs and the footer),
 "Likte du denne saken? Ja/Nei" at the end, the "Annonsørinnhold for … / Produsert
 av …" credit line, and custom CSS (which can never hide the disclosure).
 
-**Ready-made designs:** "Add section" opens 43 designed sections with live
+**Ready-made designs:** "Add section" opens 51 designed sections with live
 thumbnails (openings, chapters, statements, numbers, lists, cards, scroll
-stories, calls to action) — search by word. Sections and their style can be
+stories, calls to action, plus the industry staples: an effective-interest
+example for loans, health disclaimers, weekday tabs, a package table, weekly
+offers with the old price) — search by word. Sections and their style can be
 copied and pasted, also between projects (Ctrl+C / Ctrl+V, Alt for style only).
 
-**Templates:** besides the five workhorses there are seven **premium templates**,
+**Templates:** besides the five workhorses there are fifteen **premium templates**,
 each with its own fonts, colours and page options, dressed in a demo photo kit
-(Unsplash): **Car launch premium**, **Top 5 countdown**, **"Wrapped" year in
-numbers**, **Immersive travel**, **Interactive explorer** (tabs per room/audience),
-**Report & insight** and **Food & taste**. The gallery in "Ny Native Premium"
-shows each one live and opens a full-size preview (desktop/mobile) with all
-effects running. Demo photos and sample copy are flagged in **Check** until replaced.
+(Unsplash, ~80 photos): **Car launch premium**, **Top 5 countdown**, **"Wrapped"
+year in numbers**, **Immersive travel**, **Interactive explorer** (tabs per
+room/audience), **Report & insight**, **Food & taste** — and one per industry
+ABC BrandStudio keeps selling to: **Pharmacy & health** (the pharmacist as
+expert, tabs per skin type, the disclaimers health advertising needs),
+**Local producer "from hive to table"** (honey, dairy, brewery — the producer's
+year as a scroll story), **Bank – first home** (step-by-step guide, loan
+comparison, effective-interest example), **Energy & sustainability**
+(clickable rooftop, consumption chart), **Property – new development**
+(neighbourhood, apartment types, countdown to sales start), **Grocery – weekly
+menu** (a dinner per weekday, offers with old price, poll), **Employer &
+recruitment** and **Gym & active life** (dark, all caps, membership table).
+The gallery in "Ny Native Premium" filters by industry and searches by word,
+shows each template live and opens a full-size preview (desktop/mobile) with
+all effects running. Demo photos and sample copy are flagged in **Check** until
+replaced.
 
 **Theme:** besides colours, fonts and logo: page background colour (light or
 dark pages), heading size scale (up to "Magazine"), letter spacing, uppercase
@@ -252,9 +268,23 @@ in **Settings**.
   variants** like "For menn"/"For kvinner" with tabs, sharing image and text,
   final address, UTM, per-project scripts) · Check (everything to fix before the
   advertiser sees it) · Review.
-- Undo/redo (Ctrl+Z / Ctrl+Shift+Z), autosave every second, an automatic version
-  every 10 minutes, named versions and restore. If a colleague saved in the
-  meantime, the editor says so instead of overwriting their work.
+- **Several sections at once:** Shift- or Cmd-click in the Sections list; a bar
+  moves, duplicates, copies or deletes the group as one step.
+- **Keyboard:** `?` (or the keyboard icon) lists every shortcut. They also work
+  while the focus is in the page preview.
+- **Reduced motion:** a toolbar switch shows the page the way readers with
+  "reduce motion" switched on see it.
+- Undo/redo (Ctrl+Z / Ctrl+Shift+Z; steady typing becomes a step every few
+  seconds), autosave every second, an automatic version every 10 minutes,
+  named versions and restore. If a colleague saved in the meantime, the editor
+  says so instead of overwriting their work, keeps warning until it is
+  resolved, and offers **Lagre min versjon som kopi**. Publishing, sending a
+  round or exporting never runs on an unsaved copy.
+- **Check** also looks at the sharing title, description and image (with a
+  share-card preview in Project), duplicate anchors and dead `#links`, skipped
+  heading levels, repeated "Les mer" links and the page weight (with a warning
+  for a heavy first screen). Publishing a version the advertiser has not
+  approved asks first.
 
 ### AI mode (OpenRouter)
 
@@ -338,6 +368,9 @@ for Drive folders; without it, the folder's public view is read.
   and copies a link (`/p/<random token>/`). The advertiser opens it without a
   login, **pins comments directly on the page** and **approves with their name**.
   Edits made afterwards do not show until the next round. Links can be revoked.
+  The advertiser sees only their own comments, replies in their threads and
+  team comments marked **Synlig for annonsøren** — internal notes and the AI's
+  warnings never reach them.
 - **Export:** a ZIP with `index.html` (plus one folder per variant), WebP images
   in several sizes, the page's fonts **subset to the characters it uses** and
   self-hosted (no request to Google from readers — GDPR), video, the runtime and
