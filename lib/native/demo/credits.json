@@ -342,5 +342,301 @@
   "author": "Caleb George",
   "source": "https://unsplash.com/photos/URmkfvtK3Qw",
   "license": "Unsplash License"
+ },
+ {
+  "name": "pharmacist-shelf",
+  "file": "pharmacist-shelf.jpg",
+  "alt": "Farmasøyt i hvit frakk henter en eske fra hyllen",
+  "author": "National Cancer Institute",
+  "source": "https://unsplash.com/photos/byGTytEGjBo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "pharmacist-advice",
+  "file": "pharmacist-advice.jpg",
+  "alt": "Farmasøyt viser en kunde et produkt",
+  "author": "National Cancer Institute",
+  "source": "https://unsplash.com/photos/NNpo-liY5aU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "skincare-stones",
+  "file": "skincare-stones.jpg",
+  "alt": "Hudpleieprodukter med elvesteiner og granbar",
+  "author": "Elsa Olofsson",
+  "source": "https://unsplash.com/photos/Pm0K9Y3EPUc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "skincare-leaves",
+  "file": "skincare-leaves.jpg",
+  "alt": "Hudpleieprodukter med grønne blader",
+  "author": "Ibnu Ihza",
+  "source": "https://unsplash.com/photos/g6q3lFAe3kA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "serum-face",
+  "file": "serum-face.jpg",
+  "alt": "Kvinne påfører serum på kinnet",
+  "author": "Laura Jaeger",
+  "source": "https://unsplash.com/photos/7LAbLSKbkaQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "walk-forest",
+  "file": "walk-forest.jpg",
+  "alt": "Person går på en skogsvei i morgensol",
+  "author": "Emma Simpson",
+  "source": "https://unsplash.com/photos/mNGaaLeWEp0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "run-sunset",
+  "file": "run-sunset.jpg",
+  "alt": "Kvinne løper over en eng i solnedgang",
+  "author": "Joao Ferreira",
+  "source": "https://unsplash.com/photos/pvk6sp8fbdI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "beekeeper-frame",
+  "file": "beekeeper-frame.jpg",
+  "alt": "Birøkter i gul drakt holder en vokstavle",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/zbmd7sUmU9k",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "beekeeper-hives",
+  "file": "beekeeper-hives.jpg",
+  "alt": "Birøkter ved bikubene",
+  "author": "Annie Spratt",
+  "source": "https://unsplash.com/photos/8_WZU5xKFKk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bees-comb",
+  "file": "bees-comb.jpg",
+  "alt": "Bier på en vokstavle",
+  "author": "Simon Kadula",
+  "source": "https://unsplash.com/photos/DIwC450lRGI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bees-meadow",
+  "file": "bees-meadow.jpg",
+  "alt": "Bier flyr ved en bikube i gresset",
+  "author": "Damien Tupinier",
+  "source": "https://unsplash.com/photos/Q5rMCWwspxc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honey-dipper",
+  "file": "honey-dipper.jpg",
+  "alt": "Honning drypper fra en honningskje ned i et glass",
+  "author": "Benyamin Bohlouli",
+  "source": "https://unsplash.com/photos/Rcj302Npzis",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honey-jar",
+  "file": "honey-jar.jpg",
+  "alt": "Honningglass på et bord",
+  "author": "Jonathan Pielmayer",
+  "source": "https://unsplash.com/photos/0em3k8ebFCs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honeycomb",
+  "file": "honeycomb.jpg",
+  "alt": "Nærbilde av vokstavle fylt med honning",
+  "author": "Cristina Marin",
+  "source": "https://unsplash.com/photos/ysoJX9zBbPM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honeycomb-plate",
+  "file": "honeycomb-plate.jpg",
+  "alt": "Vokstavle med honning på et fat",
+  "author": "Anita Austvika",
+  "source": "https://unsplash.com/photos/oTqQqfOccMs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "meadow",
+  "file": "meadow.jpg",
+  "alt": "Blomstereng full av villblomster",
+  "author": "Anna Khromova",
+  "source": "https://unsplash.com/photos/CBA3Zui6ETI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "meadow-sunset",
+  "file": "meadow-sunset.jpg",
+  "alt": "Blomstereng under kveldshimmel",
+  "author": "Joel Holland",
+  "source": "https://unsplash.com/photos/TRhGEGdw-YY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "couple-kitchen",
+  "file": "couple-kitchen.jpg",
+  "alt": "Par drikker kaffe i et lyst kjøkken",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/m2S72ik44kc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "couple-news",
+  "file": "couple-news.jpg",
+  "alt": "Par ser begeistret på et dokument",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/MvxFhD6L-qo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "house-red",
+  "file": "house-red.jpg",
+  "alt": "Rødt trehus med hvite vinduer",
+  "author": "Tomas Galbavy",
+  "source": "https://unsplash.com/photos/z22CHUhAMO8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "houses-mountains",
+  "file": "houses-mountains.jpg",
+  "alt": "To sorte hus foran snødekte fjell",
+  "author": "Fotoflo",
+  "source": "https://unsplash.com/photos/641Y17bIMgk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "house-snow",
+  "file": "house-snow.jpg",
+  "alt": "Gult trehus i snø",
+  "author": "Hugo Alexandre Cruz",
+  "source": "https://unsplash.com/photos/mgS6Qg1CHck",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "solar-house",
+  "file": "solar-house.jpg",
+  "alt": "Hus med solcellepanel på taket",
+  "author": "Watt A Lot",
+  "source": "https://unsplash.com/photos/Ja8t8nJN2I4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "solar-install",
+  "file": "solar-install.jpg",
+  "alt": "Montør legger solcellepanel på et tak",
+  "author": "Bill Mead",
+  "source": "https://unsplash.com/photos/wmaP3Tl80ww",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "wind-sea",
+  "file": "wind-sea.jpg",
+  "alt": "Vindturbiner til havs",
+  "author": "Nicholas Doherty",
+  "source": "https://unsplash.com/photos/pONBhDyOFoM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "wind-fog",
+  "file": "wind-fog.jpg",
+  "alt": "Vindturbin i morgentåke",
+  "author": "Sander Weeteling",
+  "source": "https://unsplash.com/photos/iGDg_f_mlWo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cooking-family",
+  "file": "cooking-family.jpg",
+  "alt": "Bestefar og barnebarn lager mat sammen",
+  "author": "Land O Lakes Inc",
+  "source": "https://unsplash.com/photos/pazs-Hi5mf8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "baking",
+  "file": "baking.jpg",
+  "alt": "Bestemor og barnebarn baker sammen",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/0nvqzhZjWzw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "produce-shelf",
+  "file": "produce-shelf.jpg",
+  "alt": "Hyller med frisk frukt i butikken",
+  "author": "Gemma C",
+  "source": "https://unsplash.com/photos/stpjHJGqZyw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "shopper",
+  "file": "shopper.jpg",
+  "alt": "Kvinne velger ananas i fruktdisken",
+  "author": "Anya Richter",
+  "source": "https://unsplash.com/photos/dT3KPJ2bg7M",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "kitchen-modern",
+  "file": "kitchen-modern.jpg",
+  "alt": "Moderne kjøkken med spisebord",
+  "author": "Poojan Thanekar",
+  "source": "https://unsplash.com/photos/dGdrZCjQhTs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "kitchen-bright",
+  "file": "kitchen-bright.jpg",
+  "alt": "Lyst kjøkken med spisebord og taklampe",
+  "author": "Vlad Khmara",
+  "source": "https://unsplash.com/photos/5ROy4A69cmM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "team-laugh",
+  "file": "team-laugh.jpg",
+  "alt": "Tre kolleger ler sammen rundt et bord",
+  "author": "Brooke Cagle",
+  "source": "https://unsplash.com/photos/g1Kr4Ozfoac",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "team-whiteboard",
+  "file": "team-whiteboard.jpg",
+  "alt": "Kolleger i møte ved en tavle",
+  "author": "Austin Distel",
+  "source": "https://unsplash.com/photos/wD1LRb9OeEo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "team-laptop",
+  "file": "team-laptop.jpg",
+  "alt": "Fire kolleger smiler rundt en laptop",
+  "author": "Jud Mackrill",
+  "source": "https://unsplash.com/photos/Of_m3hMsoAA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "gym-trainer",
+  "file": "gym-trainer.jpg",
+  "alt": "Kvinne løfter vekter med en trener",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/rD0poLlu57M",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "gym-pair",
+  "file": "gym-pair.jpg",
+  "alt": "Mann og kvinne trener på et treningssenter",
+  "author": "Sergio Kian",
+  "source": "https://unsplash.com/photos/G6svDyPVRrc",
+  "license": "Unsplash License"
  }
 ]

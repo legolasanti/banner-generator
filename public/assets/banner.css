@@ -276,6 +276,20 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   display: -webkit-box;
   -webkit-box-orient: vertical;
   word-break: break-word;
+  text-decoration: underline transparent;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.1em;
+}
+
+/* Hover: the headline underlines itself, the way a front-page article title
+   does on abcnyheter.no. In the HTML5 creative the whole ad is the link, so
+   anywhere on the banner counts; keyboard focus gets the same cue. The offset
+   is kept small so the underline of the last clamped line stays inside the
+   headline box (overflow:hidden would otherwise slice it off). PNG/JPEG
+   exports are screenshots with no pointer, so they never carry it. */
+.bn:hover .bn__headline,
+.ad-exit:focus-visible .bn__headline {
+  text-decoration-color: currentColor;
 }
 
 /* Desktop, Mobile & Nyhetsgrid: headline only, top-aligned, left aligned */
