@@ -11,7 +11,21 @@
 
    Only what changed is re-rendered: a field edit replaces one <section>, a
    reorder rebuilds <main>, a theme change swaps the theme <style>. The text
-   being typed in place is never re-rendered under the caret.
+   being typed in place is never re-rendered under the caret. Before a
+   section is replaced, the runtime lets go of it (scroll handlers, resize
+   listeners, timers), so a long editing session does not pile them up.
+
+   Keys pressed with focus inside the frame go to the editor's shortcuts
+   (opts.onKey), except while typing in place.
+
+   "Redusert bevegelse" shows the page as a reader with reduced motion
+   switched on sees it: the stylesheet's reduced-motion rules apply and the
+   runtime behaves as if the setting were on.
+
+   The frame is sandboxed with scripts and same-origin together (the editor
+   reaches into it), which by itself isolates nothing. What keeps it safe is
+   what goes in: the page's own renderer output (sanitised text, scoped CSS),
+   np.js, allow-listed embeds — and never the tracking snippets.
    ========================================================================= */
 (function () {
   "use strict";
@@ -30,7 +44,27 @@
     return ICON[name];
   }
 
-  function create(host) {
+  // The reduced-motion stylesheet: np.css with its reduced-motion rules always
+  // on and its "no-preference" rules always off. Fetched once.
+  var reducedCss = null;
+  function reducedMotionCss() {
+    if (!reducedCss) {
+      reducedCss = fetch("/native/runtime/np.css").then(function (r) {
+        if (!r.ok) throw new Error("np.css " + r.status);
+        return r.text();
+      }).then(function (css) {
+        return css
+          .replace(/@media\s*\(prefers-reduced-motion:\s*reduce\)/g, "@media all")
+          .replace(/@media\s*\(prefers-reduced-motion:\s*no-preference\)/g, "@media not all");
+      });
+      reducedCss.catch(function () { reducedCss = null; });
+    }
+    return reducedCss;
+  }
+
+  function create(host, opts) {
+    var o = opts || {};
+    var reduced = null; // the reduced-motion CSS text while the toggle is on
     var stage = h("div.nx-stage");
     var scaler = h("div.nx-scaler");
     var frame = h("iframe.nx-frame", { title: "Forhåndsvisning av siden", sandbox: "allow-same-origin allow-scripts" });
@@ -64,7 +98,8 @@
         runtimeSrc: "/native/runtime/np.js",
         fontLinks: fontLinks(s.project),
         fontCss: customFonts(s.project),
-        extraHead: '<script>window.NP_EDITOR=true;document.documentElement.classList.add("np-editor")</script><link rel="stylesheet" href="/native/app/frame.css">',
+        cssText: reduced || "",
+        extraHead: '<script>window.NP_EDITOR=true;' + (reduced ? "window.NP_REDUCED_MOTION=true;" : "") + 'document.documentElement.classList.add("np-editor")</script><link rel="stylesheet" href="/native/app/frame.css">',
       };
     }
 
@@ -138,6 +173,7 @@
         if (after && after.id === "np-after-hero") after.remove();
         nodes.forEach(function (n) { el.parentNode.insertBefore(n, el); });
         el.remove();
+        if (win.NPRuntime && win.NPRuntime.dispose) win.NPRuntime.dispose();
         rendered[id] = page.sections[idx];
         var fresh = sectionEl(id);
         if (fresh && win.NPRuntime) win.NPRuntime.bind(fresh);
@@ -151,10 +187,10 @@
       var main = docu.getElementById("np-main");
       if (!main) return full();
       editing = null;
-      if (win.NPRuntime) win.NPRuntime.resetScrollers();
       main.innerHTML = c.page.sections.length
         ? R.renderMain(c)
         : '<div class="nx-frame-empty">Siden er tom. Legg til en seksjon fra panelet til venstre – eller bruk AI.</div>';
+      if (win.NPRuntime && win.NPRuntime.dispose) win.NPRuntime.dispose();
       rendered = {};
       c.page.sections.forEach(function (s) { rendered[s.id] = s; });
       if (win.NPRuntime) win.NPRuntime.bind(main);
@@ -199,10 +235,12 @@
     function decorateAll() {
       if (!docu) return;
       var sel = st().selected;
+      var group = st().picked.length > 1 ? st().picked : [];
       Array.prototype.forEach.call(docu.querySelectorAll(".nx-ftool, .nx-addbtn, .nx-hidden-label"), function (n) { n.remove(); });
       Array.prototype.forEach.call(docu.querySelectorAll(".np-sec"), function (el) {
         var id = el.getAttribute("data-np-section");
         el.classList.toggle("nx-sel", id === sel);
+        el.classList.toggle("nx-picked", group.indexOf(id) !== -1);
         var cls = el.className;
         if (/np-edh-/.test(cls)) {
           var label = docu.createElement("span");
@@ -376,13 +414,11 @@
         e.preventDefault();
         startEdit(info, def);
       });
+      // With focus in the page the editor's shortcuts still work (Delete,
+      // Ctrl+S without the browser's save dialog, 1/2/3 …) — not while typing.
       docu.addEventListener("keydown", function (e) {
         if (editing) return;
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
-          e.preventDefault();
-          if (e.shiftKey) NP.store.redo();
-          else NP.store.undo();
-        }
+        if (o.onKey) o.onKey(e, win);
       });
       docu.addEventListener("submit", function (e) { e.preventDefault(); });
     }
@@ -482,9 +518,23 @@
     fit();
     full();
 
+    function setReducedMotion(on) {
+      if (!on) {
+        reduced = null;
+        return full();
+      }
+      reducedMotionCss().then(function (css) {
+        reduced = css;
+        full();
+      }, function () {
+        ui.toast("Kunne ikke hente stilarket for redusert bevegelse", "err");
+      });
+    }
+
     return {
       refresh: full,
       fit: fit,
+      setReducedMotion: setReducedMotion,
       scrollTo: function (id) {
         var el = sectionEl(id);
         if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });

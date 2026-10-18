@@ -17,6 +17,7 @@ html.np-editor .np-sec::after {
 }
 html.np-editor .np-sec.nx-hover::after { box-shadow: inset 0 0 0 2px rgba(34, 133, 42, 0.45); }
 html.np-editor .np-sec.nx-sel::after { box-shadow: inset 0 0 0 3px #22852a; }
+html.np-editor .np-sec.nx-picked::after { box-shadow: inset 0 0 0 3px #22852a; background: rgba(34, 133, 42, 0.06); }
 html.np-editor [data-np-field] { cursor: text; border-radius: 3px; }
 html.np-editor .nx-sel [data-np-field]:hover { outline: 1px dashed rgba(34, 133, 42, 0.7); outline-offset: 3px; }
 html.np-editor img[data-np-field] { cursor: pointer; }

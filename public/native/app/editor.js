@@ -8,10 +8,12 @@
      middle    the live page (canvas.js)
      right     the selected section's properties (props.js)
 
-   Keyboard: Ctrl+Z / Ctrl+Shift+Z undo/redo, Ctrl+S save now,
-   Delete removes the selected section, Escape deselects, 1/2/3 switch device,
-   Ctrl+C / Ctrl+V copy and paste a section (with Alt: only its style),
-   Ctrl+D duplicates, Alt+↑/↓ moves the selected section.
+   Keyboard: see shortcuts.js ("?" lists them). Keys pressed inside the
+   preview frame reach the same handler.
+
+   When a colleague saved first (409), a banner stays over the page until
+   the user reloads or keeps their version as a copy: nothing more is saved
+   in the meantime, and leaving the page warns.
    ========================================================================= */
 (function () {
   "use strict";
@@ -75,6 +77,16 @@
       { iconOnly: true, label: "Skjermstørrelse" }
     );
     var status = h("span.nx-status");
+    var motion = h("button.nx-btn.nx-btn--ghost.nx-btn--sm.nx-motion", {
+      type: "button",
+      title: "Vis siden slik den ser ut med «redusert bevegelse» slått på",
+      "aria-pressed": "false",
+      on: { click: function () {
+        var on = motion.getAttribute("aria-pressed") !== "true";
+        motion.setAttribute("aria-pressed", String(on));
+        canvas.setReducedMotion(on);
+      } },
+    }, ui.icon("pause", 15), h("span", null, "Redusert bevegelse"));
 
     topbar.appendChild(
       h(
@@ -82,7 +94,7 @@
         null,
         h("a.nx-btn.nx-btn--ghost.nx-btn--sm", { href: "#/", title: "Alle prosjekter" }, ui.icon("arrow-left", 16)),
         h("div.nx-edbar__name", null, name, h("div.nx-edbar__meta", null, status, saveState)),
-        h("div.nx-edbar__mid", null, undo, redo, h("span.nx-sep"), pageSel, device),
+        h("div.nx-edbar__mid", null, undo, redo, h("span.nx-sep"), pageSel, device, motion),
         h(
           "div.nx-edbar__right",
           null,
@@ -91,6 +103,7 @@
             if (NP.store.page().sections.length) openPanel("assistant");
             else NP.ai.open();
           } }),
+          ui.button("", { icon: "keyboard", kind: "ghost", title: "Hurtigtaster (?)", onClick: function () { NP.shortcuts.open(); } }),
           ui.button("Forhåndsvis", { icon: "eye", kind: "ghost", title: "Åpne siden i en ny fane", onClick: preview }),
           ui.button("Del", { icon: "send", kind: "ghost", title: "Send til gjennomgang", onClick: function () { openPanel("review"); } }),
           ui.button("Eksporter", { icon: "download", kind: "primary", onClick: function () { NP.publish.dialog(); } })
@@ -98,9 +111,22 @@
       )
     );
 
+    // The tab is opened right away, inside the click: a window opened after
+    // the save (asynchronously) is blocked as a popup by Safari and Firefox.
     function preview() {
+      var url = NP.api.previewUrl(NP.store.get().project.id, NP.store.page().slug);
+      var win = window.open("", "_blank");
+      if (win) {
+        win.opener = null;
+        win.document.title = "Forhåndsvisning";
+        win.document.body.textContent = "Lagrer og åpner forhåndsvisningen …";
+      }
       NP.store.save().then(function () {
-        window.open(NP.api.previewUrl(NP.store.get().project.id, NP.store.page().slug), "_blank", "noopener");
+        if (win) win.location.replace(url);
+        else window.open(url, "_blank", "noopener");
+      }, function (err) {
+        if (win) win.close();
+        ui.toast(err.message, "err");
       });
     }
 
@@ -112,6 +138,15 @@
     panelBox.appendChild(panelHead);
     panelBox.appendChild(panelBody);
     var center = h("div.nx-center");
+    var conflictBar = h("div.nx-conflict", { role: "alert", hidden: true },
+      ui.icon("triangle-alert", 18),
+      h("div.nx-conflict__text", null,
+        h("strong", null, "En kollega har lagret en nyere versjon."),
+        h("span", null, " Endringene dine blir ikke lagret herfra. Last inn på nytt for å se den nyeste – eller ta vare på din versjon som et eget prosjekt.")),
+      h("div.nx-conflict__acts", null,
+        ui.button("Lagre min versjon som kopi", { small: true, onClick: saveCopy }),
+        ui.button("Last inn på nytt", { small: true, kind: "primary", onClick: reload })));
+    center.appendChild(conflictBar);
     var right = h("aside.nx-right", { "aria-label": "Egenskaper" });
     host.appendChild(h("div.nx-editor", null, rail, panelBox, center, right));
 
@@ -147,7 +182,7 @@
       b.textContent = String(n);
     }
 
-    var canvas = NP.canvas.create(center);
+    var canvas = NP.canvas.create(center, { onKey: function (e, win) { NP.shortcuts.handle(e, win); } });
     var props = NP.propsPanel.create(right);
     NP.props = props;
 
@@ -160,6 +195,7 @@
       redo.disabled = !NP.store.canRedo();
       status.textContent = D.STATUS_LABELS[state.project.status] || "";
       status.className = "nx-status is-" + state.project.status;
+      conflictBar.hidden = state.save !== "conflict";
       if (document.activeElement !== name) name.value = state.project.name;
       ui.clear(pageSel);
       state.project.pages.forEach(function (pg) {
@@ -178,10 +214,11 @@
         var m = ui.modal({
           title: "Prosjektet er endret av noen andre",
           sticky: true,
-          body: h("p", null, "En kollega har lagret prosjektet etter at du åpnet det. Endringene dine er ikke lagret, for å unngå at noens arbeid blir overskrevet. Last inn på nytt for å se den nyeste versjonen (kopier gjerne teksten du skrev først)."),
+          body: h("p", null, "En kollega har lagret prosjektet etter at du åpnet det. Endringene dine er ikke lagret, for å unngå at noens arbeid blir overskrevet. Last inn på nytt for å se den nyeste versjonen, eller lagre din versjon som et eget prosjekt så ingenting går tapt."),
           actions: [
             ui.button("Bli her", { kind: "ghost", onClick: function () { m.close(); } }),
-            ui.button("Last inn på nytt", { kind: "primary", onClick: function () { m.close(); location.reload(); } }),
+            ui.button("Lagre min versjon som kopi", { onClick: function () { m.close(); saveCopy(); } }),
+            ui.button("Last inn på nytt", { kind: "primary", onClick: function () { m.close(); reload(); } }),
           ],
         });
       }
@@ -199,60 +236,7 @@
 
     // ---- keyboard ------------------------------------------------------------------------
     function onKey(e) {
-      if (document.querySelector(".nx-modal-bg")) return;
-      var typing = window.WPE.util.isTyping(e.target);
-      var mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        NP.store.save().then(function () { ui.toast("Lagret", "ok"); });
-        return;
-      }
-      if (typing) return;
-      if (mod && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        if (e.shiftKey) NP.store.redo();
-        else NP.store.undo();
-        return;
-      }
-      if (mod && e.key.toLowerCase() === "y") {
-        e.preventDefault();
-        NP.store.redo();
-        return;
-      }
-      var sel = NP.store.get().selected;
-      if (mod && e.key.toLowerCase() === "c" && sel && !hasTextSelection()) {
-        e.preventDefault();
-        if (e.altKey) NP.sections.copyStyle(sel);
-        else NP.sections.copy(sel);
-        return;
-      }
-      if (mod && e.key.toLowerCase() === "v") {
-        e.preventDefault();
-        if (e.altKey && sel) NP.sections.pasteStyle(sel);
-        else NP.sections.paste(sel);
-        return;
-      }
-      if (mod && e.key.toLowerCase() === "d" && sel) {
-        e.preventDefault();
-        NP.store.duplicateSection(sel);
-        return;
-      }
-      if (sel && e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-        e.preventDefault();
-        var secs = NP.store.page().sections;
-        var at = secs.findIndex(function (x) { return x.id === sel; });
-        var to = at + (e.key === "ArrowUp" ? -1 : 1);
-        if (to >= 0 && to < secs.length) NP.store.moveSection(sel, to);
-        return;
-      }
-      if ((e.key === "Delete" || e.key === "Backspace") && sel) {
-        e.preventDefault();
-        NP.sections.remove(sel);
-      }
-      if (e.key === "Escape" && sel) NP.store.select(null);
-      if (e.key === "1") NP.store.setDevice("desktop");
-      if (e.key === "2") NP.store.setDevice("tablet");
-      if (e.key === "3") NP.store.setDevice("mobile");
+      NP.shortcuts.handle(e, window);
     }
     document.addEventListener("keydown", onKey);
 
@@ -270,9 +254,19 @@
     NP.editor.canvas = canvas;
   }
 
-  function hasTextSelection() {
-    var sel = window.getSelection && window.getSelection();
-    return !!(sel && String(sel).length);
+  /** After a conflict: keep this editor's state as a project of its own, and open it. */
+  function saveCopy() {
+    NP.store.saveAsCopy().then(function (p) {
+      ui.toast("Din versjon er lagret som «" + p.name + "»", "ok");
+      location.hash = "#/p/" + p.id;
+    }, function (err) {
+      ui.toast(err.message, "err");
+    });
+  }
+
+  /** Reload without the "leave page?" question: the user chose to drop the unsaved edits. */
+  function reload() {
+    NP.store.close().then(function () { location.reload(); });
   }
 
   function close() {

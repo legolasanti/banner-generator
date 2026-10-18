@@ -831,39 +831,47 @@
           r.warnings.concat(r.problems).forEach(function (w) { warnings.push({ section: sec.id, text: w }); });
         });
         if (!sections.length) return;
-        var pageId = NP.store.get().pageId;
+        var fresh = null;
         if (mode === "variant") {
           var probe = D.normalizeProject(Object.assign({}, project(), { pages: project().pages.concat([{ label: "AI-versjon", sections: sections }]) }));
-          var fresh = probe.pages[probe.pages.length - 1];
-          NP.store.update(function (p) { return Object.assign({}, p, { pages: p.pages.concat([fresh]) }); });
-          pageId = fresh.id;
-          NP.store.setPage(pageId);
-        } else {
-          NP.store.updatePage(function (pg) {
-            return Object.assign({}, pg, { sections: mode === "append" ? pg.sections.concat(sections) : sections });
-          });
+          fresh = probe.pages[probe.pages.length - 1];
         }
-        if (tplForLook && useLook.checked) {
-          NP.store.update(function (p) {
-            var probe = D.normalizeProject({ assets: p.assets, theme: tplForLook.theme ? T.themeOf(tplForLook) : p.theme, extras: Object.assign({}, p.extras, tplForLook.extras || {}) });
-            return Object.assign({}, p, { theme: probe.theme, extras: probe.extras });
-          });
-        }
+        var pageId = fresh ? fresh.id : NP.store.get().pageId;
+        var look = tplForLook && useLook.checked ? tplForLook : null;
         // The plan's title also names an empty project.
-        if (/^(Ny Native Premium|Uten navn)$/.test(project().name)) {
-          NP.store.update(function (p) { return Object.assign({}, p, { name: st.title.slice(0, 120) }); });
-        }
+        var rename = /^(Ny Native Premium|Uten navn)$/.test(project().name);
+        // Sections, look and name in ONE step: Ctrl+Z takes the whole result back.
+        NP.store.update(function (p) {
+          var pages = fresh
+            ? p.pages.concat([fresh])
+            : p.pages.map(function (pg) {
+                return pg.id === pageId ? Object.assign({}, pg, { sections: mode === "append" ? pg.sections.concat(sections) : sections }) : pg;
+              });
+          var lookPatch = {};
+          if (look) {
+            var lp = D.normalizeProject({ assets: p.assets, theme: look.theme ? T.themeOf(look) : p.theme, extras: Object.assign({}, p.extras, look.extras || {}) });
+            lookPatch = { theme: lp.theme, extras: lp.extras };
+          }
+          return Object.assign({}, p, { pages: pages }, lookPatch, rename ? { name: st.title.slice(0, 120) } : {});
+        });
+        if (fresh) NP.store.setPage(pageId);
         persist();
         NP.store.save().then(function () {
-          if (!asComments.checked || !warnings.length) return;
+          if (!asComments.checked || !warnings.length) return { failed: 0, total: 0 };
           var round = project().review ? project().review.round : 0;
-          return Promise.all(warnings.slice(0, 40).map(function (w) {
+          // One comment that fails must not hide the others (or the page).
+          return Promise.allSettled(warnings.slice(0, 40).map(function (w) {
             return NP.api.addComment(project().id, { text: w.text, author: "AI-assistent", round: round, anchor: { section: w.section, page: pageId } });
-          }));
-        }).then(function () {
-          ui.toast("Siden er skrevet (" + ui.money(st.cost) + "). Les gjennom – AI-en kan ta feil. Be AI-assistenten om endringer.", "ok");
-          NP.editor.openPanel(warnings.length ? "review" : "assistant");
+          })).then(function (res) {
+            return { failed: res.filter(function (x) { return x.status === "rejected"; }).length, total: res.length };
+          });
+        }).then(function (r) {
+          if (r.failed) ui.toast("Siden er skrevet, men " + r.failed + " av " + r.total + " AI-merknader kunne ikke lagres som kommentarer.", "err");
+          else ui.toast("Siden er skrevet (" + ui.money(st.cost) + "). Les gjennom – AI-en kan ta feil. Be AI-assistenten om endringer.", "ok");
+          NP.editor.openPanel(warnings.length && r.failed < r.total ? "review" : "assistant");
           m.close();
+        }, function (err) {
+          ui.toast(err.message + " Teksten står på siden, men er ikke lagret ennå.", "err");
         });
       }
     }

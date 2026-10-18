@@ -203,3 +203,46 @@ test("without JavaScript the content is all there", async (t) => {
   assert.equal(await page.$eval(".np-tabs__list", (n) => getComputedStyle(n).display), "none");
   await page.close();
 });
+
+test("re-rendering sections in the editor does not pile up handlers, listeners or timers", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const page = await open(
+    pageHtml([
+      { type: "hScroll" },
+      { type: "statement", props: { text: "En to tre fire", fx: "scroll" } },
+      { type: "timeline" },
+      { type: "countdown", props: { date: "2099-01-01 00:00" } },
+    ])
+  );
+  const result = await page.evaluate(async () => {
+    const R = window.NPRuntime;
+    // What the editor does on every field edit: swap the section, bind, dispose.
+    const rerender = () => {
+      document.querySelectorAll(".np-sec").forEach((sec) => {
+        const fresh = sec.cloneNode(true);
+        sec.replaceWith(fresh);
+        R.bind(fresh);
+      });
+      R.dispose();
+    };
+    rerender();
+    const before = R.stats();
+    let resizeAdded = 0;
+    let resizeRemoved = 0;
+    const add = window.addEventListener.bind(window);
+    const remove = window.removeEventListener.bind(window);
+    window.addEventListener = (type, fn, o) => { if (type === "resize") resizeAdded++; return add(type, fn, o); };
+    window.removeEventListener = (type, fn, o) => { if (type === "resize") resizeRemoved++; return remove(type, fn, o); };
+    for (let i = 0; i < 25; i++) rerender();
+    const cd = document.querySelector("[data-np-countdown]");
+    const s0 = cd.querySelector('[data-u="s"]').textContent;
+    await new Promise((r) => setTimeout(r, 1100));
+    return { before, after: R.stats(), resizeAdded, resizeRemoved, ticked: cd.querySelector('[data-u="s"]').textContent !== s0 };
+  });
+  assert.deepEqual(result.after, result.before, "25 more edits, not one handler more");
+  assert.ok(result.before.scrollers >= 3, "the scroll effects are bound");
+  assert.equal(result.resizeAdded, result.resizeRemoved, "every resize listener of a dropped section is removed");
+  assert.ok(result.ticked, "the live countdown still ticks");
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});

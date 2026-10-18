@@ -9,6 +9,10 @@
             limit, a low-resolution hero, heavy videos, poor contrast)
      info   good to know (no final address yet)
    Each item links to its section.
+
+   Besides the fields themselves it reads the page as it renders (headings
+   in order, link texts, #links and the ids they point at), the share card
+   (title, description, picture) and an estimate of what a reader downloads.
    ========================================================================= */
 (function () {
   "use strict";
@@ -33,6 +37,21 @@
 
   var DEMO_NAME = /^Demo – /;
 
+  // Share cards: Facebook and LinkedIn cut the title at about 70 characters
+  // and the description at about 160 (fewer on mobile).
+  var SHARE_TITLE_MAX = 70;
+  var SHARE_DESC_MIN = 50;
+  var SHARE_DESC_MAX = 160;
+  // Link texts that say nothing when a screen reader lists the page's links.
+  var VAGUE_LINKS = ["les mer", "les mer her", "mer", "se mer", "klikk her", "trykk her", "her", "lenke", "link", "mer info", "mer informasjon", "gå videre"];
+  // What a reader downloads, roughly: a WebP variant at ~1440 px holds about
+  // 0.12 bytes per pixel. Thresholds for the whole page and the first screen.
+  var WEBP_BYTES_PER_PX = 0.12;
+  var DESKTOP_IMAGE_PX = 1440;
+  var MB = 1048576;
+  var PAGE_IMAGES_WARN = 8 * MB;
+  var FIRST_SCREEN_WARN = 3 * MB;
+
   function sectionText(s) {
     var parts = [];
     S.fieldsOf(s.type).forEach(function (f) {
@@ -44,6 +63,178 @@
       });
     });
     return parts.join("\n");
+  }
+
+  // ---- the share card ----------------------------------------------------------
+  function firstHero(project) {
+    var s = project.pages[0] && project.pages[0].sections[0];
+    return s && s.type === "hero" ? s : null;
+  }
+
+  /** What Facebook / LinkedIn show when the page is shared (as render.js builds the tags). */
+  function shareInfo(project, settings) {
+    var st = settings || {};
+    var hero = firstHero(project);
+    var label = (st.disclosureLabel || "Annonsørinnhold fra {annonsør}").replace("{annonsør}", project.advertiser.name || "annonsør");
+    var title = project.meta.title || (hero && hero.props.title) || project.name;
+    var image = project.meta.ogImage || (hero && !hero.props.video && hero.props.image) || "";
+    return {
+      title: title,
+      ownTitle: !!project.meta.title,
+      description: project.meta.description,
+      fallbackDescription: label,
+      image: image && project.assets[image] ? image : "",
+      host: hostOf(project.meta.publicUrl) || st.siteName || "",
+    };
+  }
+
+  function hostOf(url) {
+    var m = /^https?:\/\/([^/]+)/.exec(url || "");
+    return m ? m[1].replace(/^www\./, "") : "";
+  }
+
+  function checkShare(project, settings, add) {
+    var info = shareInfo(project, settings);
+    var where = " (Prosjekt → Deling og søk)";
+    if (!info.ownTitle) add("info", "Ingen egen delingstittel – sidens H1 brukes." + where);
+    if (info.title.length > SHARE_TITLE_MAX) add("warn", "Delingstittelen er " + info.title.length + " tegn. Facebook og LinkedIn kutter etter omtrent " + SHARE_TITLE_MAX + "." + where);
+    if (!info.description) add("warn", "Beskrivelsen for deling mangler – da står det bare «" + info.fallbackDescription + "» under tittelen." + where);
+    else if (info.description.length > SHARE_DESC_MAX) add("warn", "Delingsbeskrivelsen er " + info.description.length + " tegn og blir kuttet etter omtrent " + SHARE_DESC_MAX + "." + where);
+    else if (info.description.length < SHARE_DESC_MIN) add("info", "Delingsbeskrivelsen er kort (" + info.description.length + " tegn). Én til to setninger om hva leseren får, fungerer best." + where);
+    if (!info.image) add("warn", "Ingen delingsbilde: velg et bilde, eller gi heroen et bilde." + where);
+  }
+
+  // ---- the page as it renders ---------------------------------------------------------
+  function renderedSections(project, settings, page) {
+    var st = settings || {};
+    var ctx = {
+      mode: "preview",
+      project: project,
+      page: page,
+      settings: st,
+      assets: Object.assign({}, st.assets || {}, project.assets),
+      url: function () { return ""; },
+      pageHref: function () { return "#"; },
+    };
+    return page.sections.map(function (s, i) {
+      try {
+        return window.NativeRender.renderSection(ctx, s, i);
+      } catch (_) {
+        return "";
+      }
+    });
+  }
+
+  function plainHtml(html) {
+    return D.plainText(html).replace(/\s+/g, " ").trim();
+  }
+
+  /** Two sections with the same anchor, and #links that lead nowhere on their page. */
+  function checkAnchors(page, html, name, add) {
+    var seen = {};
+    page.sections.forEach(function (s, i) {
+      var a = s.style.anchor ? D.slugify(s.style.anchor, "") : "";
+      if (!a) return;
+      if (seen[a]) add("error", name(i) + ": ankeret «#" + a + "» brukes også av " + name(seen[a] - 1) + ". Lenker dit havner bare på den første. (Stil → Navigasjon)", page, s);
+      else seen[a] = i + 1;
+    });
+    var ids = { "np-top": true, "np-main": true };
+    html.forEach(function (part) {
+      part.replace(/\sid="([^"]+)"/g, function (_, id) { ids[id] = true; return ""; });
+    });
+    html.forEach(function (part, i) {
+      var dead = {};
+      part.replace(/href="#([^"]+)"/g, function (_, id) {
+        if (!ids[D.decodeEntities(id)]) dead[id] = true;
+        return "";
+      });
+      Object.keys(dead).forEach(function (id) {
+        add("error", name(i) + ": lenken «#" + id + "» peker ikke til noe på siden. Gi målseksjonen dette ankeret, eller rett lenken.", page, page.sections[i]);
+      });
+    });
+  }
+
+  /** Headings should step down one level at a time: H1 → H2 → H3. */
+  function checkHeadings(page, html, name, add) {
+    var last = 1;
+    html.forEach(function (part, i) {
+      var jumped = null;
+      part.replace(/<h([1-6])\b/g, function (_, n) {
+        var level = Number(n);
+        if (!jumped && level > last + 1) jumped = [last, level];
+        last = level;
+        return "";
+      });
+      if (jumped) add("warn", name(i) + ": overskriftene hopper fra H" + jumped[0] + " til H" + jumped[1] + ". Skjermlesere og søkemotorer leser nivåene som en innholdsfortegnelse – gi seksjonen en tittel, eller bruk et mellomnivå.", page, page.sections[i]);
+    });
+  }
+
+  /** The same vague text ("Les mer") on several links. */
+  function checkLinkText(page, html, add) {
+    var counts = {};
+    var first = {};
+    html.forEach(function (part, i) {
+      part.replace(/<a\b[^>]*>([\s\S]*?)<\/a>/g, function (_, inner) {
+        var text = plainHtml(inner).toLowerCase().replace(/[.!:→›»]+$/, "").trim();
+        if (VAGUE_LINKS.indexOf(text) === -1) return "";
+        counts[text] = (counts[text] || 0) + 1;
+        if (first[text] === undefined) first[text] = i;
+        return "";
+      });
+    });
+    Object.keys(counts).forEach(function (text) {
+      if (counts[text] < 2) return;
+      add("warn", "«" + text.charAt(0).toUpperCase() + text.slice(1) + "» står på " + counts[text] + " lenker. Lest opp uten sammenheng sier de ingenting – skriv hvor lenken fører, f.eks. «Se ladekartet».", page, page.sections[first[text]]);
+    });
+  }
+
+  // ---- page weight ---------------------------------------------------------------------
+  function imageBytes(a) {
+    if (!a) return 0;
+    if (!a.widths || !a.widths.length || !a.w) return a.bytes || 0; // served as it is
+    var w = Math.min(DESKTOP_IMAGE_PX, a.widths[a.widths.length - 1]);
+    var h = a.h ? (w * a.h) / a.w : w * 0.66;
+    return Math.min(a.bytes || Infinity, w * h * WEBP_BYTES_PER_PX);
+  }
+
+  function sectionBytes(project, s) {
+    var images = 0;
+    var video = 0;
+    D.usedAssets({ pages: [{ sections: [s] }], assets: project.assets, theme: {}, advertiser: {}, meta: {} }).forEach(function (id) {
+      var a = project.assets[id];
+      if (!a) return;
+      if (a.kind === "video") video += a.bytes || 0;
+      else if (a.kind !== "font") images += imageBytes(a);
+    });
+    return { images: images, video: video };
+  }
+
+  function mb(bytes) {
+    return (bytes / MB).toFixed(1).replace(".", ",") + " MB";
+  }
+
+  function checkWeight(project, add) {
+    project.pages.forEach(function (page) {
+      var images = 0;
+      var video = 0;
+      var seen = {};
+      page.sections.forEach(function (s) {
+        var b = sectionBytes(project, s);
+        images += b.images;
+        video += b.video;
+        seen[s.id] = b;
+      });
+      var multi = project.pages.length > 1 ? "«" + page.label + "»: " : "";
+      var say = function (text) { return multi ? multi + text : text.charAt(0).toUpperCase() + text.slice(1); };
+      var first = page.sections[0];
+      if (first && first.type === "hero") {
+        var hb = seen[first.id];
+        var top = hb.images + hb.video;
+        if (top > FIRST_SCREEN_WARN) add("warn", say("første skjerm (heroen) veier ca. " + mb(top) + ". Over " + mb(FIRST_SCREEN_WARN) + " åpner siden tregt på mobil – bruk et lettere bilde eller en kortere video."), page, first);
+      }
+      if (images > PAGE_IMAGES_WARN) add("warn", say("bildene veier til sammen ca. " + mb(images) + " på desktop. Vurder færre eller mindre bilder."), page);
+      add("info", say("sidevekt (anslag, desktop): ca. " + mb(images) + " bilder" + (video ? " og " + mb(video) + " video" : "") + ". Mobil laster mindre bildeversjoner."), page);
+    });
   }
 
   function run(project, settings) {
@@ -185,6 +376,17 @@
     });
     if (videoBytes > 80 * 1048576) add("warn", "Videoene er til sammen " + Math.round(videoBytes / 1048576) + " MB. Vurder å komprimere dem (f.eks. HandBrake, 1080p, 5–8 Mbit/s).");
     if (!project.meta.publicUrl) add("info", "Endelig adresse er ikke satt (Prosjekt → Deling). Eksporten får da ikke canonical og delingsbilde.");
+
+    checkShare(project, settings || {}, add);
+    project.pages.forEach(function (page) {
+      var multi = project.pages.length > 1;
+      var name = function (i) { return (multi ? page.label + " › " : "") + (i + 1) + ". " + S.BLOCKS[page.sections[i].type].label; };
+      var html = renderedSections(project, settings, page);
+      checkAnchors(page, html, name, add);
+      checkHeadings(page, html, name, add);
+      checkLinkText(page, html, add);
+    });
+    checkWeight(project, add);
     var order = { error: 0, warn: 1, info: 2 };
     return out.sort(function (a, b) { return order[a.level] - order[b.level]; });
   }
@@ -226,5 +428,5 @@
     return root;
   }
 
-  NP.preflight = { run: run, list: list, panel: panel, go: go };
+  NP.preflight = { run: run, list: list, panel: panel, go: go, shareInfo: shareInfo };
 })();

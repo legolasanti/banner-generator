@@ -1537,8 +1537,13 @@
     return head + "\n" + body + "\n";
   }
 
-  /** Every distinct character the page shows — for subsetting its fonts. */
-  function pageText(project) {
+  /**
+   * Every distinct character the page shows — for subsetting its fonts.
+   * Includes the fixed parts: the disclosure ("Annonsørinnhold fra Citroën"),
+   * the footer text and the credit line, which come from the settings.
+   */
+  function pageText(project, settings) {
+    var st = settings || {};
     var chars = {};
     function add(s) {
       String(s || "").split("").forEach(function (c) { chars[c] = true; });
@@ -1564,8 +1569,12 @@
     var x = project.extras || {};
     add(x.stickyLabel);
     add(x.feedbackQ);
-    S.STYLE_FIELDS.forEach(function () {});
     project.pages.forEach(function (pg) { pg.sections.forEach(function (s) { add(s.style.chapter); }); });
+    add(project.advertiser && project.advertiser.name);
+    add(st.disclosureLabel || "Annonsørinnhold fra {annonsør}");
+    add(st.footerText);
+    add(st.publisherName);
+    add(st.studioName);
     add("0123456789,.-–«»%: Vis alle fakta Se svaret Kilde Visste du? Spørsmål av min lesing dager timer minutter sekunder Takk Ja Nei Annonsørinnhold for Produsert av ✦•│—/↻");
     // CSS may change the case (uppercase headings and buttons), so the font
     // needs both forms of every letter.

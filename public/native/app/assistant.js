@@ -40,6 +40,12 @@
     return NP.store.get().project;
   }
 
+  /** Still in the project the request was made for? (The user may have left it meanwhile.) */
+  function stillIn(projectId) {
+    var s = NP.store.get();
+    return !!(s && s.project && s.project.id === projectId);
+  }
+
   function chat() {
     var ai = project().ai || {};
     return Array.isArray(ai.chat) ? ai.chat : [];
@@ -295,10 +301,10 @@
       draw();
       var before = snapshot();
       var key = stateKey();
+      // save() rejects when the page is not on the server (conflict, network):
+      // the AI would otherwise work on an older version.
       NP.store.save().then(function () {
-        var saveState = NP.store.get().save;
-        if (saveState === "conflict") throw new Error("Prosjektet er endret av noen andre. Last inn på nytt først.");
-        if (saveState === "error") throw new Error("Siden kunne ikke lagres, så AI-en ville jobbet på en eldre versjon. Sjekk nettet og prøv igjen.");
+        if (!stillIn(projectId)) throw new Error("Prosjektet er lukket.");
         return NP.api.ai("revise", {
           projectId: projectId,
           rev: NP.store.get().rev,
@@ -311,7 +317,7 @@
       }).then(function (r) {
         inflight = null;
         busy = false;
-        if (!NP.store.get().project || project().id !== projectId) return; // the user left the project
+        if (!stillIn(projectId)) return; // the user left the project
         var reply = { role: "assistant", text: r.reply || "", changes: r.changes || [], warnings: r.warnings || [], questions: r.questions || [], cost: r.cost, model: r.model, at: new Date().toISOString() };
         if ((r.sections || r.theme || r.extras) && stateKey() !== key) {
           reply.changes = [];
@@ -324,7 +330,7 @@
       }, function (err) {
         inflight = null;
         busy = false;
-        if (!NP.store.get().project || project().id !== projectId) return;
+        if (!stillIn(projectId)) return;
         saveChat(chat().concat([{ role: "assistant", text: "Det gikk ikke: " + err.message, at: new Date().toISOString() }]));
         draw();
       });

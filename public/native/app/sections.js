@@ -2,9 +2,11 @@
    app/sections.js — the section list (left panel) and "Legg til seksjon".
 
    The list is the page's table of contents: drag to reorder, click to jump,
-   eye to hide per device. Adding a section opens a catalogue grouped like
-   the schema (Topp, Tekst, Media, Handling, Effekter) plus the team's saved
-   sections from the library.
+   eye to hide per device. Shift-click picks a run of sections, Cmd/Ctrl-click
+   one more; a bar over the list then moves, duplicates, copies or deletes
+   the whole group (each as one undo step). Adding a section opens a
+   catalogue grouped like the schema (Topp, Tekst, Media, Handling, Effekter)
+   plus the team's saved sections from the library.
    ========================================================================= */
 (function () {
   "use strict";
@@ -28,25 +30,66 @@
     return ["desktop", "tablet", "mobile"].filter(function (d) { return s.hide[d]; });
   }
 
+  /** Shift-click: the run from the selected section; Cmd/Ctrl-click: toggle one. */
+  function clickPick(e, id) {
+    var state = NP.store.get();
+    if (e.shiftKey && state.selected) {
+      var secs = NP.store.page().sections;
+      var a = secs.findIndex(function (x) { return x.id === state.selected; });
+      var b = secs.findIndex(function (x) { return x.id === id; });
+      var from = Math.min(a, b);
+      var to = Math.max(a, b);
+      return NP.store.pick(secs.slice(from, to + 1).map(function (x) { return x.id; }).concat([state.selected]));
+    }
+    if (e.metaKey || e.ctrlKey) {
+      var cur = NP.store.picked();
+      var on = cur.indexOf(id) !== -1;
+      return NP.store.pick(on ? cur.filter(function (x) { return x !== id; }) : cur.concat([id]));
+    }
+    NP.store.select(id);
+  }
+
+  function groupBar(ids) {
+    var page = NP.store.page();
+    var first = page.sections.findIndex(function (s) { return s.id === ids[0]; });
+    var last = page.sections.findIndex(function (s) { return s.id === ids[ids.length - 1]; });
+    return h(
+      "div.nx-groupbar",
+      { role: "toolbar", "aria-label": ids.length + " seksjoner valgt" },
+      h("strong.nx-groupbar__n", null, ids.length + " valgt"),
+      ui.button("", { icon: "arrow-up", small: true, kind: "ghost", title: "Flytt opp (Alt+↑)", disabled: first === 0, onClick: function () { NP.store.moveSections(ids, -1); } }),
+      ui.button("", { icon: "arrow-down", small: true, kind: "ghost", title: "Flytt ned (Alt+↓)", disabled: last === page.sections.length - 1, onClick: function () { NP.store.moveSections(ids, 1); } }),
+      ui.button("", { icon: "copy-plus", small: true, kind: "ghost", title: "Dupliser (Ctrl+D)", onClick: function () { NP.store.duplicateSections(ids); } }),
+      ui.button("", { icon: "copy", small: true, kind: "ghost", title: "Kopier (Ctrl+C)", onClick: function () { copy(ids); } }),
+      ui.button("", { icon: "trash", small: true, kind: "ghost", title: "Slett (Delete)", onClick: function () { remove(ids); } }),
+      ui.button("", { icon: "x", small: true, kind: "ghost", title: "Fjern valget (Esc)", onClick: function () { NP.store.select(null); } })
+    );
+  }
+
   function panel() {
     var root = h("div.nx-seclist");
+    var bar = h("div.nx-groupbar-slot");
     var list = h("ol.nx-seclist__list", { "aria-label": "Seksjoner på siden" });
     var dragId = null;
 
     function draw() {
       var state = NP.store.get();
       var page = NP.store.page();
+      var ids = NP.store.picked();
+      var group = ids.length > 1;
+      ui.clear(bar);
+      if (group) bar.appendChild(groupBar(ids));
       ui.clear(list);
       list.appendChild(h("li.nx-seclist__fixed", { title: "Merkingen er fast og kan ikke fjernes" }, ui.icon("lock", 14), h("span", null, "Annonsørmerking")));
       page.sections.forEach(function (s, i) {
         var hidden = hiddenOn(s);
         var item = h(
-          "li.nx-seclist__item" + (state.selected === s.id ? ".is-sel" : ""),
+          "li.nx-seclist__item" + (state.selected === s.id ? ".is-sel" : "") + (group && ids.indexOf(s.id) !== -1 ? ".is-picked" : ""),
           { draggable: "true", dataset: { id: s.id } },
           h("span.nx-seclist__grip", { "aria-hidden": "true" }, ui.icon("grip-vertical", 14)),
           h(
             "button.nx-seclist__main",
-            { type: "button", on: { click: function () { NP.store.select(s.id); } } },
+            { type: "button", "aria-pressed": group ? String(ids.indexOf(s.id) !== -1) : null, on: { click: function (e) { clickPick(e, s.id); } } },
             h("span.nx-seclist__icon", null, ui.icon(S.BLOCKS[s.type].icon, 16)),
             h("span.nx-seclist__text", null, h("span.nx-seclist__type", null, (i + 1) + ". " + S.BLOCKS[s.type].label), h("span.nx-seclist__sum", null, summary(s) || "–"))
           ),
@@ -87,6 +130,7 @@
       list.appendChild(h("li.nx-seclist__fixed", null, ui.icon("lock", 14), h("span", null, "Bunntekst og deling")));
     }
 
+    root.appendChild(bar);
     root.appendChild(list);
     root.appendChild(
       h(
@@ -260,7 +304,13 @@
                 on: {
                   click: function () {
                     NP.store.addAssets(Object.keys(item.assets || {}).map(function (id) { return Object.assign({ id: id }, item.assets[id]); }));
-                    var secs = item.sections.map(D.cloneSection);
+                    // A saved set keeps its own anchors, unless the page already uses them.
+                    var taken = {};
+                    NP.store.page().sections.forEach(function (x) { if (x.style.anchor) taken[x.style.anchor] = true; });
+                    var secs = item.sections.map(function (sec) {
+                      var c = D.cloneSection(sec, { keepNav: true });
+                      return c.style.anchor && taken[c.style.anchor] ? D.cloneSection(sec) : c;
+                    });
                     secs.forEach(function (sec, k) { NP.store.addSection(sec, index + k); });
                     m.close();
                   },
@@ -310,29 +360,38 @@
     return NP["_clip_" + kind] || null;
   }
 
-  function copy(id) {
+  /** Copy one section or several (an array of ids, in page order). */
+  function copy(idOrIds) {
     var p = NP.store.get().project;
-    var found = D.findSection(p, id);
-    if (!found) return;
+    var ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+    var sections = ids.map(function (id) { var f = D.findSection(p, id); return f && f.section; }).filter(Boolean);
+    if (!sections.length) return;
     var assets = {};
-    D.usedAssets({ pages: [{ sections: [found.section] }], assets: p.assets, theme: {}, advertiser: {}, meta: {} }).forEach(function (a) {
+    D.usedAssets({ pages: [{ sections: sections }], assets: p.assets, theme: {}, advertiser: {}, meta: {} }).forEach(function (a) {
       if (p.assets[a]) assets[a] = p.assets[a];
     });
-    clipWrite("section", { section: found.section, assets: assets });
-    ui.toast("Seksjonen er kopiert – lim inn med Ctrl+V", "ok");
+    clipWrite("section", { section: sections[0], sections: sections, assets: assets });
+    ui.toast(sections.length > 1 ? sections.length + " seksjoner er kopiert – lim inn med Ctrl+V" : "Seksjonen er kopiert – lim inn med Ctrl+V", "ok");
   }
 
   function paste(afterId) {
     var clip = clipRead("section");
-    if (!clip || !clip.section) return ui.toast("Ingenting å lime inn", "err");
+    var list = clip && (clip.sections || (clip.section ? [clip.section] : []));
+    if (!list || !list.length) return ui.toast("Ingenting å lime inn", "err");
     NP.store.addAssets(Object.keys(clip.assets || {}).map(function (id) { return Object.assign({ id: id }, clip.assets[id]); }));
     var assets = NP.store.get().project.assets;
-    var sec = D.normalizeSection(D.cloneSection(clip.section), { assets: assets });
-    if (!sec) return;
+    var secs = list.map(function (sec) { return D.normalizeSection(D.cloneSection(sec), { assets: assets }); }).filter(Boolean);
+    if (!secs.length) return;
     var page = NP.store.page();
     var at = afterId ? page.sections.findIndex(function (x) { return x.id === afterId; }) : -1;
-    NP.store.addSection(sec, at === -1 ? page.sections.length : at + 1);
-    NP.store.select(sec.id);
+    var index = at === -1 ? page.sections.length : at + 1;
+    // One undo step for the whole paste.
+    NP.store.updatePage(function (pg) {
+      var next = pg.sections.slice();
+      next.splice.apply(next, [Math.min(index, next.length), 0].concat(secs));
+      return Object.assign({}, pg, { sections: next });
+    });
+    NP.store.pick(secs.map(function (x) { return x.id; }));
   }
 
   function copyStyle(id) {
@@ -368,11 +427,20 @@
     ui.toast("Stilen er limt inn", "ok");
   }
 
-  function remove(id) {
-    var found = D.findSection(NP.store.get().project, id);
-    if (!found) return;
-    ui.confirm("Slette seksjonen?", "«" + S.BLOCKS[found.section.type].label + "» fjernes fra siden. Du kan angre med Ctrl+Z.", "Slett", true).then(function (ok) {
-      if (ok) NP.store.removeSection(id);
+  /** Delete one section or several (an array of ids), after asking. */
+  function remove(idOrIds) {
+    var p = NP.store.get().project;
+    var ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds]).filter(function (id) { return D.findSection(p, id); });
+    if (!ids.length) return;
+    var first = D.findSection(p, ids[0]).section;
+    var title = ids.length > 1 ? "Slette " + ids.length + " seksjoner?" : "Slette seksjonen?";
+    var text = ids.length > 1
+      ? ids.length + " seksjoner fjernes fra siden. Du kan angre med Ctrl+Z."
+      : "«" + S.BLOCKS[first.type].label + "» fjernes fra siden. Du kan angre med Ctrl+Z.";
+    ui.confirm(title, text, "Slett", true).then(function (ok) {
+      if (!ok) return;
+      if (ids.length > 1) NP.store.removeSections(ids);
+      else NP.store.removeSection(ids[0]);
     });
   }
 

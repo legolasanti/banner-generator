@@ -46,6 +46,27 @@
     NP.store.update(function (p) { return Object.assign({}, p, patchFn(p)); }, { group: group, from: "panel" });
   }
 
+  /** How the page looks when shared on Facebook / LinkedIn; redraws with every edit. */
+  function shareCard() {
+    var box = h("div.nx-sharecard", { "aria-label": "Forhåndsvisning av deling" });
+    function draw() {
+      var p = project();
+      var info = NP.preflight.shareInfo(p, NP.settings || {});
+      var label = (NP.settings && NP.settings.disclosureLabel ? NP.settings.disclosureLabel : "Annonsørinnhold fra {annonsør}").replace("{annonsør}", p.advertiser.name || "annonsør");
+      ui.clear(box);
+      box.appendChild(info.image
+        ? h("img.nx-sharecard__img", { src: ui.thumb(p.assets[info.image], info.image, 480), alt: "" })
+        : h("div.nx-sharecard__img.is-empty", null, ui.icon("image-off", 22), h("span", null, "Uten bilde")));
+      box.appendChild(h("div.nx-sharecard__text", null,
+        info.host ? h("span.nx-sharecard__host", null, info.host) : null,
+        h("strong.nx-sharecard__title", null, info.title + " – " + label),
+        h("span.nx-sharecard__desc", null, info.description || label)));
+    }
+    draw();
+    box.refresh = draw;
+    return box;
+  }
+
   function pagesBlock() {
     var box = h("div.nx-pages");
     function draw() {
@@ -99,7 +120,8 @@
       ui.prompt(copy ? "Ny variant" : "Ny side", "Navn (vises i fanene, f.eks. «For kvinner»)", "", "Lag").then(function (name) {
         if (!name) return;
         var cur = NP.store.page();
-        var sections = copy ? cur.sections.map(D.cloneSection) : [];
+        // A variant is a page of its own: it keeps the anchors and chapter names.
+        var sections = copy ? cur.sections.map(function (s) { return D.cloneSection(s, { keepNav: true }); }) : [];
         var probe = D.normalizeProject(Object.assign({}, project(), { pages: project().pages.concat([{ label: name, sections: sections }]) }));
         var fresh = probe.pages[probe.pages.length - 1];
         setDirect(function (p) { return { pages: p.pages.concat([fresh]) }; });
@@ -147,6 +169,8 @@
     root.appendChild(text("Beskrivelse", p.meta.description, function (v) {
       setDirect(function (x) { return { meta: Object.assign({}, x.meta, { description: D.cleanText(v, 300, false) }) }; }, "meta-desc");
     }, { multiline: true, max: 160, rows: 3 }));
+    var card = shareCard();
+    root.appendChild(h("div.nx-field", null, h("div.nx-field__head", null, h("span.nx-field__label", null, "Slik ser delingen ut"), h("span.nx-muted", null, "Facebook / LinkedIn")), card));
     var og = p.meta.ogImage;
     root.appendChild(
       h(
@@ -225,6 +249,7 @@
 
     var unsub = NP.store.subscribe(function (s, change) {
       if (change.kind === "page" || (change.kind === "project" && change.undo)) pages.refresh();
+      if (change.kind === "project" || change.kind === "meta") card.refresh();
     });
     root.destroy = unsub;
     return root;

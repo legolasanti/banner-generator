@@ -6,6 +6,10 @@
    the page and approve with their name. Edits made afterwards stay in the
    editor until the next round is sent, so the advertiser never reviews a
    moving target.
+
+   Comments are internal unless shared: the advertiser sees their own, the
+   replies in their threads and what the team marks "Synlig for
+   annonsøren". AI warnings and team notes stay internal.
    ========================================================================= */
 (function () {
   "use strict";
@@ -48,17 +52,46 @@
     }).catch(function (err) { ui.toast(err.message, "err"); });
   }
 
+  /** Is this comment on the advertiser's link? (Same rule as the server.) */
+  function visibleToClient(c, all) {
+    if (c.from === "client") return true;
+    if (typeof c.shared === "boolean") return c.shared;
+    var parent = c.parent && all.filter(function (x) { return x.id === c.parent; })[0];
+    return !!(parent && parent.from === "client");
+  }
+
+  function shareSwitch(checked, label) {
+    var box = h("input", { type: "checkbox", checked: checked });
+    return { input: box, node: h("label.nx-check.nx-share", { title: "Annonsøren ser kommentaren på gjennomgangslenken" }, box, " ", label || "Synlig for annonsøren") };
+  }
+
+  function visibilityTag(c, all) {
+    return visibleToClient(c, all)
+      ? h("span.nx-tag.nx-tag--shared", { title: "Vises på gjennomgangslenken" }, ui.icon("eye", 12), " Synlig for annonsøren")
+      : h("span.nx-tag", { title: "Bare teamet ser denne" }, ui.icon("lock", 12), " Intern");
+  }
+
   function commentNode(c, all, refresh) {
     var replies = all.filter(function (x) { return x.parent === c.id; });
     var resolved = h("input", { type: "checkbox", checked: c.resolved });
     resolved.addEventListener("change", function () {
       NP.api.resolveComment(project().id, c.id, resolved.checked).then(refresh, function (err) { ui.toast(err.message, "err"); });
     });
-    var reply = h("input.nx-input.nx-input--sm", { type: "text", placeholder: "Svar …" });
+    var threadVisible = visibleToClient(c, all);
+    // A reply in a thread the advertiser sees is visible too, unless unticked.
+    var reply = h("input.nx-input.nx-input--sm", { type: "text", placeholder: threadVisible ? "Svar annonsøren …" : "Svar …" });
+    var replyShare = shareSwitch(threadVisible);
     reply.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" || !reply.value.trim()) return;
-      NP.api.addComment(project().id, { text: reply.value.trim(), parent: c.id, round: c.round, anchor: c.anchor }).then(refresh, function (err) { ui.toast(err.message, "err"); });
+      NP.api.addComment(project().id, { text: reply.value.trim(), parent: c.id, round: c.round, anchor: c.anchor, shared: threadVisible && replyShare.input.checked }).then(refresh, function (err) { ui.toast(err.message, "err"); });
     });
+    // The team decides afterwards too; the advertiser's own comments and the AI's are fixed.
+    var toggle = null;
+    if (c.from !== "client" && c.author !== "AI-assistent") {
+      toggle = ui.button(threadVisible ? "Gjør intern" : "Vis for annonsøren", { small: true, kind: "ghost", icon: threadVisible ? "eye-off" : "eye", onClick: function () {
+        NP.api.shareComment(project().id, c.id, !threadVisible).then(refresh, function (err) { ui.toast(err.message, "err"); });
+      } });
+    }
     return h(
       "div.nx-comment" + (c.resolved ? ".is-done" : "") + (c.from === "client" ? ".is-client" : ""),
       null,
@@ -74,6 +107,7 @@
         h("span.nx-muted", null, "Runde " + c.round + " · " + ui.when(c.at)),
         h("label.nx-check.nx-comment__done", { title: "Løst" }, resolved, " Løst")
       ),
+      h("div.nx-comment__vis", null, visibilityTag(c, all), toggle),
       c.anchor && c.anchor.section
         ? h("button.nx-comment__where", { type: "button", on: { click: function () {
             if (c.anchor.page) NP.store.setPage(c.anchor.page);
@@ -82,9 +116,11 @@
         : null,
       h("p.nx-comment__text", null, c.text),
       replies.map(function (r) {
-        return h("div.nx-comment__reply", null, h("strong", null, r.author), " ", h("span.nx-muted", null, ui.when(r.at)), h("p", null, r.text));
+        var shown = threadVisible && visibleToClient(r, all);
+        return h("div.nx-comment__reply", null, h("strong", null, r.author), " ", h("span.nx-muted", null, ui.when(r.at) + (threadVisible && !shown && r.from !== "client" ? " · intern" : "")), h("p", null, r.text));
       }),
-      reply
+      reply,
+      threadVisible ? replyShare.node : null
     );
   }
 
@@ -123,7 +159,7 @@
                 NP.store.adopt({ review: r.review, rev: r.rev });
                 ui.toast("Lenken er trukket tilbake", "ok");
                 draw();
-              });
+              }, function (err) { ui.toast(err.message, "err"); });
             });
           } }) : null
         )
@@ -132,25 +168,33 @@
       var commentsBox = h("div.nx-stack.nx-stack--sm");
       root.appendChild(h("h3.nx-panel__h", null, "Kommentarer"));
       root.appendChild(commentsBox);
-      var newC = h("textarea.nx-input.nx-textarea", { rows: 2, placeholder: "Intern kommentar til teamet …" });
+      var newC = h("textarea.nx-input.nx-textarea", { rows: 2, placeholder: "Kommentar til teamet …" });
+      var newShare = shareSwitch(false);
+      newShare.input.addEventListener("change", function () {
+        newC.placeholder = newShare.input.checked ? "Kommentar annonsøren også ser …" : "Kommentar til teamet …";
+      });
       root.appendChild(
         h(
           "div.nx-stack.nx-stack--sm",
           null,
           newC,
-          ui.button("Legg til kommentar", { small: true, onClick: function () {
-            if (!newC.value.trim()) return;
-            var sel = NP.store.get().selected;
-            NP.api.addComment(p.id, {
-              text: newC.value.trim(),
-              round: rv ? rv.round : 0,
-              anchor: sel ? { section: sel, page: NP.store.get().pageId } : null,
-            }).then(function () {
-              newC.value = "";
-              loadComments();
-            }, function (err) { ui.toast(err.message, "err"); });
-          } }),
-          h("p.nx-help", null, "Er en seksjon valgt, festes kommentaren til den.")
+          h("div.nx-row.nx-row--between", null,
+            newShare.node,
+            ui.button("Legg til kommentar", { small: true, onClick: function () {
+              if (!newC.value.trim()) return;
+              var sel = NP.store.get().selected;
+              NP.api.addComment(p.id, {
+                text: newC.value.trim(),
+                round: rv ? rv.round : 0,
+                anchor: sel ? { section: sel, page: NP.store.get().pageId } : null,
+                shared: newShare.input.checked,
+              }).then(function () {
+                newC.value = "";
+                newShare.input.checked = false;
+                loadComments();
+              }, function (err) { ui.toast(err.message, "err"); });
+            } })),
+          h("p.nx-help", null, "Kommentarer er interne til teamet med mindre du krysser av for «Synlig for annonsøren». Er en seksjon valgt, festes kommentaren til den.")
         )
       );
 

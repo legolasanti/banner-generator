@@ -734,10 +734,19 @@
     });
   }
 
-  /** A deep copy of a section with fresh ids (for duplicate / paste / library). */
-  function cloneSection(section) {
+  /**
+   * A deep copy of a section with fresh ids (for duplicate / paste / library).
+   * The anchor id and the chapter-menu name are cleared — two sections with
+   * the same anchor break #links and list the chapter twice — unless
+   * opts.keepNav (a whole page copied as a set keeps its own navigation).
+   */
+  function cloneSection(section, opts) {
     var copy = JSON.parse(JSON.stringify(section));
     copy.id = newId("s");
+    if (!(opts && opts.keepNav === true) && copy.style) {
+      copy.style.anchor = "";
+      copy.style.chapter = "";
+    }
     S.fieldsOf(copy.type).forEach(function (f) {
       if (f.type === "list" && Array.isArray(copy.props[f.key])) {
         copy.props[f.key] = copy.props[f.key].map(function (item) {

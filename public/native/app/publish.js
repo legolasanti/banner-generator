@@ -4,6 +4,13 @@
 
    Both start with the same check list (preflight.js), so nobody exports a
    page with a button that leads nowhere without being told.
+
+   The ZIP is downloaded by the browser itself (a form posted into a hidden
+   frame), so a page with several hundred MB of video streams straight to
+   disk instead of being held in memory first. An error answer lands in the
+   frame instead of a download, and is shown as a message.
+
+   Publishing a version the advertiser has not approved asks first.
    ========================================================================= */
 (function () {
   "use strict";
@@ -16,33 +23,93 @@
     return NP.store.get().project;
   }
 
-  function filenameFrom(res, fallback) {
-    var cd = res.headers.get("Content-Disposition") || "";
-    var m = /filename="([^"]+)"/.exec(cd);
-    return m ? m[1] : fallback;
+  var ERROR_WAIT_MS = 10 * 60 * 1000;
+
+  /**
+   * POST to `url` as a normal browser download. Resolves when the request
+   * is on its way; `onError(message)` runs if the server answers with an
+   * error page instead of the file.
+   */
+  function browserDownload(url, onError) {
+    var name = "np-dl-" + Date.now();
+    var frame = h("iframe", { name: name, hidden: true, title: "Nedlasting" });
+    var form = h("form", { method: "POST", action: url, target: name, hidden: true });
+    function cleanup() {
+      clearTimeout(timer);
+      frame.remove();
+      form.remove();
+    }
+    // A download never loads the frame; an error answer (JSON) does.
+    frame.addEventListener("load", function () {
+      var text = "";
+      try {
+        text = frame.contentDocument.body.textContent || "";
+      } catch (_) {
+        /* not readable: nothing to show */
+      }
+      var msg = "Eksporten feilet";
+      try {
+        msg = JSON.parse(text).error || msg;
+      } catch (_) {
+        /* not JSON */
+      }
+      if (text) onError(msg);
+      cleanup();
+    });
+    var timer = setTimeout(cleanup, ERROR_WAIT_MS);
+    document.body.appendChild(frame);
+    document.body.appendChild(form);
+    form.submit();
   }
 
   function download(btn, status) {
     var p = project();
     btn.disabled = true;
-    status.textContent = "Lager ZIP – bilder, skrifter og video pakkes …";
+    status.textContent = "Lagrer …";
     return NP.store
       .save()
-      .then(function () { return fetch(NP.api.exportUrl(p.id), { method: "POST" }); })
-      .then(function (res) {
-        if (!res.ok) return res.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || "Eksporten feilet"); });
-        var name = filenameFrom(res, "native.zip");
-        return res.blob().then(function (blob) {
-          window.WPE.util.saveBlob(blob, name);
-          status.textContent = "Ferdig: " + name + " (" + (blob.size / 1048576).toFixed(1).replace(".", ",") + " MB).";
-          ui.toast("ZIP-filen er lastet ned", "ok");
+      .then(function () {
+        status.textContent = "Lager ZIP – bilder, skrifter og video pakkes. Nedlastingen starter av seg selv når filen er klar.";
+        browserDownload(NP.api.exportUrl(p.id), function (msg) {
+          status.textContent = msg;
+          ui.toast(msg, "err");
         });
+        ui.toast("Eksporten er startet", "ok");
       })
       .catch(function (err) {
         status.textContent = err.message;
         ui.toast(err.message, "err");
       })
-      .then(function () { btn.disabled = false; });
+      .then(function () {
+        // Not twice in a row by accident; the download runs on its own.
+        setTimeout(function () { btn.disabled = false; }, 4000);
+      });
+  }
+
+  /** Why this version is not approved by the advertiser, or "" when it is. */
+  function notApproved(p) {
+    if (p.status === "approved" || p.status === "published") return "";
+    if (!p.review) return "Siden har ikke vært sendt til annonsøren for gjennomgang.";
+    if (p.status === "review") return "Runde " + p.review.round + " venter fortsatt på godkjenning fra annonsøren.";
+    return "Siden er endret etter runde " + p.review.round + ", så annonsøren har ikke sett denne versjonen.";
+  }
+
+  /** Publishing a version the advertiser has not approved needs a yes. */
+  function confirmUnapproved(p) {
+    var why = notApproved(p);
+    if (!why) return Promise.resolve(true);
+    return ui.confirm("Publisere uten godkjenning?", why + " Vil du publisere likevel?", "Publiser likevel", true);
+  }
+
+  function publish(p, done) {
+    confirmUnapproved(project()).then(function (ok) {
+      if (!ok) return;
+      return NP.store.save().then(function () { return NP.api.publish(p.id); }).then(function (res) {
+        NP.store.adopt({ status: "published" });
+        ui.toast("Publisert på " + res.path, "ok");
+        done();
+      });
+    }).catch(function (err) { ui.toast(err.message, "err"); });
   }
 
   function dialog() {
@@ -68,13 +135,7 @@
           pubStatus.appendChild(h("p.nx-help", null, "Publisert " + ui.when(r.published[mine].at) + ". Endringer vises først når du publiserer på nytt."));
         }
         pubStatus.appendChild(h("div.nx-row", null,
-          ui.button(mine ? "Publiser endringene" : "Publiser her", { icon: "globe", onClick: function () {
-            NP.store.save().then(function () { return NP.api.publish(p.id); }).then(function (res) {
-              NP.store.adopt({ status: "published" });
-              ui.toast("Publisert på " + res.path, "ok");
-              drawPublish();
-            }, function (err) { ui.toast(err.message, "err"); });
-          } }),
+          ui.button(mine ? "Publiser endringene" : "Publiser her", { icon: "globe", onClick: function () { publish(p, drawPublish); } }),
           mine ? ui.button("Avpubliser", { kind: "ghost", onClick: function () {
             ui.confirm("Avpublisere?", "Siden slutter å virke på " + base + "/n/" + mine + "/.", "Avpubliser", true).then(function (ok) {
               if (!ok) return;
@@ -82,10 +143,12 @@
                 NP.store.adopt({ status: "approved" });
                 ui.toast("Siden er avpublisert", "ok");
                 drawPublish();
-              });
+              }, function (err) { ui.toast(err.message, "err"); });
             });
           } }) : null
         ));
+      }, function (err) {
+        pubStatus.appendChild(h("p.nx-muted", null, err.message));
       });
     }
 
@@ -105,9 +168,7 @@
         h("div.nx-row", null, dl),
         status,
         h("h3.nx-panel__h", null, "Publiser fra ABC design"),
-        p.status !== "approved" && p.status !== "published"
-          ? h("p.nx-note.nx-note--warn", null, ui.icon("circle-alert", 15), " Denne versjonen er ikke godkjent av annonsøren" + (p.review ? " – den er endret etter runde " + p.review.round : "") + ".")
-          : null,
+        notApproved(p) ? h("p.nx-note.nx-note--warn", null, ui.icon("circle-alert", 15), " Ikke godkjent: " + notApproved(p)) : null,
         h("p.nx-muted", null, "ABC design kan også vise siden selv, på /n/<adresse>/. Nyttig for testing og når verktøyet ligger på en server med eget domene."),
         pubStatus
       ),

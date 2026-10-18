@@ -16,7 +16,11 @@
 
    The editor preview loads the same file with window.NP_EDITOR = true: no
    tracking, no share links, and NPRuntime.bind(root) re-binds the sections
-   the editor just re-rendered.
+   the editor just re-rendered. NPRuntime.dispose() then lets go of the
+   sections that left the page: their scroll handlers, resize listeners,
+   observers and timers (everything a binding registers is tied to its
+   element). window.NP_REDUCED_MOTION = true makes the runtime behave as if
+   the reader had asked for reduced motion (the editor's preview toggle).
    ========================================================================= */
 (function () {
   "use strict";
@@ -24,7 +28,7 @@
   var doc = document;
   var root = doc.documentElement;
   var EDITOR = !!window.NP_EDITOR;
-  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduced = !!window.NP_REDUCED_MOTION || !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   root.classList.add("np-js");
 
   // ---- measurement ----------------------------------------------------------
@@ -63,6 +67,16 @@
 
   var io = "IntersectionObserver" in window;
 
+  // What a binding leaves behind outside its element (window listeners,
+  // observers), as [element, undo]: dispose() undoes it once the element has
+  // left the page.
+  var cleanups = [];
+
+  function listen(el, target, type, fn) {
+    target.addEventListener(type, fn);
+    cleanups.push([el, function () { target.removeEventListener(type, fn); }]);
+  }
+
   function onVisible(el, cb, opts) {
     if (!io) return cb(el, true);
     var obs = new IntersectionObserver(function (entries) {
@@ -71,20 +85,35 @@
       });
     }, opts || { threshold: 0.15 });
     obs.observe(el);
+    cleanups.push([el, function () { obs.disconnect(); }]);
     return obs;
   }
 
   // ---- scroll loop (one rAF for everything that follows the scroll) ----------
-  var scrollers = []; // bound to sections (dropped when the editor re-renders)
+  var scrollers = []; // [element, fn(vh)] bound to sections
   var persistent = []; // page-wide (scroll depth, the "scrolled" flag)
   var ticking = false;
+
+  function onScroll(el, fn) {
+    scrollers.push([el, fn]);
+  }
 
   function frame() {
     ticking = false;
     var vh = window.innerHeight;
     var i;
     for (i = 0; i < persistent.length; i++) persistent[i](vh);
-    for (i = 0; i < scrollers.length; i++) scrollers[i](vh);
+    for (i = 0; i < scrollers.length; i++) scrollers[i][1](vh);
+  }
+
+  /** Forget everything bound to elements that are no longer in the page. */
+  function dispose() {
+    scrollers = scrollers.filter(function (s) { return s[0].isConnected; });
+    cleanups = cleanups.filter(function (c) {
+      if (c[0].isConnected) return true;
+      c[1]();
+      return false;
+    });
   }
 
   function requestFrame() {
@@ -227,7 +256,7 @@
         v.preload = "auto";
         v.pause();
       });
-      scrollers.push(function (vh) {
+      onScroll(sec, function (vh) {
         var rect = sec.getBoundingClientRect();
         var total = rect.height - vh;
         if (rect.bottom < -vh || rect.top > vh * 2) return;
@@ -257,7 +286,7 @@
       if (!once(el, "parallax")) return;
       var speed = Number(el.getAttribute("data-np-parallax")) || 0.3;
       var host = el.parentNode;
-      scrollers.push(function (vh) {
+      onScroll(el, function (vh) {
         var r = host.getBoundingClientRect();
         if (r.bottom < 0 || r.top > vh) return;
         var center = r.top + r.height / 2 - vh / 2;
@@ -476,9 +505,9 @@
         if (textBox) track_.style.setProperty("--np-zt", textBox.offsetHeight + 24 + "px");
       }
       measure();
-      window.addEventListener("resize", measure);
+      listen(track_, window, "resize", measure);
       if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(measure);
-      scrollers.push(function (vh) {
+      onScroll(track_, function (vh) {
         var r = track_.getBoundingClientRect();
         var total = r.height - vh;
         var p = total > 0 ? Math.min(1, Math.max(0, -r.top / (total * 0.75))) : 1;
@@ -500,7 +529,7 @@
         words.forEach(function (w) { w.classList.add("is-lit"); });
         return;
       }
-      scrollers.push(function (vh) {
+      onScroll(el, function (vh) {
         var r = el.getBoundingClientRect();
         if (r.bottom < 0 || r.top > vh) return;
         // From the text's top reaching 85 % of the screen to its bottom at 45 %.
@@ -521,6 +550,7 @@
         obs && obs.unobserve(t);
         var i = 0;
         (function type() {
+          if (!t.isConnected) return; // re-rendered by the editor
           i++;
           t.textContent = text.slice(0, i);
           if (i < text.length) setTimeout(type, 28 + Math.random() * 50);
@@ -534,7 +564,7 @@
     $all("[data-np-mqscroll]", scope).forEach(function (el) {
       if (!once(el, "mq") || reduced) return;
       var dir = el.classList.contains("np-mq--right") ? 1 : -1;
-      scrollers.push(function (vh) {
+      onScroll(el, function (vh) {
         var r = el.getBoundingClientRect();
         if (r.bottom < -200 || r.top > vh + 200) return;
         var shift = (vh - r.top) * 0.6 * dir;
@@ -634,7 +664,7 @@
     $all("[data-np-timeline]", scope).forEach(function (tl) {
       if (!once(tl, "tl")) return;
       if (reduced || EDITOR) return tl.style.setProperty("--np-tlp", "1");
-      scrollers.push(function (vh) {
+      onScroll(tl, function (vh) {
         var r = tl.getBoundingClientRect();
         var p = (vh * 0.6 - r.top) / r.height;
         tl.style.setProperty("--np-tlp", Math.min(1, Math.max(0, p)).toFixed(3));
@@ -655,9 +685,9 @@
         sec.style.height = pin.clientHeight + dist + window.innerHeight * 0.25 + "px";
       }
       measure();
-      window.addEventListener("resize", measure);
-      window.addEventListener("load", measure);
-      scrollers.push(function (vh) {
+      listen(sec, window, "resize", measure);
+      listen(sec, window, "load", measure);
+      onScroll(sec, function (vh) {
         var r = sec.getBoundingClientRect();
         if (r.bottom < -vh || r.top > vh * 2) return;
         var total = r.height - pin.clientHeight;
@@ -870,6 +900,7 @@
       $all("[data-u]", el).forEach(function (c) { cells[c.getAttribute("data-u")] = c; });
       function pad(n) { return (n < 10 ? "0" : "") + n; }
       function tick() {
+        if (!el.isConnected) return; // the section left the page: stop ticking
         var left = Math.max(0, at - Date.now());
         if (!left) {
           el.classList.add("is-done");
@@ -1007,10 +1038,15 @@
   window.NPRuntime = {
     bind: bind,
     track: track,
-    // The editor re-renders sections; dropped nodes take their listeners along,
-    // but the shared scroll loop must forget them too.
+    // The editor re-renders sections; dropped nodes take their own listeners
+    // along, dispose() drops what was registered outside them.
+    dispose: dispose,
     resetScrollers: function () {
-      scrollers.length = 0;
+      scrollers = [];
+    },
+    // How much is bound right now (the editor's leak test reads it).
+    stats: function () {
+      return { scrollers: scrollers.length, cleanups: cleanups.length };
     },
   };
 

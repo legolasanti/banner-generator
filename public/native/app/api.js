@@ -93,6 +93,7 @@
     comments: function (id) { return request("GET", P + "/projects/" + enc(id) + "/comments"); },
     addComment: function (id, body) { return request("POST", P + "/projects/" + enc(id) + "/comments", body); },
     resolveComment: function (id, cid, resolved) { return request("POST", P + "/projects/" + enc(id) + "/comments/" + enc(cid), { resolved: resolved }); },
+    shareComment: function (id, cid, shared) { return request("POST", P + "/projects/" + enc(id) + "/comments/" + enc(cid), { shared: shared }); },
     publish: function (id) { return request("POST", P + "/projects/" + enc(id) + "/publish"); },
     unpublish: function (id) { return request("DELETE", P + "/projects/" + enc(id) + "/publish"); },
     published: function () { return request("GET", P + "/published"); },

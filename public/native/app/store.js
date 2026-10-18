@@ -7,12 +7,23 @@
    references.
 
    Typing in one field is ONE undo step: edits with the same `group` within
-   a second of each other replace the last step instead of adding one.
+   a second of each other replace the last step instead of adding one — but
+   a step never spans more than a few seconds, so a long stretch of typing
+   can still be undone a bit at a time.
+
+   Undo/redo restore the page, never what the server owns (review round,
+   status, revision …) or the AI's bookkeeping.
 
    Saving: every change marks the project dirty; it is sent to the server
    1.2 s after the last change, together with the revision it was based on.
    If a colleague saved in between, the server answers 409 and the editor
-   says so instead of overwriting their work.
+   says so instead of overwriting their work. From then on nothing is saved
+   (the state stays "conflict" and leaving the page warns) until the user
+   reloads or saves their version as a copy.
+
+   save() resolves once the project as it is now is on the server, and
+   rejects when it is not (conflict, network error): actions that work on
+   the server's copy — send a round, publish, export — must stop then.
    ========================================================================= */
 (function () {
   "use strict";
@@ -23,12 +34,16 @@
 
   var MAX_UNDO = 200;
   var GROUP_MS = 1000;
+  var GROUP_MAX_MS = 4000;
   var SAVE_DELAY = 1200;
+  var RETRY_DELAY = 8000;
+  // Fields the server owns or the AI keeps: undo/redo leave them as they are.
+  var KEEP_ON_UNDO = ["ai", "id", "rev", "status", "review", "owner", "createdAt", "updatedAt", "lastSnapshotAt"];
 
   var state = null;
   var past = [];
   var future = [];
-  var lastGroup = { key: null, at: 0 };
+  var lastGroup = { key: null, at: 0, start: 0 };
   var listeners = [];
   var saveTimer = 0;
   var saving = null;
@@ -54,12 +69,13 @@
     clearTimeout(saveTimer);
     past = [];
     future = [];
-    lastGroup = { key: null, at: 0 };
+    lastGroup = { key: null, at: 0, start: 0 };
     state = {
       project: project,
       rev: project.rev,
       pageId: project.pages[0].id,
       selected: null,
+      picked: [], // several sections picked in the Sections list (Shift/Cmd-click)
       device: "desktop",
       save: "saved",
       error: "",
@@ -115,16 +131,15 @@
     var now = Date.now();
     if (o.history === false) {
       // Bookkeeping (e.g. project.ai): saved, but not an undo step.
-    } else if (o.group && lastGroup.key === o.group && now - lastGroup.at < GROUP_MS && past.length) {
+    } else if (o.group && lastGroup.key === o.group && now - lastGroup.at < GROUP_MS && now - lastGroup.start < GROUP_MAX_MS && past.length) {
       // Same burst of typing: keep the step from before the burst.
+      lastGroup = { key: o.group, at: now, start: lastGroup.start };
     } else {
       past.push(before);
       if (past.length > MAX_UNDO) past.shift();
+      lastGroup = { key: o.group || null, at: now, start: now };
     }
-    if (o.history !== false) {
-      lastGroup = { key: o.group || null, at: now };
-      future = [];
-    }
+    if (o.history !== false) future = [];
     state = Object.assign({}, state, { project: after });
     markDirty();
     emit({
@@ -144,18 +159,25 @@
 
   /**
    * The AI wizard's state and the assistant's conversation (project.ai) are
-   * not page edits: undo/redo restores the page but keeps them as they are.
+   * not page edits, and the review round, status and revision belong to the
+   * server: undo/redo restores the page but keeps all of those as they are.
    */
-  function keepAi(target, current) {
-    return target.ai === current.ai ? target : Object.assign({}, target, { ai: current.ai });
+  function keepServer(target, current) {
+    var patch = null;
+    KEEP_ON_UNDO.forEach(function (k) {
+      if (target[k] === current[k]) return;
+      patch = patch || {};
+      patch[k] = current[k];
+    });
+    return patch ? Object.assign({}, target, patch) : target;
   }
 
   function undo() {
     if (!past.length) return;
     var before = state.project;
     future.push(before);
-    state = Object.assign({}, state, { project: keepAi(past.pop(), before) });
-    lastGroup = { key: null, at: 0 };
+    state = Object.assign({}, state, { project: keepServer(past.pop(), before) });
+    lastGroup = { key: null, at: 0, start: 0 };
     fixSelection();
     markDirty();
     emit({ kind: "project", sections: null, structure: true, theme: true, shell: true, undo: true });
@@ -165,8 +187,8 @@
     if (!future.length) return;
     var current = state.project;
     past.push(current);
-    state = Object.assign({}, state, { project: keepAi(future.pop(), current) });
-    lastGroup = { key: null, at: 0 };
+    state = Object.assign({}, state, { project: keepServer(future.pop(), current) });
+    lastGroup = { key: null, at: 0, start: 0 };
     fixSelection();
     markDirty();
     emit({ kind: "project", sections: null, structure: true, theme: true, shell: true, undo: true });
@@ -176,6 +198,8 @@
     var p = state.project;
     if (!p.pages.some(function (pg) { return pg.id === state.pageId; })) state.pageId = p.pages[0].id;
     if (state.selected && !Doc.findSection(p, state.selected)) state.selected = null;
+    var ids = idsOnPage(state.picked);
+    if (ids.length !== state.picked.length) state.picked = ids.length > 1 ? ids : [];
   }
 
   // ---- helpers for the common edits ----------------------------------------------
@@ -259,9 +283,15 @@
 
   function updatePage(fn) {
     update(function (p) {
-      return Object.assign({}, p, {
-        pages: p.pages.map(function (pg) { return pg.id === state.pageId ? fn(pg) : pg; }),
+      var changed = false;
+      var pages = p.pages.map(function (pg) {
+        if (pg.id !== state.pageId) return pg;
+        var next = fn(pg);
+        if (next !== pg) changed = true;
+        return next;
       });
+      // An edit that changes nothing (a move past the edge) is not an undo step.
+      return changed ? Object.assign({}, p, { pages: pages }) : p;
     });
   }
 
@@ -302,6 +332,76 @@
     addSection(copy, found.index + 1);
   }
 
+  // ---- several sections at once (one undo step each) ------------------------------
+  /** `ids` that are on the open page, in page order. */
+  function idsOnPage(ids) {
+    var want = {};
+    (ids || []).forEach(function (id) { want[id] = true; });
+    return page().sections.filter(function (s) { return want[s.id]; }).map(function (s) { return s.id; });
+  }
+
+  function removeSections(ids) {
+    var gone = {};
+    idsOnPage(ids).forEach(function (id) { gone[id] = true; });
+    updatePage(function (pg) {
+      return Object.assign({}, pg, { sections: pg.sections.filter(function (s) { return !gone[s.id]; }) });
+    });
+    if (gone[state.selected] || state.picked.length) select(null);
+  }
+
+  /** Copies go right after the last of the group, in page order, and become the selection. */
+  function duplicateSections(ids) {
+    var list = idsOnPage(ids);
+    if (!list.length) return;
+    var copies = [];
+    updatePage(function (pg) {
+      var want = {};
+      list.forEach(function (id) { want[id] = true; });
+      var last = -1;
+      pg.sections.forEach(function (s, i) { if (want[s.id]) last = i; });
+      copies = pg.sections.filter(function (s) { return want[s.id]; }).map(function (s) { return Doc.cloneSection(s); });
+      var secs = pg.sections.slice();
+      secs.splice.apply(secs, [last + 1, 0].concat(copies));
+      return Object.assign({}, pg, { sections: secs });
+    });
+    pick(copies.map(function (c) { return c.id; }));
+  }
+
+  /** Move every section of the group one place up (delta -1) or down (+1), unless one is at the edge. */
+  function moveSections(ids, delta) {
+    updatePage(function (pg) {
+      var want = {};
+      idsOnPage(ids).forEach(function (id) { want[id] = true; });
+      var secs = pg.sections.slice();
+      var at = [];
+      secs.forEach(function (s, i) { if (want[s.id]) at.push(i); });
+      if (!at.length || (delta < 0 && at[0] === 0) || (delta > 0 && at[at.length - 1] === secs.length - 1)) return pg;
+      if (delta > 0) at.reverse();
+      at.forEach(function (i) {
+        var tmp = secs[i + delta];
+        secs[i + delta] = secs[i];
+        secs[i] = tmp;
+      });
+      return Object.assign({}, pg, { sections: secs });
+    });
+  }
+
+  /** Pick several sections (the last one becomes the selected one the right panel shows). */
+  function pick(ids) {
+    var list = idsOnPage(ids);
+    if (list.length < 2) return select(list[0] || null);
+    var sel = list.indexOf(state.selected) !== -1 ? state.selected : list[list.length - 1];
+    state = Object.assign({}, state, { picked: list, selected: sel });
+    emit({ kind: "select" });
+  }
+
+  /** The sections an action applies to: the picked group, else the selected one. */
+  function picked() {
+    if (!state) return [];
+    if (state.picked.length > 1) return state.picked.slice();
+    return state.selected ? [state.selected] : [];
+  }
+
   /** Add assets (metadata from an upload) to the project. */
   function addAssets(list) {
     var add = (list || []).filter(Boolean);
@@ -325,14 +425,14 @@
   }
 
   function select(id) {
-    if (state.selected === id) return;
-    state = Object.assign({}, state, { selected: id });
+    if (state.selected === id && !state.picked.length) return;
+    state = Object.assign({}, state, { selected: id, picked: [] });
     emit({ kind: "select" });
   }
 
   function setPage(id) {
     if (state.pageId === id) return;
-    state = Object.assign({}, state, { pageId: id, selected: null });
+    state = Object.assign({}, state, { pageId: id, selected: null, picked: [] });
     emit({ kind: "page" });
   }
 
@@ -349,21 +449,39 @@
   }
 
   function markDirty() {
+    // After a conflict nothing more is saved: the edits stay unsaved (and
+    // leaving warns) until the user reloads or saves a copy.
     if (state.save === "conflict") return;
     setSave("dirty");
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(save, SAVE_DELAY);
+    saveTimer = setTimeout(autoSave, SAVE_DELAY);
   }
 
+  /** Saves nobody waits for (the timers, leaving the page): failures show in the save state. */
+  function autoSave() {
+    save().catch(function () {});
+  }
+
+  function saveError() {
+    if (!state) return new Error("Prosjektet er ikke åpent lenger.");
+    var err = state.save === "conflict"
+      ? new Error("Prosjektet er endret av noen andre, så endringene dine er ikke lagret. Last inn på nytt, eller lagre din versjon som kopi.")
+      : new Error("Siden kunne ikke lagres" + (state.error ? " (" + state.error + ")" : "") + ". Sjekk nettet og prøv igjen.");
+    err.save = state.save;
+    return err;
+  }
+
+  /** Resolves when the project as it is now is on the server; rejects otherwise. */
   function save() {
     clearTimeout(saveTimer);
-    if (!state || state.save === "conflict") return Promise.resolve();
+    if (!state || state.save === "conflict") return Promise.reject(saveError());
     if (saving) {
       // One save at a time; the latest state goes out right after.
       return saving.then(function () {
-        if (state.save === "dirty") return save();
+        if (state && state.save !== "saved") return save();
       });
     }
+    if (state.save === "saved") return Promise.resolve();
     var project = state.project;
     var id = project.id;
     setSave("saving");
@@ -374,20 +492,38 @@
         var unchanged = state.project === project;
         state = Object.assign({}, state, { rev: res.rev, project: Object.assign({}, state.project, { rev: res.rev, status: res.status }) });
         setSave(unchanged ? "saved" : "dirty");
-        if (state.save === "dirty") saveTimer = setTimeout(save, SAVE_DELAY);
-      })
-      .catch(function (err) {
+        if (state.save === "dirty") saveTimer = setTimeout(autoSave, SAVE_DELAY);
+      }, function (err) {
+        if (!state || state.project.id !== id) return;
         if (err.status === 409) {
           setSave("conflict", err.message);
         } else {
           setSave("error", err.message);
-          saveTimer = setTimeout(save, 8000);
+          saveTimer = setTimeout(autoSave, RETRY_DELAY);
         }
       })
       .then(function () {
         saving = null;
       });
-    return saving;
+    return saving.then(function () {
+      if (!state || state.project.id !== id) throw saveError();
+      if (state.save === "dirty") return save();
+      if (state.save !== "saved") throw saveError();
+    });
+  }
+
+  /** Edits that are not on the server (and would be lost by leaving now). */
+  function hasUnsaved() {
+    return !!state && state.save !== "saved";
+  }
+
+  /**
+   * After a conflict: keep this editor's state as a new project, so neither
+   * the colleague's work nor ours is lost. Resolves the new project.
+   */
+  function saveAsCopy() {
+    if (!state) return Promise.reject(saveError());
+    return NP.api.createProject({ copyOf: state.project }).then(function (r) { return r.project; });
   }
 
   /** After a server-side change (review round, status …): adopt rev/status. */
@@ -400,11 +536,10 @@
   }
 
   window.addEventListener("beforeunload", function (e) {
-    if (state && (state.save === "dirty" || state.save === "saving" || state.save === "error")) {
-      save();
-      e.preventDefault();
-      e.returnValue = "";
-    }
+    if (!hasUnsaved()) return;
+    if (state.save !== "conflict") autoSave();
+    e.preventDefault();
+    e.returnValue = "";
   });
 
   NP.store = {
@@ -422,6 +557,11 @@
     removeSection: removeSection,
     moveSection: moveSection,
     duplicateSection: duplicateSection,
+    removeSections: removeSections,
+    duplicateSections: duplicateSections,
+    moveSections: moveSections,
+    pick: pick,
+    picked: picked,
     addAssets: addAssets,
     setAsset: setAsset,
     select: select,
@@ -432,12 +572,14 @@
     canUndo: function () { return past.length > 0; },
     canRedo: function () { return future.length > 0; },
     save: save,
+    hasUnsaved: hasUnsaved,
+    saveAsCopy: saveAsCopy,
     adopt: adopt,
     close: function () {
       clearTimeout(saveTimer);
       listeners = [];
       var closing = state;
-      var p = state && state.save !== "saved" && state.save !== "conflict" ? save() : Promise.resolve();
+      var p = state && state.save !== "saved" && state.save !== "conflict" ? save().catch(function () {}) : Promise.resolve();
       return p.then(function () {
         if (state === closing || (state && closing && state.project.id === closing.project.id)) state = null;
       });

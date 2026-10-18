@@ -568,3 +568,45 @@ p { margin: 0; }
 .nx-asst__input { resize: vertical; min-height: 72px; }
 .nx-asst__actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .nx-code { max-height: 60vh; overflow: auto; margin: 0; padding: 14px; border-radius: 10px; background: #14161b; color: #e6e8ee; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; tab-size: 2; }
+
+/* ------------------------- conflict, shortcuts, groups ------------------------- */
+/* A colleague saved first: stays over the page until the user reloads or keeps a copy. */
+.nx-conflict { position: absolute; z-index: 5; top: 12px; left: 24px; right: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid #f0c2bf; border-left: 4px solid var(--danger); box-shadow: var(--shadow-md); font-size: 13px; line-height: 1.45; color: var(--ink); }
+.nx-conflict[hidden] { display: none; }
+.nx-conflict > svg { color: var(--danger); flex: none; }
+.nx-conflict__text { flex: 1 1 280px; min-width: 0; }
+.nx-conflict__acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.nx-motion[aria-pressed="true"] { background: var(--green-soft); color: var(--green-deep); }
+@media (max-width: 1500px) { .nx-motion > span { display: none; } .nx-motion { width: 30px; padding: 0; } }
+
+.nx-shortcuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px; }
+.nx-shortcuts__group { display: flex; flex-direction: column; gap: 6px; }
+.nx-shortcuts__list { margin: 0; display: flex; flex-direction: column; }
+.nx-shortcuts__row { display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.nx-shortcuts__row dd { margin: 0; color: var(--ink-2); }
+.nx-shortcuts__foot { grid-column: 1 / -1; }
+.nx-keys { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.nx-keys__plus { color: var(--ink-3); font-size: 11px; }
+.nx-kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--border-strong); border-bottom-width: 2px; background: var(--surface); font: 700 11.5px/1 var(--font); color: var(--ink); }
+
+.nx-groupbar { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; padding: 4px 4px 4px 10px; border-radius: 10px; background: var(--green-soft); border: 1px solid var(--green); }
+.nx-groupbar__n { flex: 1; font-size: 12.5px; color: var(--green-deep); }
+.nx-seclist__item.is-picked { border-color: var(--green); background: var(--green-soft); }
+.nx-seclist__item.is-picked .nx-seclist__icon { background: var(--surface); color: var(--green-deep); }
+
+/* review: who sees a comment */
+.nx-comment__vis { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nx-comment__vis .nx-tag { gap: 4px; text-transform: none; }
+.nx-tag--shared { background: #e7f0ff; color: #1e5fbf; }
+.nx-share { font-size: 12.5px; color: var(--ink-2); }
+.nx-row--between { justify-content: space-between; }
+
+/* project: the share card */
+.nx-sharecard { display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.nx-sharecard__img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; background: var(--surface-3); }
+.nx-sharecard__img.is-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--ink-3); font-size: 12px; }
+.nx-sharecard__text { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px 10px; background: var(--surface-2); }
+.nx-sharecard__host { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
+.nx-sharecard__title { font-size: 14px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nx-sharecard__desc { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
