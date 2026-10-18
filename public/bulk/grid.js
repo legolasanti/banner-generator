@@ -7,6 +7,11 @@
    draws its banners once it scrolls near the viewport, and a card that is
    off-screen when its row changes is just marked stale and redrawn when it
    comes back.
+
+   With a few hundred rows the list needs handles: search (headline, filename
+   or a row number), sorting, and a selection — the tick at the start of each
+   card — that the bar at the top acts on: weight, sizes back to Auto, in or
+   out of the download, duplicate, remove.
    ========================================================================= */
 (function () {
   "use strict";
@@ -14,10 +19,19 @@
   var BULK = (window.BULK = window.BULK || {});
   var store = BULK.store;
   var state = BULK.state;
+  var ui = BULK.ui;
   var h = window.WPE.util.h;
 
   var DENSITY = { s: 0.2, m: 0.28, l: 0.4 };
   var LEVEL_LABEL = { ok: "Klar", warn: "Sjekk", error: "Feil", pending: "Venter" };
+  var SORTS = [
+    ["sheet", "Rekkefølge i arket"],
+    ["status", "Feil først"],
+    ["long", "Lengst overskrift først"],
+    ["short", "Kortest overskrift først"],
+  ];
+  var HEADLINE_DEBOUNCE_MS = 220;
+  var ANNOUNCE_MS = 700;
 
   var dom = {};
   var cards = {}; // rid → {card, thumbs, headline, ...}
@@ -26,20 +40,6 @@
   var stale = {};
 
   // ---- toolbar ----------------------------------------------------------
-  function seg(items, active, onPick, label) {
-    var wrap = h("div.segmented.bk-seg", { role: "group", "aria-label": label });
-    items.forEach(function (it) {
-      var b = h("button.seg", { type: "button", "data-val": it[0], title: it[2] || null }, it[1]);
-      if (String(it[0]) === String(active)) b.classList.add("is-active");
-      b.addEventListener("click", function () {
-        Array.prototype.forEach.call(wrap.children, function (x) { x.classList.toggle("is-active", x === b); });
-        onPick(it[0]);
-      });
-      wrap.appendChild(b);
-    });
-    return wrap;
-  }
-
   function buildToolbar() {
     dom.sourceLine = h("div.bk-srcline");
     dom.filters = h("div.bk-filters", { role: "group", "aria-label": "Vis rader" });
@@ -81,15 +81,13 @@
       h(
         "div.bk-toolbar__row.bk-toolbar__row--controls",
         null,
-        dom.filters,
-        h("span.bk-sep"),
         h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Formater"), dom.formatChips),
         h("span.bk-sep"),
         h(
           "div.bk-ctl",
           null,
           h("span.bk-ctl__label", null, "Skrift"),
-          seg([["bold", "Halvfet"], ["regular", "Normal"]], state.weight, function (v) {
+          ui.seg([["bold", "Halvfet"], ["regular", "Normal"]], state.weight, function (v) {
             state.weight = v;
             store.emit("weight");
           }, "Skrifttykkelse")
@@ -100,14 +98,152 @@
           "div.bk-ctl",
           null,
           h("span.bk-ctl__label", null, "Visning"),
-          seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
+          ui.seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
             state.density = v;
             applyDensity();
           }, "Størrelse på forhåndsvisning")
         )
-      )
+      ),
+      buildListBar()
     );
     return dom.toolbar;
+  }
+
+  /** Select-all, the status filters, search and sort. */
+  function buildListBar() {
+    dom.selectAll = h("input", { type: "checkbox", "aria-label": "Velg alle radene som vises" });
+    dom.selectAll.addEventListener("change", function () {
+      selectWhere(dom.selectAll.checked ? function () { return true; } : null);
+    });
+    dom.search = h("input.bk-input.bk-search", {
+      type: "search",
+      placeholder: "Søk i overskrift, filnavn eller radnummer",
+      "aria-label": "Søk i radene",
+      spellcheck: "false",
+    });
+    var st = null;
+    dom.search.addEventListener("input", function () {
+      clearTimeout(st);
+      st = setTimeout(function () {
+        state.search = dom.search.value;
+        applyView(true);
+      }, 120);
+    });
+    dom.search.addEventListener("keydown", function (e) {
+      // Enter on a row number (or a single hit) opens that row.
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      state.search = dom.search.value;
+      applyView(true);
+      var hits = store.viewRows();
+      if (hits.length === 1 || (/^\d+$/.test(dom.search.value.trim()) && hits.length)) BULK.editor.open(hits[0].rid);
+    });
+    dom.sort = h("select.bk-select", { "aria-label": "Sorter radene" });
+    SORTS.forEach(function (s) {
+      dom.sort.appendChild(h("option", { value: s[0], selected: state.sort === s[0] }, s[1]));
+    });
+    dom.sort.addEventListener("change", function () {
+      state.sort = dom.sort.value;
+      store.emit("view");
+      store.persist();
+      applyView(true);
+    });
+    dom.listTools = h("div.bk-listtools");
+    // While rows are ticked, the selection bar takes this row's place rather
+    // than appearing above it: the list must not jump down under the pointer
+    // between ticking one row and the next.
+    dom.listRow = h(
+      "div.bk-toolbar__row.bk-toolbar__row--list",
+      null,
+      h("label.bk-include.bk-selectall", { title: "Velg alle radene som vises" }, dom.selectAll),
+      buildSelectionBar(),
+      dom.filters,
+      dom.listTools,
+      h("div.bk-toolbar__spacer"),
+      dom.search,
+      dom.sort
+    );
+    return dom.listRow;
+  }
+
+  /** What can be done to the ticked rows. Shown (in the list row) only while some are ticked. */
+  function buildSelectionBar() {
+    dom.selCount = h("b.bk-selbar__n");
+    var link = function (label, fn, title) {
+      var b = h("button.bk-link", { type: "button", title: title || null }, label);
+      b.addEventListener("click", fn);
+      return b;
+    };
+    var act = function (label, fn, extra, title) {
+      var b = h("button.btn-ghost.btn-sm" + (extra || ""), { type: "button", title: title || null }, label);
+      b.addEventListener("click", function () {
+        var rows = selectedRows();
+        if (rows.length) fn(rows);
+      });
+      return b;
+    };
+    var weight = function (label, value, title) {
+      return act(label, function (rows) {
+        rows.forEach(function (row) { store.updateRow(row, { weight: value }, { refit: true, touch: true }); });
+      }, null, title);
+    };
+    dom.selbar = h(
+      "div.bk-selbar",
+      { hidden: true, role: "region", "aria-label": "Valgte rader" },
+      dom.selCount,
+      link("Alle som vises", function () { selectWhere(function () { return true; }); }),
+      link("Bare klare", function () { selectWhere(function (r) { return r.level === "ok"; }); }, "Velg radene som er klare"),
+      link("Ingen", function () { selectWhere(null); }),
+      h("span.bk-sep"),
+      h("span.bk-ctl__label", null, "Skrift"),
+      weight("Halvfet", "bold"),
+      weight("Normal", "regular"),
+      weight("Som resten", "", "Følg valget for hele kjøringen"),
+      h("span.bk-sep"),
+      act("Tekststørrelse til Auto", function (rows) {
+        rows.forEach(function (row) {
+          if (Object.keys(row.manual).length) store.updateRow(row, { manual: {} }, { refit: true });
+        });
+      }),
+      act("Ta med", function (rows) { rows.forEach(function (row) { store.updateRow(row, { include: true }); }); }),
+      act("Ta ut", function (rows) { rows.forEach(function (row) { store.updateRow(row, { include: false }); }); }),
+      act("Dupliser", function (rows) { rows.forEach(function (row) { store.duplicateRow(row); }); }),
+      act("Fjern", function (rows) {
+        var n = rows.length;
+        if (!confirm("Fjerne " + n + (n === 1 ? " rad" : " rader") + " fra listen? Regnearket endres ikke.")) return;
+        store.removeRows(rows);
+      }, ".is-danger")
+    );
+    return dom.selbar;
+  }
+
+  function selectedRows() {
+    return state.rows.filter(function (r) { return r.selected; });
+  }
+
+  /** Tick the rows in view that `pick` accepts; untick the rest. No pick = none. */
+  function selectWhere(pick) {
+    var shown = store.viewRows();
+    state.rows.forEach(function (row) {
+      row.selected = !!pick && shown.indexOf(row) !== -1 && pick(row);
+      var c = cards[row.rid];
+      if (c) {
+        c.select.checked = row.selected;
+        c.card.classList.toggle("is-selected", row.selected);
+      }
+    });
+    renderSelection();
+  }
+
+  function renderSelection() {
+    var n = selectedRows().length;
+    var shown = store.viewRows();
+    var shownSelected = shown.filter(function (r) { return r.selected; }).length;
+    dom.selbar.hidden = !n;
+    dom.listRow.classList.toggle("has-selection", !!n);
+    dom.selCount.textContent = n + " valgt";
+    dom.selectAll.checked = !!shown.length && shownSelected === shown.length;
+    dom.selectAll.indeterminate = shownSelected > 0 && shownSelected < shown.length;
   }
 
   function renderSourceLine() {
@@ -122,7 +258,7 @@
     if (src.url) {
       var again = h("button.bk-link", { type: "button" }, "Hent på nytt");
       again.addEventListener("click", function () {
-        if (!confirm("Hente arket på nytt? Endringer du har gjort her, erstattes av det som står i arket.")) return;
+        if (!confirm("Hente arket på nytt? Rader med samme radnummer og overskrift beholder det du har justert her; resten erstattes av det som står i arket.")) return;
         BULK.source.reload().catch(function (err) { BULK.source.toast(err.message, "err"); });
       });
       dom.sourceLine.appendChild(again);
@@ -155,30 +291,71 @@
       b.addEventListener("click", function () {
         state.filter = f[0];
         renderFilters();
-        applyFilter();
+        applyView(true);
       });
       dom.filters.appendChild(b);
     });
+    renderListTools();
+    announceSoon(c);
+  }
+
+  /** The retry and report links beside the filters, when there is a reason. */
+  function renderListTools() {
+    dom.listTools.innerHTML = "";
     // A dead link may have been fixed at the source, or a server was briefly
     // down: one click tries every failed photo again.
     var failed = state.rows.filter(function (r) { return r.image && r.image.status === "error"; }).length;
     if (failed) {
       var retry = h("button.bk-link.bk-retry", { type: "button" }, "Hent " + failed + (failed === 1 ? " bilde" : " bilder") + " på nytt");
       retry.addEventListener("click", function () { BULK.source.retryFailed(); });
-      dom.filters.appendChild(retry);
+      dom.listTools.appendChild(retry);
+    }
+    if (ui.problemLines(state.rows).length > 1) {
+      var report = h("button.bk-link", { type: "button", title: "Rader med feil eller merknader, med radnummer og årsak – til den som fylte ut arket" }, "Feilrapport (CSV)");
+      report.addEventListener("click", function () {
+        ui.downloadProblemReport(state.rows, BULK.run.zipName());
+      });
+      dom.listTools.appendChild(report);
     }
   }
 
-  function applyFilter() {
-    var any = false;
+  // Screen readers hear the counts settle, not every step of the fitting.
+  var announceTimer = null;
+  function announceSoon(c) {
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(function () {
+      var parts = [c.all + (c.all === 1 ? " rad" : " rader")];
+      if (c.ok) parts.push(c.ok + " klare");
+      if (c.warn) parts.push(c.warn + " å sjekke");
+      if (c.error) parts.push(c.error + " med feil");
+      if (c.pending) parts.push(c.pending + " venter");
+      dom.live.textContent = parts.join(", ");
+    }, ANNOUNCE_MS);
+  }
+
+  /**
+   * Show the rows the filter and search let through. `reorder` also puts the
+   * cards in the chosen sort order — done only when the user changes the
+   * view, never while fitting changes a status, so a card does not jump away
+   * under the pointer.
+   */
+  function applyView(reorder) {
+    var rows = store.viewRows();
+    var shown = {};
+    rows.forEach(function (row) { shown[row.rid] = true; });
     state.rows.forEach(function (row) {
       var c = cards[row.rid];
-      if (!c) return;
-      var show = state.filter === "all" || row.level === state.filter;
-      c.card.hidden = !show;
-      if (show) any = true;
+      if (c) c.card.hidden = !shown[row.rid];
     });
-    dom.empty.hidden = any || !state.rows.length;
+    if (reorder) {
+      rows.forEach(function (row) {
+        var c = cards[row.rid];
+        if (c) dom.list.appendChild(c.card);
+      });
+    }
+    dom.empty.hidden = !!rows.length || !state.rows.length;
+    dom.empty.textContent = state.search ? "Ingen rader passer søket «" + state.search.trim() + "»." : "Ingen rader i dette utvalget.";
+    renderSelection();
   }
 
   function applyDensity() {
@@ -189,20 +366,28 @@
 
   // ---- row cards --------------------------------------------------------
   function buildCard(row) {
-    var include = h("input", { type: "checkbox", checked: row.include, title: "Ta med i nedlastingen" });
-    include.addEventListener("change", function () {
-      store.updateRow(row, { include: include.checked });
+    var label = row.sheetRow ? "rad " + row.sheetRow : "ny rad";
+    var select = h("input", { type: "checkbox", checked: row.selected, "aria-label": "Velg " + label });
+    select.addEventListener("change", function () {
+      row.selected = select.checked;
+      card.classList.toggle("is-selected", row.selected);
+      renderSelection();
+    });
+    var include = h("button.bk-toggle", { type: "button" });
+    include.addEventListener("click", function () {
+      store.updateRow(row, { include: !row.include });
     });
 
-    var headline = h("textarea.bk-hl", { rows: 2, maxlength: 200, "aria-label": "Overskrift, rad " + (row.sheetRow || "") });
+    var headline = h("textarea.bk-hl", { rows: 2, maxlength: 200, "aria-label": "Overskrift, " + label });
     headline.value = row.headline;
-    var t = null;
+    var key = "grid:" + row.rid;
     headline.addEventListener("input", function () {
-      clearTimeout(t);
-      t = setTimeout(function () {
+      store.deferEdit(key, function () {
+        if (state.rows.indexOf(row) === -1) return;
         store.updateRow(row, { headline: headline.value.replace(/\s+/g, " ").trim() }, { refit: true });
-      }, 220);
+      }, HEADLINE_DEBOUNCE_MS);
     });
+    headline.addEventListener("blur", function () { store.flushEdits(key); });
 
     var count = h("span.bk-count");
     var file = h("span.bk-file");
@@ -214,7 +399,7 @@
     var runMark = h("span.bk-runmark", { hidden: true });
 
     var card = h(
-      "article.bk-card",
+      "article.bk-card" + (row.selected ? ".is-selected" : ""),
       { "data-rid": row.rid },
       h(
         "div.bk-card__meta",
@@ -222,11 +407,12 @@
         h(
           "div.bk-card__top",
           null,
-          h("label.bk-include", null, include),
-          h("span.bk-rownum", { title: "Rad i regnearket" }, row.sheetRow ? "Rad " + row.sheetRow : "—"),
+          h("label.bk-include", null, select),
+          h("span.bk-rownum", { title: "Rad i regnearket" }, row.sheetRow ? "Rad " + row.sheetRow : "Ny"),
           badge,
           runMark,
           h("span.bk-toolbar__spacer"),
+          include,
           adjust
         ),
         headline,
@@ -235,21 +421,43 @@
       ),
       thumbs
     );
-    cards[row.rid] = { card: card, include: include, headline: headline, count: count, file: file, issues: issues, badge: badge, thumbs: thumbs, runMark: runMark, built: false };
+    cards[row.rid] = { card: card, select: select, include: include, headline: headline, count: count, file: file, issues: issues, badge: badge, thumbs: thumbs, runMark: runMark, built: false };
     if (observer) observer.observe(card);
     return card;
+  }
+
+  function runMarkText(run) {
+    if (run.status === "done") return "✓ laget" + (run.smaller && run.smaller.length ? " · mindre tekst" : "");
+    if (run.status === "running") return "lages …";
+    if (run.status === "error") return "✕ " + (run.error || "feilet");
+    if (run.status === "waiting") return "i kø";
+    if (run.status === "skipped") return "– ikke laget (avbrutt)";
+    return "";
+  }
+
+  /** The final filename and the row's own weight, under the headline. */
+  function renderFile(row) {
+    var c = cards[row.rid];
+    if (!c) return;
+    var base = store.fileBaseOf(row);
+    c.file.textContent = base + (row.weight ? " · " + (row.weight === "regular" ? "Normal" : "Halvfet") : "");
+    c.file.title = "Filnavn i ZIP-en: " + base + "-…" + (row.filename ? "" : " (laget fra overskriften)");
   }
 
   function updateMeta(row) {
     var c = cards[row.rid];
     if (!c) return;
     c.card.classList.toggle("is-excluded", !row.include);
+    c.card.classList.toggle("is-selected", !!row.selected);
     c.card.dataset.level = row.level;
-    c.include.checked = row.include;
+    c.select.checked = !!row.selected;
+    c.include.textContent = row.include ? "Ta ut" : "Ta med";
+    c.include.setAttribute("aria-pressed", row.include ? "false" : "true");
+    c.include.title = row.include ? "Ikke ta med denne i nedlastingen" : "Ta med denne i nedlastingen igjen";
     if (document.activeElement !== c.headline && c.headline.value !== row.headline) c.headline.value = row.headline;
     var n = window.BannerAutofit.countChars(row.headline);
     c.count.textContent = n + " tegn";
-    c.file.textContent = (row.filename ? row.filename : "filnavn fra overskrift") + (row.weight ? " · " + (row.weight === "regular" ? "Normal" : "Halvfet") : "");
+    renderFile(row);
     c.badge.className = "bk-badge bk-badge--" + row.level;
     c.badge.textContent = LEVEL_LABEL[row.level] || "";
     c.issues.innerHTML = "";
@@ -262,9 +470,8 @@
     c.runMark.hidden = !run;
     if (run) {
       c.runMark.className = "bk-runmark bk-runmark--" + run.status;
-      c.runMark.textContent =
-        run.status === "done" ? "✓ laget" : run.status === "running" ? "lages …" : run.status === "error" ? "✕ " + (run.error || "feilet") : run.status === "waiting" ? "i kø" : "";
-      c.runMark.title = run.error || "";
+      c.runMark.textContent = runMarkText(run);
+      c.runMark.title = run.error || (run.notes || []).join("\n");
     }
   }
 
@@ -331,6 +538,25 @@
     if (visible[row.rid]) drawThumbs(row);
   }
 
+  function addCard(row) {
+    stale[row.rid] = true;
+    var card = buildCard(row);
+    var next = state.rows[state.rows.indexOf(row) + 1];
+    var before = next && cards[next.rid] ? cards[next.rid].card : null;
+    dom.list.insertBefore(card, before);
+    updateMeta(row);
+  }
+
+  function dropCard(row) {
+    var c = cards[row.rid];
+    if (!c) return;
+    if (observer) observer.unobserve(c.card);
+    c.card.remove();
+    delete cards[row.rid];
+    delete visible[row.rid];
+    delete stale[row.rid];
+  }
+
   function rebuild() {
     dom.list.innerHTML = "";
     cards = {};
@@ -341,6 +567,7 @@
       function (entries) {
         entries.forEach(function (e) {
           var rid = e.target.dataset.rid;
+          if (!cards[rid]) return;
           visible[rid] = e.isIntersecting;
           if (e.isIntersecting && (stale[rid] || !cards[rid].built)) {
             var row = store.findRow(rid);
@@ -355,10 +582,12 @@
       dom.list.appendChild(buildCard(row));
       updateMeta(row);
     });
+    if (dom.search.value !== state.search) dom.search.value = state.search;
+    dom.sort.value = state.sort;
     renderSourceLine();
     renderWarnings();
     renderFilters();
-    applyFilter();
+    applyView(true);
     applyDensity();
   }
 
@@ -370,6 +599,7 @@
   }
 
   // Filters/counts are cheap but run on every fit; batch them per frame.
+  // Filenames too: a row becoming ready can give another row its "-2".
   var countsQueued = false;
   function refreshCountsSoon() {
     if (countsQueued) return;
@@ -377,7 +607,8 @@
     requestAnimationFrame(function () {
       countsQueued = false;
       renderFilters();
-      if (state.filter !== "all") applyFilter();
+      state.rows.forEach(renderFile);
+      if (state.filter !== "all" || state.search) applyView(false);
       if (BULK.run) BULK.run.refresh();
     });
   }
@@ -387,10 +618,18 @@
     dom.warnings = h("ul.bk-warnings", { hidden: true });
     dom.list = h("div.bk-list");
     dom.empty = h("p.bk-empty", { hidden: true }, "Ingen rader i dette utvalget.");
+    dom.live = h("p.bk-sr", { "aria-live": "polite", role: "status" });
+    var addRow = h("button.btn-ghost.btn-sm.bk-addrow", { type: "button", title: "En banner som ikke står i arket" }, "+ Ny rad");
+    addRow.addEventListener("click", function () {
+      var row = store.addBlankRow();
+      BULK.editor.open(row.rid);
+    });
     host.appendChild(buildToolbar());
     host.appendChild(dom.warnings);
     host.appendChild(dom.list);
     host.appendChild(dom.empty);
+    host.appendChild(h("div.bk-listfoot", null, addRow));
+    host.appendChild(dom.live);
   }
 
   store.on(function (what, payload) {
@@ -401,9 +640,15 @@
     } else if (what === "row") {
       refreshRow(payload.row);
       refreshCountsSoon();
+    } else if (what === "list") {
+      payload.removed.forEach(dropCard);
+      payload.added.forEach(addCard);
+      applyView(false);
+      refreshCountsSoon();
     } else if (what === "run-rows") {
       // Only the run mark changed: the banners themselves stay as drawn.
       state.rows.forEach(updateMeta);
+      renderListTools();
     } else if (what === "evaluated" || what === "formats" || what === "crop") {
       state.rows.forEach(refreshRow);
       refreshCountsSoon();

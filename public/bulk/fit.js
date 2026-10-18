@@ -175,6 +175,7 @@
   // Refit what changed.
   store.on(function (what, payload) {
     if (what === "rows") schedule();
+    else if (what === "list") schedule(payload.added);
     else if (what === "row" && payload.refit) schedule([payload.row]);
     else if (what === "row") {
       evaluate(payload.row);

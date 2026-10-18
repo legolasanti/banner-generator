@@ -182,6 +182,7 @@
       if (e.target === dom.root) close();
     });
     dom.root.addEventListener("keydown", function (e) {
+      BULK.ui.trapTab(dom.root, e);
       if (e.key === "Escape") close();
     });
   }
@@ -208,20 +209,17 @@
       overrides[spec.label] = { min: r.min, max: spec.autoFit.max, tiers: r.tiers };
     });
     dom.save.disabled = true;
-    fetch("/api/settings")
-      .then(BULK.source.readJson)
-      .then(function (settings) {
-        settings.autoFit = overrides;
-        return fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(settings),
-        });
-      })
+    // Only the rules go to the server: sending the whole settings object back
+    // would undo whatever someone changed in Innstillinger meanwhile.
+    fetch("/api/bulk/rules", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ autoFit: overrides }),
+    })
       .then(BULK.source.readJson)
       .then(function (saved) {
         applyRules(saved.autoFit || {});
-        BULK.settings = saved;
+        BULK.settings = Object.assign({}, BULK.settings, { autoFit: saved.autoFit || {} });
         BULK.source.toast("Reglene er lagret", "ok");
         close();
       })

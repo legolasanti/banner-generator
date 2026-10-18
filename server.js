@@ -46,6 +46,11 @@ const wallpaperDeliver = require("./lib/wallpaper/deliver");
 const { createBulkImages } = require("./lib/bulk/images");
 const { createBulkJobs } = require("./lib/bulk/jobs");
 const bulkDeliver = require("./lib/bulk/deliver");
+const bulkHistory = require("./lib/bulk/history");
+// "Spar 50 % på hotell.png" → "spar-50-pa-hotell". Shared with the browser
+// (public/bulk/names.js), so Bulk can show each row's final filename before
+// the run.
+const { sanitizeFilename } = require("./public/bulk/names.js");
 const bulkLinks = require("./lib/bulk/links");
 const { registerBulkRoutes } = require("./lib/bulk/routes");
 const { createNative } = require("./lib/native");
@@ -208,17 +213,6 @@ function ensureDirsSync() {
   }
 }
 
-function sanitizeFilename(name) {
-  let s = String(name == null ? "" : name).trim().toLowerCase();
-  s = s.replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a");
-  // strip remaining accents/diacritics
-  s = s.normalize("NFKD").replace(/[̀-ͯ]/g, "");
-  s = s.replace(/\s+/g, "-");
-  s = s.replace(/[^a-z0-9-]/g, "");
-  s = s.replace(/-+/g, "-").replace(/^-+|-+$/g, "");
-  s = s.slice(0, 60).replace(/^-+|-+$/g, "");
-  return s || "banner";
-}
 
 function clampNumber(value, min, max, fallback) {
   let n = Number(value);
@@ -910,15 +904,16 @@ app.use(
   })
 );
 
-// Bulk photos (render masters and previews). Content-hashed names; same
-// treatment as the wallpaper assets.
+// Bulk photos (render masters and previews). Content-hashed names, but NOT
+// cached forever like the wallpaper assets: they are scratch, cleared after
+// a few weeks unused, and a browser holding an immutable copy would keep
+// showing a photo the server can no longer render.
 app.use(
   "/bulk-assets",
   express.static(BULK_DIR, {
     index: false,
     dotfiles: "deny",
-    immutable: true,
-    maxAge: "365d",
+    maxAge: "1d",
     fallthrough: false,
     setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
   })
@@ -1266,8 +1261,10 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
 });
 
 // ---- History --------------------------------------------------------------
+// Bulk entries are sent as summaries: their rows (a few hundred per run) are
+// only needed for the download, which reads them itself.
 app.get("/api/history", async (req, res) => {
-  res.json(await loadHistory());
+  res.json((await loadHistory()).map(bulkHistory.summarize));
 });
 
 app.get("/api/history/:id/download", async (req, res) => {
@@ -1618,7 +1615,6 @@ const bulkJobs = createBulkJobs({
   buildHtmlPackages,
   loadSettings,
   budgetFor,
-  sanitizeFilename,
   normalizeClickUrl,
   fileStamp,
   images: bulkImages,
@@ -1626,15 +1622,28 @@ const bulkJobs = createBulkJobs({
   historyDir: HISTORY_DIR,
   logoPath: ABC_LOGO,
   logoAsset: ABC_LOGO_ASSET,
-  saveHistoryEntry: (entry) =>
+  // A run's entry is written after its first banner and replaced in place
+  // after every one after it (see lib/bulk/history.js).
+  upsertHistoryEntry: (entry) =>
     withHistoryLock(async () => {
       let history = await loadHistory();
-      history.unshift(entry);
-      history = await trimHistory(history);
+      const idx = history.findIndex((e) => e.id === entry.id);
+      if (idx >= 0) {
+        history = history.map((e, i) => (i === idx ? entry : e));
+      } else {
+        history.unshift(entry);
+        history = await trimHistory(history);
+      }
       await writeHistory(history);
     }),
 });
-registerBulkRoutes(app, { safeFetch, images: bulkImages, jobs: bulkJobs });
+registerBulkRoutes(app, {
+  safeFetch,
+  images: bulkImages,
+  jobs: bulkJobs,
+  // Merged into what is stored, so nothing else in settings.json is touched.
+  updateAutoFit: async (autoFit) => saveSettings({ ...(await loadSettings()), autoFit }),
+});
 
 // SPA-ish fallback to index for unknown non-API GETs
 app.get(/^(?!\/api\/).*/, (req, res, next) => {
@@ -1657,6 +1666,9 @@ async function start() {
   await loadSettings(); // creates settings.json if missing
   if (!(await pathExists(HISTORY_JSON))) await writeHistory([]);
   bulkImages.cleanUp().catch((e) => console.warn("[bulk] clean-up: " + e.message));
+  bulkHistory
+    .tidy({ historyDir: HISTORY_DIR, withLock: withHistoryLock, loadHistory, writeHistory })
+    .catch((e) => console.warn("[bulk] history tidy-up: " + e.message));
 
   if (!imageTools.isAvailable()) {
     console.warn(

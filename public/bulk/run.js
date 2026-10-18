@@ -6,7 +6,9 @@
    the server (lib/bulk/jobs.js); this polls it, mirrors each row's state onto
    its card, and when it finishes offers the ZIP in the chosen folder layout —
    plus the other layouts, which cost nothing (the files are already made).
-   The job id is remembered, so a reload in the middle picks the run back up.
+   The job is remembered, so a reload in the middle picks the run back up,
+   and a reload after it still shows the result, its downloads and what
+   failed.
    ========================================================================= */
 (function () {
   "use strict";
@@ -17,8 +19,12 @@
   var h = window.WPE.util.h;
 
   var POLL_MS = 900;
+  var IMAGE_MISSING = "image-missing"; // lib/bulk/jobs.js
+  var MAX_LISTED_FAILURES = 12;
   var dom = {};
   var pollTimer = null;
+  // Between the click and the server's answer: no second run may start.
+  var starting = false;
 
   var LAYOUTS = [
     ["format", "Per størrelse", "Én mappe per størrelse, f.eks. 320x400/"],
@@ -26,19 +32,7 @@
     ["flat", "Alt i én", "Alle filene direkte i ZIP-en"],
   ];
 
-  function seg(items, active, onPick, label) {
-    var wrap = h("div.segmented.bk-seg", { role: "group", "aria-label": label });
-    items.forEach(function (it) {
-      var b = h("button.seg", { type: "button", "data-val": it[0], title: it[2] || null }, it[1]);
-      if (String(it[0]) === String(active)) b.classList.add("is-active");
-      b.addEventListener("click", function () {
-        Array.prototype.forEach.call(wrap.children, function (x) { x.classList.toggle("is-active", x === b); });
-        onPick(it[0]);
-      });
-      wrap.appendChild(b);
-    });
-    return wrap;
-  }
+  var seg = BULK.ui.seg;
 
   function setOutput(patch) {
     Object.assign(state.output, patch);
@@ -91,13 +85,14 @@
 
     dom.progress = h("div.bk-progress", { hidden: true });
     dom.bar = h("span.bk-progress__bar");
+    dom.track = h("div.bk-progress__track", { role: "progressbar", "aria-label": "Fremdrift", "aria-valuemin": "0", "aria-valuemax": "100" }, dom.bar);
     dom.progressText = h("span.bk-progress__text");
     dom.cancel = h("button.btn-ghost.btn-sm", { type: "button" }, "Avbryt");
     dom.cancel.addEventListener("click", cancel);
-    dom.progress.appendChild(h("div.bk-progress__track", null, dom.bar));
+    dom.progress.appendChild(dom.track);
     dom.progress.appendChild(h("div.bk-progress__row", null, dom.progressText, dom.cancel));
 
-    dom.result = h("div.bk-result", { hidden: true });
+    dom.result = h("div.bk-result", { hidden: true, "aria-live": "polite" });
 
     host.appendChild(
       h(
@@ -121,18 +116,16 @@
     refresh();
   }
 
-  function sendable() {
-    return state.rows.filter(function (r) {
-      return r.include && (r.level === "ok" || r.level === "warn");
-    });
+  function isRunning(job) {
+    return !!job && (job.status === "queued" || job.status === "running");
   }
 
   /** The button's wording and the line beside it. */
   function refresh() {
     if (!dom.go) return;
-    var running = state.job && (state.job.status === "queued" || state.job.status === "running");
+    var running = isRunning(state.job) || starting;
     var c = BULK.fit.counts();
-    var ready = sendable().length;
+    var ready = store.sendable().length;
     var formats = store.specs().length;
     var excludedErr = state.rows.filter(function (r) { return r.include && r.level === "error"; }).length;
     var pending = c.pending || 0;
@@ -187,7 +180,7 @@
         outputType: state.output.type,
         format: state.output.format,
         resolution: state.output.resolution,
-        name: state.output.name || defaultName(),
+        name: zipName(),
         clickUrl: state.output.clickUrl,
       },
     };
@@ -199,12 +192,21 @@
     return base;
   }
 
+  /** The run's name: the ZIP, the history entry, the error report. */
+  function zipName() {
+    return window.BULK_NAMES.sanitizeFilename(state.output.name || defaultName());
+  }
+
   function start() {
-    var rows = sendable();
+    if (starting || isRunning(state.job)) return;
+    // A headline still being typed belongs in this run, not the next one.
+    store.flushEdits();
+    var rows = store.sendable();
     if (!rows.length) return;
+    starting = true;
     clearRunMarks();
     dom.result.hidden = true;
-    dom.go.disabled = true;
+    refresh();
     fetch("/api/bulk/jobs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -212,10 +214,12 @@
     })
       .then(BULK.source.readJson)
       .then(function (job) {
+        starting = false;
         job.rids = rows.map(function (r) { return r.rid; });
         track(job);
       })
       .catch(function (err) {
+        starting = false;
         BULK.source.toast(err.message, "err");
         refresh();
       });
@@ -249,6 +253,9 @@
         pollFailures = 0;
         next.rids = job.rids;
         state.job = next;
+        // The first finished banner creates the history entry: remember it,
+        // so a reload or a restart still has the download of what was made.
+        if (next.entryId && !job.entryId) store.persist();
         mirrorRows(next);
         showProgress(next);
         if (next.status === "queued" || next.status === "running") {
@@ -274,12 +281,19 @@
       });
   }
 
-  /** Copy each row's run state onto its card. */
-  function mirrorRows(job) {
-    if (!job.rids) return;
-    job.rows.forEach(function (r, i) {
-      var row = store.findRow(job.rids[i]);
-      if (row) row.run = { status: r.status, error: r.error };
+  /**
+   * Copy each row's run state onto its card. Rows are matched by id (the
+   * server echoes it, and ids survive a reload); a photo the run found gone
+   * is marked on the row itself, so «Hent bildene på nytt» offers to fix it —
+   * but not when replaying a saved result after a reload: the photo may have
+   * been fetched again since.
+   */
+  function mirrorRows(job, replay) {
+    (job.rows || []).forEach(function (r, i) {
+      var row = store.findRow(r.rid || (job.rids && job.rids[i]));
+      if (!row) return;
+      row.run = { status: r.status, error: r.error, notes: r.notes || [], smaller: r.smaller || [] };
+      if (!replay && r.code === IMAGE_MISSING && row.image && row.image.status === "ok") BULK.source.imageGone(row, r.error);
     });
     store.emit("run-rows");
   }
@@ -304,6 +318,7 @@
     var settled = job.done + job.failed;
     var frac = job.total ? settled / job.total : 0;
     dom.bar.style.transform = "scaleX(" + Math.max(0.02, frac) + ")";
+    dom.track.setAttribute("aria-valuenow", String(Math.round(frac * 100)));
     var text = "Lager " + Math.min(job.total, settled + 1) + " av " + job.total;
     if (job.startedAt && job.done > 0) {
       var perRow = (Date.now() - job.startedAt) / 1000 / job.done;
@@ -316,6 +331,7 @@
 
   function finished(job) {
     clearTimeout(pollTimer);
+    dom.track.removeAttribute("aria-valuenow");
     store.persist();
     refresh();
     renderResult();
@@ -348,15 +364,20 @@
     dom.result.hidden = false;
     if (!job.entryId) {
       dom.result.appendChild(h("p.bk-result__text.is-bad", null, job.error || "Ingen bannere ble laget."));
+      renderFailures(job);
       return;
     }
     var html = job.outputType === "html";
     var layout = state.output.layout;
     var layoutName = LAYOUTS.filter(function (l) { return l[0] === layout; })[0][1].toLowerCase();
+    // A run cut off by a restart: its counts are from before the cut, so the
+    // download (which holds everything that was made) says it instead.
     var head =
-      (job.status === "cancelled" ? "Avbrutt: " : "Ferdig: ") +
-      job.done + (job.done === 1 ? " banner" : " bannere") + " i " + job.formats.length + " størrelser" +
-      (job.failed ? " · " + job.failed + " feilet" : "");
+      job.status === "failed"
+        ? "Stoppet underveis – det som ble ferdig, er med i ZIP-en"
+        : (job.status === "cancelled" ? "Avbrutt: " : "Ferdig: ") +
+          job.done + (job.done === 1 ? " banner" : " bannere") + " i " + job.formats.length + " størrelser" +
+          (job.failed ? " · " + job.failed + " feilet" : "");
     var main = h("a.btn-download", { href: downloadUrl(job, layout, html), download: "" }, "Last ned ZIP (" + layoutName + ")");
     var alts = LAYOUTS.filter(function (l) { return l[0] !== layout; }).map(function (l) {
       return h("a.result__alt-link", { href: downloadUrl(job, l[0], html), download: "" }, l[1]);
@@ -373,6 +394,42 @@
     dom.result.appendChild(
       h("div.result__alt", null, h("span.result__alt-label", null, "eller:"), alts, h("span.result__alt-label", null, "· ligger også i Historikk"))
     );
+    renderFailures(job);
+  }
+
+  /**
+   * What did not get made, by sheet row — click one to fix it — and the
+   * report to send to whoever filled in the sheet. Rows that got smaller
+   * text than planned are listed too: they are made, but worth a look.
+   */
+  function renderFailures(job) {
+    var failed = [];
+    var smaller = [];
+    (job.rows || []).forEach(function (r, i) {
+      var row = store.findRow(r.rid || (job.rids && job.rids[i]));
+      if (r.status === "error") failed.push({ row: row, text: r.error || "feilet" });
+      else if (r.status === "done" && r.smaller && r.smaller.length) smaller.push({ row: row, text: (r.notes || []).slice(-r.smaller.length).join(" · ") });
+    });
+    if (!failed.length && !smaller.length) return;
+    var item = function (f, cls) {
+      var label = f.row ? (f.row.sheetRow ? "Rad " + f.row.sheetRow : "Ny rad") + ": " + (f.row.headline || "(uten overskrift)") : "(raden er fjernet)";
+      var btn = h("button.bk-link", { type: "button", disabled: !f.row }, label);
+      if (f.row) btn.addEventListener("click", function () { BULK.editor.open(f.row.rid); });
+      return h("li" + cls, null, btn, h("span", null, " – " + f.text));
+    };
+    var list = h("ul.bk-result__fails");
+    failed.slice(0, MAX_LISTED_FAILURES).forEach(function (f) { list.appendChild(item(f, ".is-bad")); });
+    smaller.slice(0, Math.max(0, MAX_LISTED_FAILURES - failed.length)).forEach(function (f) { list.appendChild(item(f, "")); });
+    var more = failed.length + smaller.length - list.children.length;
+    if (more > 0) list.appendChild(h("li.bk-result__more", null, "… og " + more + " til (se feilrapporten)"));
+    var report = h("button.btn-ghost.btn-sm", { type: "button" }, "Last ned feilrapport (CSV)");
+    report.addEventListener("click", function () { BULK.ui.downloadProblemReport(state.rows, zipName()); });
+    var title = [];
+    if (failed.length) title.push(failed.length + (failed.length === 1 ? " banner ble ikke laget" : " bannere ble ikke laget"));
+    if (smaller.length) title.push(smaller.length + " fikk mindre tekst enn planlagt");
+    dom.result.appendChild(
+      h("div.bk-result__failbox", null, h("div.bk-result__failhead", null, h("b", null, title.join(" · ")), report), list)
+    );
   }
 
   function cancel() {
@@ -386,17 +443,42 @@
       .then(function () { dom.cancel.disabled = false; });
   }
 
-  /** Pick a run back up after a reload. */
-  function resume(jobId) {
-    if (!jobId) return;
-    fetch("/api/bulk/jobs/" + encodeURIComponent(jobId))
+  /**
+   * After a reload: follow a run that was still going, or show the result of
+   * the last one. A run the server has forgotten (it restarted, or the run is
+   * hours old) keeps the result as it was saved — its files are in Historikk.
+   */
+  function resume(saved) {
+    if (!saved || !saved.id) return;
+    if (!isRunning(saved)) {
+      state.job = saved;
+      mirrorRows(saved, true);
+      refresh();
+      renderResult();
+      return;
+    }
+    fetch("/api/bulk/jobs/" + encodeURIComponent(saved.id))
       .then(BULK.source.readJson)
       .then(function (job) {
-        // Row ids are new after a reload; match by position among the sent rows.
-        job.rids = null;
-        track(job);
+        job.rids = saved.rids || null;
+        mirrorRows(job);
+        if (isRunning(job)) track(job);
+        else {
+          state.job = job;
+          finished(job);
+        }
       })
-      .catch(function () { /* finished and forgotten, or the server restarted */ });
+      .catch(function () {
+        // Usually the server restarted mid-run: what was finished is in
+        // Historikk (lib/bulk/history.js keeps it).
+        state.job = Object.assign({}, saved, {
+          status: "failed",
+          error: "Fant ikke kjøringen på serveren lenger – den kan ha blitt startet på nytt. Det som ble ferdig, ligger i Historikk.",
+        });
+        store.persist();
+        refresh();
+        renderResult();
+      });
   }
 
   store.on(function (what) {
@@ -411,5 +493,5 @@
     }
   });
 
-  BULK.run = { build: build, refresh: refresh, resume: resume };
+  BULK.run = { build: build, refresh: refresh, resume: resume, zipName: zipName };
 })();

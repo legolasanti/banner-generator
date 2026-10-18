@@ -47,30 +47,33 @@
   }
 
   // ---- loading the sheet --------------------------------------------------
-  function accept(data, source) {
+  function accept(data, source, merge) {
     if (!data.rows || !data.rows.length) {
       var why = (data.warnings && data.warnings[0]) || "Fant ingen rader i arket.";
       throw new Error(why);
     }
-    store.setRows(data.rows, {
+    var meta = {
       source: Object.assign({}, data.source || {}, source || {}),
       columns: data.columns,
       warnings: data.warnings,
       guessed: data.guessed,
-    });
+    };
+    var kept = merge ? store.mergeRows(data.rows, meta) : (store.setRows(data.rows, meta), 0);
     state.rows.forEach(queueImage);
     var n = data.rows.length;
-    toast(n + (n === 1 ? " rad lest" : " rader lest") + " fra arket", "ok");
+    var msg = n + (n === 1 ? " rad lest" : " rader lest") + " fra arket";
+    if (kept) msg += " · " + kept + " beholdt det du hadde justert";
+    toast(msg, "ok");
   }
 
-  function fromUrl(url) {
+  function fromUrl(url, merge) {
     return fetch("/api/bulk/sheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: url }),
     })
       .then(readJson)
-      .then(function (data) { accept(data); });
+      .then(function (data) { accept(data, null, merge); });
   }
 
   function fromText(text) {
@@ -110,17 +113,30 @@
       .then(function (data) { accept(data, { kind: "demo" }); });
   }
 
-  /** Re-read the same Google/URL source (after the sheet was edited). */
+  /**
+   * Re-read the same Google/URL source (after the sheet was edited). Rows
+   * that are still the same row keep what was adjusted here (see
+   * store.mergeRows).
+   */
   function reload() {
     var src = state.source;
     if (!src || !src.url) return Promise.reject(new Error("Denne kilden kan ikke hentes på nytt"));
-    return fromUrl(src.url);
+    store.flushEdits();
+    return fromUrl(src.url, true);
   }
 
   // ---- photos ------------------------------------------------------------
+  var LOCAL_FILE = "(lokal fil) ";
+
   function queueImage(row) {
     if (!row.imageUrl) {
       store.updateRow(row, { image: { status: "missing" } });
+      return;
+    }
+    if (row.image && row.image.status === "ok" && row.image.id) return; // restored session, or kept on reload
+    // An uploaded photo has no link to fetch again.
+    if (row.imageUrl.indexOf(LOCAL_FILE) === 0) {
+      store.updateRow(row, { image: { status: "error", error: "Bildet var en lokal fil og er ikke lenger på serveren – last det opp på nytt i Juster" } });
       return;
     }
     var cached = imageCache[row.imageUrl];
@@ -128,7 +144,6 @@
       store.updateRow(row, { image: cached });
       return;
     }
-    if (row.image && row.image.status === "ok" && row.image.id) return; // restored session
     store.updateRow(row, { image: { status: "waiting" } });
     imageQueue.push(row);
     pumpImages();
@@ -178,7 +193,7 @@
     return fetch("/api/bulk/image-file", { method: "POST", body: fd })
       .then(readJson)
       .then(function (img) {
-        store.updateRow(row, { imageUrl: "(lokal fil) " + file.name, image: Object.assign({ status: "ok" }, img), pos: null });
+        store.updateRow(row, { imageUrl: LOCAL_FILE + file.name, image: Object.assign({ status: "ok" }, img), pos: null });
       })
       .catch(function (err) {
         store.updateRow(row, { image: { status: "error", error: err.message } });
@@ -188,17 +203,68 @@
 
   function setImageUrl(row, url) {
     var clean = String(url || "").trim();
-    store.updateRow(row, { imageUrl: clean, pos: null });
+    // Not "ok" any more, or queueImage would keep the old photo.
+    store.updateRow(row, { imageUrl: clean, pos: null, image: { status: "waiting" } });
     queueImage(row);
   }
 
   function retryFailed() {
     state.rows.forEach(function (row) {
-      if (row.image && row.image.status === "error") {
-        delete imageCache[row.imageUrl];
-        queueImage(row);
-      }
+      if (row.image && row.image.status === "error") refetchImage(row);
     });
+  }
+
+  /** Fetch one row's photo from its link again (it may have been fixed). */
+  function refetchImage(row) {
+    if (!row) return;
+    delete imageCache[row.imageUrl];
+    store.updateRow(row, { image: { status: "waiting" } });
+    queueImage(row);
+  }
+
+  /**
+   * A restored session's photos may have been cleared from the server since
+   * (they are kept for a few weeks unused), and the browser's copy of a
+   * preview says nothing about that. Ask once for the whole sheet; a photo
+   * that is gone is fetched again from its link. The rest count as used, so
+   * the clean-up leaves them alone.
+   */
+  function checkRestoredImages() {
+    var ids = {};
+    state.rows.forEach(function (row) {
+      if (row.image && row.image.status === "ok" && row.image.id) ids[row.image.id] = true;
+    });
+    var list = Object.keys(ids);
+    if (!list.length) return Promise.resolve(0);
+    return fetch("/api/bulk/image-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: list }),
+    })
+      .then(readJson)
+      .then(function (res) {
+        var gone = {};
+        (res.missing || []).forEach(function (id) { gone[id] = true; });
+        var n = 0;
+        state.rows.forEach(function (row) {
+          if (!row.image || !gone[row.image.id]) return;
+          n++;
+          Object.keys(imageCache).forEach(function (url) {
+            if (imageCache[url].id === row.image.id) delete imageCache[url];
+          });
+          store.updateRow(row, { image: { status: "waiting" } });
+          queueImage(row);
+        });
+        return n;
+      })
+      .catch(function () { return 0; /* the run checks again; nothing is lost */ });
+  }
+
+  /** A run found a photo gone: mark the row so it is fetched again. */
+  function imageGone(row, message) {
+    if (!row) return;
+    delete imageCache[row.imageUrl];
+    store.updateRow(row, { image: { status: "error", error: message || "Bildet er ikke lenger på serveren – hent det på nytt" } });
   }
 
   function pendingImages() {
@@ -410,6 +476,9 @@
     setImageUrl: setImageUrl,
     uploadImage: uploadImage,
     retryFailed: retryFailed,
+    refetchImage: refetchImage,
+    checkRestoredImages: checkRestoredImages,
+    imageGone: imageGone,
     pendingImages: pendingImages,
     toast: toast,
     readJson: readJson,

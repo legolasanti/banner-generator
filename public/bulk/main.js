@@ -65,19 +65,23 @@
         state.rows.forEach(function (row) {
           if (!row.image || row.image.status !== "ok") BULK.source.queueImage(row);
         });
-        BULK.run.resume(resumed.jobId);
+        // A photo that says "ok" may have been cleared from the server since.
+        BULK.source.checkRestoredImages();
+        BULK.run.resume(resumed.job);
       } else {
         showScreen();
       }
     });
   }
 
-  store.on(function (what) {
+  store.on(function (what, payload) {
     if (!built) return;
     if (what === "rows") {
       BULK.grid.rebuild();
       showScreen();
-      dom.scroll.scrollTop = 0;
+      if (!(payload && payload.keepScroll)) dom.scroll.scrollTop = 0;
+    } else if (what === "list") {
+      showScreen();
     }
   });
 

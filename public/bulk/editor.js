@@ -7,8 +7,10 @@
    format at a readable size, each with its own text size — "Auto" follows
    the rules, switching it off gives a slider.
 
-   Alt+← / Alt+→ step through the rows (only the ones the current filter
-   shows), Esc closes.
+   Alt+← / Alt+→ step through the rows the list showed when the editor was
+   opened, in its order — the same rows even when fixing one takes it out of
+   the «Feil» filter — and Esc closes. The focus point moves with the arrow
+   keys too (Shift for bigger steps), and Tab stays inside the editor.
    ========================================================================= */
 (function () {
   "use strict";
@@ -18,16 +20,20 @@
   var state = BULK.state;
   var h = window.WPE.util.h;
 
+  var HEADLINE_DEBOUNCE_MS = 160;
+  var NUDGE = 1; // focus point step, in percent
+  var NUDGE_BIG = 10;
+
   var dom = null;
   var current = null; // row
+  var navList = []; // the rows Alt+←/→ walk through, fixed when the editor opens
   var focusType = null;
   var lastFocus = null;
   var sliding = false; // a size slider is being dragged
 
-  function visibleRows() {
-    return state.rows.filter(function (r) {
-      return state.filter === "all" || r.level === state.filter;
-    });
+  /** The rows to step through: the list as it was, minus rows since removed. */
+  function stepRows() {
+    return navList.filter(function (r) { return state.rows.indexOf(r) !== -1; });
   }
 
   function build() {
@@ -37,6 +43,24 @@
     dom.prev = h("button.iconbtn", { type: "button", title: "Forrige rad (Alt+←)", "aria-label": "Forrige rad" }, "‹");
     dom.next = h("button.iconbtn", { type: "button", title: "Neste rad (Alt+→)", "aria-label": "Neste rad" }, "›");
     dom.close = h("button.btn-primary.btn-sm", { type: "button" }, "Ferdig");
+    dom.duplicate = h("button.btn-ghost.btn-sm", { type: "button", title: "Lag en kopi av raden rett under" }, "Dupliser");
+    dom.remove = h("button.btn-ghost.btn-sm.is-danger", { type: "button", title: "Fjern raden fra listen (regnearket endres ikke)" }, "Fjern");
+    dom.duplicate.addEventListener("click", function () {
+      store.flushEdits("ed:");
+      var copy = store.duplicateRow(current);
+      navList.splice(navList.indexOf(current) + 1, 0, copy);
+      open(copy.rid);
+    });
+    dom.remove.addEventListener("click", function () {
+      var row = current;
+      if (!confirm("Fjerne denne raden fra listen? Regnearket endres ikke.")) return;
+      var list = stepRows();
+      var next = list[list.indexOf(row) + 1] || list[list.indexOf(row) - 1];
+      store.flushEdits("ed:");
+      store.removeRows([row]);
+      if (next) open(next.rid);
+      else close();
+    });
     dom.prev.addEventListener("click", function () { step(-1); });
     dom.next.addEventListener("click", function () { step(1); });
     dom.close.addEventListener("click", close);
@@ -44,7 +68,20 @@
     // Photo + focus point
     dom.photo = h("img.bk-focus__img", { alt: "", draggable: "false" });
     dom.dot = h("span.bk-focus__dot", { "aria-hidden": "true" });
-    dom.focusBox = h("div.bk-focus", { title: "Dra punktet dit motivet er" }, dom.photo, dom.dot);
+    dom.focusBox = h(
+      "div.bk-focus",
+      {
+        title: "Dra punktet dit motivet er, eller bruk piltastene (Shift = større steg)",
+        tabindex: "0",
+        role: "slider",
+        "aria-label": "Fokuspunkt i bildet. Piltastene flytter det, Shift gir større steg.",
+        "aria-valuemin": "0",
+        "aria-valuemax": "100",
+      },
+      dom.photo,
+      dom.dot
+    );
+    dom.focusBox.addEventListener("keydown", nudgeFocus);
     dom.focusNote = h("span.bk-ed__note");
     dom.autoFocus = h("button.bk-link", { type: "button" }, "Automatisk");
     dom.autoFocus.addEventListener("click", function () { store.updateRow(current, { pos: null }); });
@@ -52,7 +89,7 @@
     dom.zoomOut = h("output");
     dom.zoom.addEventListener("input", function () {
       dom.zoomOut.textContent = dom.zoom.value + " %";
-      store.updateRow(current, { zoom: +dom.zoom.value });
+      store.updateRow(current, { zoom: +dom.zoom.value }, { touch: true });
     });
     initDrag();
 
@@ -70,31 +107,36 @@
       dom.imgFile.value = "";
       BULK.source.uploadImage(current, file).catch(function (err) { BULK.source.toast(err.message, "err"); });
     });
-    dom.imgStatus = h("p.bk-ed__imgstatus");
+    dom.imgStatus = h("p.bk-ed__imgstatus", { "aria-live": "polite" });
+    dom.imgAgain = h("button.bk-link", { type: "button", title: "Hent bildet fra lenken i arket en gang til" }, "Hent bildet på nytt");
+    dom.imgAgain.addEventListener("click", function () { BULK.source.refetchImage(current); });
 
     // Text and settings
     dom.headline = h("textarea.bk-input", { rows: 3, maxlength: 200, "aria-label": "Overskrift" });
     dom.count = h("span.counter");
-    var t = null;
     dom.headline.addEventListener("input", function () {
       dom.count.textContent = window.BannerAutofit.countChars(dom.headline.value) + " tegn";
-      clearTimeout(t);
-      t = setTimeout(function () {
-        store.updateRow(current, { headline: dom.headline.value.replace(/\s+/g, " ").trim() }, { refit: true });
-      }, 160);
+      // The row typed in, not whichever row is open when the timer fires.
+      var row = current;
+      var text = dom.headline.value;
+      store.deferEdit("ed:" + row.rid, function () {
+        if (state.rows.indexOf(row) === -1) return;
+        store.updateRow(row, { headline: text.replace(/\s+/g, " ").trim() }, { refit: true });
+      }, HEADLINE_DEBOUNCE_MS);
     });
 
     dom.weight = h("div.segmented.bk-seg", { role: "group", "aria-label": "Skrift" });
     [["", "Som resten"], ["bold", "Halvfet"], ["regular", "Normal"]].forEach(function (w) {
       var b = h("button.seg", { type: "button", "data-val": w[0] }, w[1]);
-      b.addEventListener("click", function () { store.updateRow(current, { weight: w[0] }, { refit: true }); });
+      b.addEventListener("click", function () { store.updateRow(current, { weight: w[0] }, { refit: true, touch: true }); });
       dom.weight.appendChild(b);
     });
 
     dom.filename = h("input.bk-input", { type: "text", maxlength: 60, placeholder: "lages fra overskriften" });
-    dom.filename.addEventListener("input", function () { store.updateRow(current, { filename: dom.filename.value.trim() }); });
+    dom.filename.addEventListener("input", function () { store.updateRow(current, { filename: dom.filename.value.trim() }, { touch: true }); });
+    dom.fileOut = h("span.field__hint.bk-ed__fileout");
     dom.click = h("input.bk-input", { type: "url", placeholder: "https://… (bare for HTML5)", spellcheck: "false" });
-    dom.click.addEventListener("input", function () { store.updateRow(current, { clickUrl: dom.click.value.trim() }); });
+    dom.click.addEventListener("input", function () { store.updateRow(current, { clickUrl: dom.click.value.trim() }, { touch: true }); });
     dom.include = h("input", { type: "checkbox" });
     dom.include.addEventListener("change", function () { store.updateRow(current, { include: dom.include.checked }); });
     dom.issues = h("ul.bk-issues.bk-issues--ed");
@@ -111,15 +153,16 @@
       h("h4", null, "Bilde", dom.focusNote, dom.autoFocus),
       dom.focusBox,
       h("div.slider", null, h("span.slider__name", null, "Zoom"), dom.zoom, dom.zoomOut),
-      dom.imgStatus,
+      h("div.bk-ed__imgline", null, dom.imgStatus, dom.imgAgain),
       h("div.bk-row", null, dom.imgUrl, dom.imgFetch, dom.imgUpload, dom.imgFile),
       h("h4", null, "Tekst"),
       field("Overskrift", dom.headline, dom.count),
       field("Skrift", dom.weight),
-      field("Filnavn", dom.filename, h("span.field__hint", null, "uten filtype")),
+      field("Filnavn", dom.filename, dom.fileOut),
       field("Klikk-lenke", dom.click),
       h("label.bk-check", null, dom.include, h("span", null, "Ta med i nedlastingen")),
-      dom.issues
+      dom.issues,
+      h("div.bk-ed__rowacts", null, dom.duplicate, dom.remove)
     );
 
     dom.root = h(
@@ -139,6 +182,7 @@
   }
 
   function onKey(e) {
+    BULK.ui.trapTab(dom.root, e);
     if (e.key === "Escape") {
       e.preventDefault();
       close();
@@ -164,10 +208,24 @@
   function placeDot() {
     if (!current) return;
     var pos = store.positionOf(current);
+    dom.focusBox.setAttribute("aria-valuenow", String(pos.x));
+    dom.focusBox.setAttribute("aria-valuetext", pos.x + " % fra venstre, " + pos.y + " % fra toppen");
     var r = photoRect();
     var box = dom.focusBox.getBoundingClientRect();
     dom.dot.style.left = r.left - box.left + (pos.x / 100) * r.width + "px";
     dom.dot.style.top = r.top - box.top + (pos.y / 100) * r.height + "px";
+  }
+
+  /** Arrow keys move the focus point; Shift moves it ten times as far. */
+  function nudgeFocus(e) {
+    var moves = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    var m = moves[e.key];
+    if (!m || e.altKey || e.metaKey || e.ctrlKey || !current || !current.image || current.image.status !== "ok") return;
+    e.preventDefault();
+    var step = e.shiftKey ? NUDGE_BIG : NUDGE;
+    var pos = store.positionOf(current);
+    var clamp = function (v) { return Math.max(0, Math.min(100, Math.round(v))); };
+    store.updateRow(current, { pos: { x: clamp(pos.x + m[0] * step), y: clamp(pos.y + m[1] * step) } });
   }
 
   function initDrag() {
@@ -272,7 +330,7 @@
 
   function renderLeft() {
     var row = current;
-    var list = visibleRows();
+    var list = stepRows();
     var idx = list.indexOf(row);
     dom.title.textContent = row.sheetRow ? "Rad " + row.sheetRow : "Banner";
     dom.counter.textContent = idx >= 0 ? idx + 1 + " av " + list.length : "";
@@ -296,6 +354,7 @@
         ? "Ingen bildelenke i arket"
         : "Henter bilde …";
     dom.imgStatus.classList.toggle("is-bad", img.status === "error" || img.status === "missing");
+    dom.imgAgain.hidden = !/^https?:\/\//i.test(row.imageUrl) || img.status === "loading" || img.status === "waiting";
     dom.focusNote.textContent = row.pos ? "· satt for hånd" : row.sheetFocus ? "· fra arket" : state.smartCrop && img.focus ? "· automatisk" : "· midten";
     dom.autoFocus.hidden = !row.pos;
     dom.zoom.value = row.zoom || 0;
@@ -308,6 +367,8 @@
       b.classList.toggle("is-active", b.dataset.val === (row.weight || ""));
     });
     if (document.activeElement !== dom.filename) dom.filename.value = row.filename;
+    dom.fileOut.textContent = "→ " + store.fileBaseOf(row);
+    dom.fileOut.title = "Navnet filene får i ZIP-en (uten format og filtype)";
     if (document.activeElement !== dom.click) dom.click.value = row.clickUrl;
     dom.click.placeholder = state.output.clickUrl ? state.output.clickUrl + " (standard)" : "https://… (bare for HTML5)";
     dom.include.checked = row.include;
@@ -332,11 +393,21 @@
     var row = store.findRow(rid);
     if (!row) return;
     if (!dom) build();
+    store.flushEdits(); // the card's headline, if it was still being typed
+    // Another row: its own text in the fields, even the one that has focus
+    // (renderLeft leaves a focused field alone so typing is not overwritten).
+    if (row !== current) {
+      dom.headline.value = row.headline;
+      dom.filename.value = row.filename;
+      dom.click.value = row.clickUrl;
+    }
     current = row;
     focusType = type || null;
     dom.imgUrl.value = "";
     if (!dom.root.isConnected) {
       lastFocus = document.activeElement;
+      navList = store.viewRows();
+      if (navList.indexOf(row) === -1) navList = state.rows.slice();
       document.body.appendChild(dom.root);
     }
     requestAnimationFrame(function () {
@@ -346,7 +417,8 @@
   }
 
   function step(dir) {
-    var list = visibleRows();
+    store.flushEdits("ed:");
+    var list = stepRows();
     var idx = list.indexOf(current);
     var next = list[idx + dir];
     if (next) open(next.rid);
@@ -354,8 +426,10 @@
 
   function close() {
     if (!dom || !dom.root.isConnected) return;
+    store.flushEdits("ed:");
     dom.root.remove();
     current = null;
+    navList = [];
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
 
@@ -376,7 +450,7 @@
     if (what === "fit" && payload === current) renderSoon();
     else if (what === "row" && payload.row === current) renderSoon();
     else if (what === "evaluated" || what === "formats" || what === "crop") renderSoon();
-    else if (what === "rows" && state.rows.indexOf(current) === -1) close();
+    else if ((what === "rows" || what === "list") && state.rows.indexOf(current) === -1) close();
   });
   window.addEventListener("resize", function () {
     if (current) renderSoon();
