@@ -157,7 +157,8 @@
       h("div.bk-row", null, dom.imgUrl, dom.imgFetch, dom.imgUpload, dom.imgFile),
       h("h4", null, "Tekst"),
       field("Overskrift", dom.headline, dom.count),
-      field("Skrift", dom.weight),
+      productFields(field),
+      state.product === "houseads" ? field("Skrift", dom.weight) : null,
       field("Filnavn", dom.filename, dom.fileOut),
       field("Klikk-lenke", dom.click),
       h("label.bk-check", null, dom.include, h("span", null, "Ta med i nedlastingen")),
@@ -179,6 +180,71 @@
       if (e.target === dom.root) close();
     });
     dom.root.addEventListener("keydown", onKey);
+  }
+
+  /**
+   * The fields the product's own tab has: Ingress and Merkevare for ReadPeak
+   * and Norsk Tipping, Knappetekst for ReadPeak, Spilltype and Vinnersjanse
+   * for Norsk Tipping. Empty means "the run's default", shown as placeholder.
+   */
+  function productFields(field) {
+    var L = window.BULK_PRODUCTS.LIMITS;
+    var out = [];
+    var text = function (key, tag, attrs, refit) {
+      var el = h(tag + ".bk-input", attrs);
+      el.addEventListener("input", function () {
+        var row = current;
+        var value = el.value;
+        store.deferEdit("ed:" + row.rid + ":" + key, function () {
+          if (state.rows.indexOf(row) === -1) return;
+          var patch = {};
+          patch[key] = value.replace(/\s+/g, " ").trim();
+          store.updateRow(row, patch, { refit: refit, touch: true });
+        }, HEADLINE_DEBOUNCE_MS);
+      });
+      dom.text[key] = el;
+      return el;
+    };
+    dom.text = {};
+    if (store.has("subtitle")) {
+      out.push(field("Ingress", text("subtitle", "textarea", { rows: 2, maxlength: L.subtitle, "aria-label": "Ingress" }, true), h("span.field__hint", null, "vises i 308×380")));
+    }
+    if (store.has("brandLabel")) {
+      out.push(field("Merkevare", text("brandLabel", "input", { type: "text", maxlength: L.brandLabel, "aria-label": "Merkevare" }, true)));
+    }
+    if (store.has("ctaText")) {
+      out.push(field("Knappetekst", text("ctaText", "input", { type: "text", maxlength: L.ctaText, "aria-label": "Knappetekst" }, true)));
+    }
+    if (store.has("gameType")) {
+      dom.game = h("select.bk-input", { "aria-label": "Spilltype" });
+      dom.game.addEventListener("change", function () {
+        var preset = store.gamePresets().filter(function (g) { return g.id === dom.game.value; })[0];
+        store.updateRow(current, { gameType: preset ? preset.label : "" }, { refit: true, touch: true });
+      });
+      out.push(field("Spilltype", dom.game));
+      out.push(field("Vinnersjanse", text("vinnersjanse", "input", { type: "text", maxlength: L.vinnersjanse, "aria-label": "Vinnersjanse" }, true), h("span.field__hint", null, "tomt = spillets")));
+    }
+    return out;
+  }
+
+  /** Fill the product fields from the row; the run's defaults as placeholders. */
+  function renderProductFields(row) {
+    Object.keys(dom.text || {}).forEach(function (key) {
+      var el = dom.text[key];
+      if (document.activeElement !== el) el.value = row[key] || "";
+    });
+    if (dom.text.brandLabel) dom.text.brandLabel.placeholder = (state.common.brandLabel[state.product] || "Ingen") + " (felles)";
+    if (dom.text.ctaText) dom.text.ctaText.placeholder = (state.common.ctaText || "Ingen knapp") + " (felles)";
+    if (dom.game) {
+      var presets = store.gamePresets();
+      var match = window.BULK_PRODUCTS.matchGame(row.gameType, presets);
+      var fallback = window.BULK_PRODUCTS.matchGame(store.defaultGame(), presets);
+      dom.game.innerHTML = "";
+      dom.game.appendChild(h("option", { value: "" }, "Som resten" + (fallback ? " (" + fallback.label + ")" : "")));
+      presets.forEach(function (g) { dom.game.appendChild(h("option", { value: g.id }, g.label)); });
+      dom.game.value = match ? match.id : "";
+      dom.text.vinnersjanse.placeholder = store.vinnerOf(Object.assign({}, row, { vinnersjanse: "" })) || "Ingen vinnersjanse";
+    }
   }
 
   function onKey(e) {
@@ -302,6 +368,8 @@
 
       var note = "";
       if (f && !f.fits) note = window.BannerAutofit.describe(f);
+      else if (f && !isManual && !spec.autoFit && f.scale < 1 - 1e-6) note = "Satt ned fra 100 % for å få plass";
+      else if (f && !isManual && !spec.autoFit) note = "Auto: 100 %, settes ned bare hvis teksten ikke får plass";
       else if (f && !isManual && f.scale < f.ruleScale - 1e-6) note = "Regelen sier " + Math.round(f.ruleScale * 100) + " %, satt ned for å få plass";
       else if (f && !isManual) note = "Regel: " + f.chars + " tegn → " + Math.round(f.ruleScale * 100) + " %";
 
@@ -371,6 +439,7 @@
     dom.fileOut.title = "Navnet filene får i ZIP-en (uten format og filtype)";
     if (document.activeElement !== dom.click) dom.click.value = row.clickUrl;
     dom.click.placeholder = state.output.clickUrl ? state.output.clickUrl + " (standard)" : "https://… (bare for HTML5)";
+    renderProductFields(row);
     dom.include.checked = row.include;
     dom.issues.innerHTML = "";
     row.issues
@@ -400,6 +469,7 @@
       dom.headline.value = row.headline;
       dom.filename.value = row.filename;
       dom.click.value = row.clickUrl;
+      Object.keys(dom.text || {}).forEach(function (key) { dom.text[key].value = row[key] || ""; });
     }
     current = row;
     focusType = type || null;
@@ -444,6 +514,13 @@
       else render();
     });
   }
+
+  // Another product has other fields: the editor is built again next time.
+  store.on(function (what) {
+    if (what !== "product" || !dom) return;
+    close();
+    dom = null;
+  });
 
   store.on(function (what, payload) {
     if (!current || !dom || !dom.root.isConnected) return;

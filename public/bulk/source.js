@@ -97,7 +97,7 @@
   }
 
   function fromDemo() {
-    return fetch("/api/bulk/template.csv")
+    return fetch("/api/bulk/template.csv?product=" + encodeURIComponent(state.product))
       .then(function (res) {
         if (!res.ok) throw new Error("Kunne ikke hente eksempelet");
         return res.text();
@@ -274,19 +274,47 @@
   }
 
   // ---- the start screen -------------------------------------------------
-  var GUIDE = [
-    ["Overskrift", "Ja", "Spar opptil 50 % på hotell i høst", "Teksten i banneret. Størrelsen velges automatisk per format."],
-    ["Bildelenke", "Ja", "https://…/hotell.jpg", "Direkte lenke til bildet. Google Drive- og Dropbox-delingslenker virker også."],
-    ["Filnavn", "Nei", "hotell-host", "Uten filtype. Tomt = lages fra overskriften."],
-    ["Skrift", "Nei", "Halvfet / Normal", "Tomt = valget for hele kjøringen."],
-    ["Fokus", "Nei", "topp · bunn venstre · 30/70", "Hvor bildet skal holdes når det beskjæres. Tomt = automatisk."],
-    ["Klikk-lenke", "Nei", "https://www.abcnyheter.no/…", "Bare for HTML5. Tomt = standardlenken du setter ved nedlasting."],
-  ];
+  // What each column means, by its name in the example sheet; the examples
+  // themselves come from that sheet (public/bulk/products.js), so the guide
+  // shows the chosen product's real columns.
+  var REQUIRED = { Overskrift: true, Bildelenke: true };
+  function columnNote(name, productId) {
+    var house = productId === "houseads";
+    return {
+      Overskrift: house
+        ? "Teksten i banneret. Størrelsen velges automatisk per format."
+        : "Teksten i banneret. Settes ned (til 75 %) i formater der den ellers ikke får plass.",
+      Ingress: "Teksten under overskriften i 308×380. Tomt = ingen ingress.",
+      Bildelenke: "Direkte lenke til bildet. Google Drive- og Dropbox-delingslenker virker også.",
+      Merkevare:
+        productId === "norsktipping"
+          ? "Etiketten over overskriften. Tomt = NORSK TIPPING, eller det du velger for hele kjøringen."
+          : "Annonsørens navn i den grønne etiketten. Tomt = merkevaren du velger for hele kjøringen.",
+      Knappetekst: "Tomt = «Les mer her», eller teksten du velger for hele kjøringen. Én linje.",
+      Spilltype: "Lotto, Vikinglotto, Eurojackpot, Sport … som i Norsk Tipping-fanen. Gir riktig vinnersjanse. Tomt = spillet for hele kjøringen.",
+      Vinnersjanse: "Egen tekst i stedet for spillets. Tomt = spillets vinnersjanse.",
+      Filnavn: "Uten filtype. Tomt = lages fra overskriften.",
+      Skrift: "Halvfet / Normal. Tomt = valget for hele kjøringen.",
+      Fokus: "Hvor bildet skal holdes når det beskjæres (topp · bunn venstre · 30/70). Tomt = automatisk.",
+      "Klikk-lenke": "Bare for HTML5. Tomt = standardlenken du setter ved nedlasting.",
+    }[name] || "";
+  }
+
+  function guideRows(productId) {
+    var t = window.BULK_PRODUCTS.get(productId).template;
+    return t[0].map(function (name, i) {
+      var example = "";
+      for (var r = 1; r < t.length && !example; r++) example = t[r][i];
+      if (/^https?:\/\//.test(example)) example = name === "Bildelenke" ? "https://…/bilde.jpg" : example.replace(/^(https?:\/\/[^/]+\/).*$/, "$1…");
+      return [name, REQUIRED[name] ? "Ja" : "Nei", example || "–", columnNote(name, productId)];
+    });
+  }
 
   function guide() {
+    var house = state.product === "houseads";
     var limits = store.allSpecs().map(function (spec) {
       var r = spec.autoFit;
-      return h("li", null, h("b", null, spec.width + "×" + spec.height), h("span", null, "maks ca. " + r.maxChars + " tegn"));
+      return h("li", null, h("b", null, spec.width + "×" + spec.height), h("span", null, r ? "maks ca. " + r.maxChars + " tegn" : spec.name));
     });
     return h(
       "details.bk-guide",
@@ -311,17 +339,20 @@
           h(
             "tbody",
             null,
-            GUIDE.map(function (g) {
+            guideRows(state.product).map(function (g) {
               return h("tr", null, h("td", null, h("b", null, g[0])), h("td", null, g[1]), h("td", null, h("code", null, g[2])), h("td", null, g[3]));
             })
           )
         ),
-        h("p.bk-guide__sub", null, "Lengste overskrift som får plass (på 70 %):"),
+        h("p.bk-guide__sub", null, house ? "Lengste overskrift som får plass (på 70 %):" : "Formatene:"),
         h("ul.bk-guide__limits", null, limits),
         h(
           "p.bk-guide__note",
           null,
-          "Kortere tekst blir større (opptil 120 %), lengre blir mindre (ned til 70 %). Reglene kan endres under «Tekststørrelse-regler» når arket er lastet."
+          house
+            ? "Kortere tekst blir større (opptil 120 %), lengre blir mindre (ned til 70 %). Reglene kan endres under «Tekststørrelse-regler» når arket er lastet."
+            : (state.product === "readpeak" ? "Overskrift, ingress og knappetekst" : "Overskrift og ingress") +
+              " måles i hvert format. Tekst som blir kuttet eller deler et ord, merkes Feil før noe lages."
         )
       )
     );
@@ -334,6 +365,9 @@
 
   /** Build the start screen into `host`. */
   function buildStart(host) {
+    startDom.kicker = h("span.bk-kicker");
+    startDom.template = h("a.btn-ghost.btn-sm", { download: "" });
+    startDom.guide = h("details.bk-guide");
     var linkInput = h("input.bk-input", {
       type: "url",
       placeholder: "https://docs.google.com/spreadsheets/d/…",
@@ -436,13 +470,14 @@
         h(
           "header.bk-start__head",
           null,
-          h("span.bk-kicker", null, "Houseads · bulk"),
+          startDom.kicker,
           h("h2", null, "Mange bannere fra ett regneark"),
           h(
             "p",
             null,
             "Én rad per banner: overskrift og bildelenke. Verktøyet henter bildene, velger tekststørrelse for hvert format og lager alt i én ZIP – du kontrollerer og justerer før nedlasting."
-          )
+          ),
+          h("div.bk-ctl.bk-start__product", null, h("span.bk-ctl__label", null, "Produkt"), productSwitch())
         ),
         h(
           "div.bk-sources",
@@ -460,16 +495,77 @@
         h(
           "div.bk-start__foot",
           null,
-          h("a.btn-ghost.btn-sm", { href: "/api/bulk/template.csv", download: "" }, "Last ned mal (CSV)"),
+          startDom.template,
           demoBtn
         ),
-        guide()
+        startDom.guide
       )
     );
+    renderStartProduct();
   }
+
+  // The start screen's product-dependent parts, redrawn on a switch.
+  var startDom = {};
+  function renderStartProduct() {
+    var label = window.BULK_PRODUCTS.get(state.product).label;
+    startDom.kicker.textContent = label + " · bulk";
+    startDom.template.href = "/api/bulk/template.csv?product=" + encodeURIComponent(state.product);
+    startDom.template.textContent = "Last ned mal for " + label + " (CSV)";
+    var next = guide();
+    if (startDom.guide.open) next.open = true;
+    startDom.guide.replaceWith(next);
+    startDom.guide = next;
+  }
+
+  /**
+   * Houseads | ReadPeak | Norsk Tipping. With rows loaded, a switch keeps
+   * them and checks them again against the new product's formats, after
+   * asking: sizes set by hand belong to the old formats and are dropped.
+   */
+  function productSwitch() {
+    var P = window.BULK_PRODUCTS;
+    var wrap = BULK.ui.seg(
+      P.ORDER.map(function (id) { return [id, P.get(id).label]; }),
+      state.product,
+      function (id) {
+        if (id === state.product) return;
+        if (state.rows.length) {
+          var ok = confirm(
+            "Lage " + P.get(id).label + " av dette arket? Radene beholdes og sjekkes på nytt for " +
+              P.get(id).label + "-formatene. Tekststørrelser satt for hånd nullstilles."
+          );
+          if (!ok) return syncSwitches();
+        }
+        store.setProduct(id);
+      },
+      "Produkt"
+    );
+    wrap.classList.add("bk-product");
+    switches.push(wrap);
+    return wrap;
+  }
+
+  // Every product switch on the page (start screen, toolbar) shows the same.
+  var switches = [];
+  function syncSwitches() {
+    switches.forEach(function (wrap) {
+      Array.prototype.forEach.call(wrap.children, function (b) {
+        var on = b.dataset.val === state.product;
+        b.classList.toggle("is-active", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    });
+  }
+
+  store.on(function (what) {
+    if (what !== "product") return;
+    syncSwitches();
+    if (startDom.guide) renderStartProduct();
+  });
 
   BULK.source = {
     buildStart: buildStart,
+    productSwitch: productSwitch,
     fromUrl: fromUrl,
     reload: reload,
     queueImage: queueImage,

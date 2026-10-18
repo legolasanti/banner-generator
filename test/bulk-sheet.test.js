@@ -86,6 +86,11 @@ test("reads rows by header, skipping a title row above and blank rows", () => {
       weight: "regular",
       focus: { x: 50, y: 0 },
       zoom: null,
+      subtitle: "",
+      brandLabel: "",
+      ctaText: "",
+      gameType: "",
+      vinnersjanse: "",
     }
   );
   assert.equal(out.rows[1].sheetRow, 6);

@@ -19,6 +19,7 @@ global.window = {
   BannerFormats: require("../public/assets/formats.js"),
   BannerAutofit: require("../public/assets/autofit.js"),
   BULK_NAMES: require("../public/bulk/names.js"),
+  BULK_PRODUCTS: require("../public/bulk/products.js"),
   WPE: { util: { h: () => ({}) } },
 };
 require("../public/bulk/state.js");

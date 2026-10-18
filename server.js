@@ -1622,6 +1622,7 @@ const bulkJobs = createBulkJobs({
   historyDir: HISTORY_DIR,
   logoPath: ABC_LOGO,
   logoAsset: ABC_LOGO_ASSET,
+  findAgeIcon,
   // A run's entry is written after its first banner and replaced in place
   // after every one after it (see lib/bulk/history.js).
   upsertHistoryEntry: (entry) =>

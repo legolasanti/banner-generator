@@ -23,6 +23,7 @@
   var h = window.WPE.util.h;
 
   var DENSITY = { s: 0.2, m: 0.28, l: 0.4 };
+  var SMALL_FORMAT_BOOST = 1.75;
   var LEVEL_LABEL = { ok: "Klar", warn: "Sjekk", error: "Feil", pending: "Venter" };
   var SORTS = [
     ["sheet", "Rekkefølge i arket"],
@@ -44,6 +45,62 @@
     dom.sourceLine = h("div.bk-srcline");
     dom.filters = h("div.bk-filters", { role: "group", "aria-label": "Vis rader" });
     dom.formatChips = h("div.bk-formats", { role: "group", "aria-label": "Formater" });
+
+    var smart = h("input", { type: "checkbox", checked: state.smartCrop });
+    smart.addEventListener("change", function () {
+      state.smartCrop = smart.checked;
+      store.emit("crop");
+    });
+
+    // The rules are the house formats' (the others are measured), and so is
+    // the weight choice; both hide for the other products.
+    dom.rulesBtn = h("button.btn-ghost.btn-sm", { type: "button" }, "Tekststørrelse-regler");
+    dom.rulesBtn.addEventListener("click", function () { BULK.rules.open(); });
+    dom.weightCtl = h(
+      "div.bk-ctl",
+      null,
+      h("span.bk-ctl__label", null, "Skrift"),
+      ui.seg([["bold", "Halvfet"], ["regular", "Normal"]], state.weight, function (v) {
+        state.weight = v;
+        store.emit("weight");
+      }, "Skrifttykkelse")
+    );
+    dom.common = h("div.bk-toolbar__row.bk-common", { role: "group", "aria-label": "Felles for alle rader" });
+
+    dom.toolbar = h(
+      "div.bk-toolbar",
+      null,
+      h("div.bk-toolbar__row", null, dom.sourceLine, h("div.bk-toolbar__spacer"), dom.rulesBtn),
+      h(
+        "div.bk-toolbar__row.bk-toolbar__row--controls",
+        null,
+        h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Produkt"), BULK.source.productSwitch()),
+        h("span.bk-sep"),
+        h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Formater"), dom.formatChips),
+        h("span.bk-sep"),
+        dom.weightCtl,
+        h("label.bk-check", { title: "Holder motivet i bildet når det beskjæres. Av = midt i bildet." }, smart, h("span", null, "Smart beskjæring")),
+        h("div.bk-toolbar__spacer"),
+        h(
+          "div.bk-ctl",
+          null,
+          h("span.bk-ctl__label", null, "Visning"),
+          ui.seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
+            state.density = v;
+            applyDensity();
+          }, "Størrelse på forhåndsvisning")
+        )
+      ),
+      dom.common,
+      buildListBar()
+    );
+    renderProductControls();
+    return dom.toolbar;
+  }
+
+  /** The format chips, and what shows only for some products. */
+  function renderProductControls() {
+    dom.formatChips.innerHTML = "";
     store.allSpecs().forEach(function (spec) {
       var input = h("input", { type: "checkbox", checked: state.formats.indexOf(spec.key) !== -1 });
       input.addEventListener("change", function () {
@@ -64,49 +121,82 @@
         h("label.bk-chip", { title: spec.name }, input, h("span", null, spec.width + "×" + spec.height))
       );
     });
+    var house = state.product === "houseads";
+    dom.rulesBtn.hidden = !house;
+    dom.weightCtl.hidden = !house;
+    dom.selWeight.hidden = !house;
+    dom.selGame.hidden = !store.has("gameType");
+    dom.selGamePick.innerHTML = "";
+    store.gamePresets().forEach(function (g) { dom.selGamePick.appendChild(h("option", { value: g.id }, g.label)); });
+    renderCommon();
+  }
 
-    var smart = h("input", { type: "checkbox", checked: state.smartCrop });
-    smart.addEventListener("change", function () {
-      state.smartCrop = smart.checked;
-      store.emit("crop");
-    });
-
-    var rulesBtn = h("button.btn-ghost.btn-sm", { type: "button" }, "Tekststørrelse-regler");
-    rulesBtn.addEventListener("click", function () { BULK.rules.open(); });
-
-    dom.toolbar = h(
-      "div.bk-toolbar",
-      null,
-      h("div.bk-toolbar__row", null, dom.sourceLine, h("div.bk-toolbar__spacer"), rulesBtn),
-      h(
-        "div.bk-toolbar__row.bk-toolbar__row--controls",
-        null,
-        h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Formater"), dom.formatChips),
-        h("span.bk-sep"),
-        h(
-          "div.bk-ctl",
-          null,
-          h("span.bk-ctl__label", null, "Skrift"),
-          ui.seg([["bold", "Halvfet"], ["regular", "Normal"]], state.weight, function (v) {
-            state.weight = v;
-            store.emit("weight");
-          }, "Skrifttykkelse")
-        ),
-        h("label.bk-check", { title: "Holder motivet i bildet når det beskjæres. Av = midt i bildet." }, smart, h("span", null, "Smart beskjæring")),
-        h("div.bk-toolbar__spacer"),
-        h(
-          "div.bk-ctl",
-          null,
-          h("span.bk-ctl__label", null, "Visning"),
-          ui.seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
-            state.density = v;
-            applyDensity();
-          }, "Størrelse på forhåndsvisning")
-        )
-      ),
-      buildListBar()
+  /**
+   * «Felles for alle rader»: what a row gets when its own cell is empty, and
+   * the call to action's look — the controls of the single ReadPeak / Norsk
+   * Tipping form, set once for the whole sheet.
+   */
+  function renderCommon() {
+    var c = state.common;
+    dom.common.innerHTML = "";
+    dom.common.hidden = !store.has("brandLabel");
+    if (dom.common.hidden) return;
+    var changed = function () { store.emit("common"); };
+    var later = null;
+    var text = function (value, placeholder, label, apply, max) {
+      var input = h("input.bk-input.bk-common__in", { type: "text", value: value, placeholder: placeholder, maxlength: max, "aria-label": label });
+      input.addEventListener("input", function () {
+        apply(input.value);
+        clearTimeout(later);
+        later = setTimeout(changed, 300);
+      });
+      return input;
+    };
+    var L = window.BULK_PRODUCTS.LIMITS;
+    var ctl = function (label, control, title) {
+      return h("label.bk-ctl", { title: title || null }, h("span.bk-ctl__label", null, label), control);
+    };
+    dom.common.appendChild(h("span.bk-common__title", null, "Felles for alle rader"));
+    dom.common.appendChild(
+      ctl("Merkevare", text(c.brandLabel[state.product] || "", state.product === "readpeak" ? "F.eks. INTERFLORA" : "", "Merkevare for rader uten egen", function (v) {
+        c.brandLabel[state.product] = v;
+      }, L.brandLabel), "Brukes der arket ikke har merkevare")
     );
-    return dom.toolbar;
+    if (store.has("ctaText")) {
+      dom.common.appendChild(
+        ctl("Knappetekst", text(c.ctaText, "Les mer her", "Knappetekst for rader uten egen", function (v) { c.ctaText = v; }, L.ctaText), "Brukes der arket ikke har knappetekst")
+      );
+    }
+    if (store.has("gameType")) {
+      var game = h("select.bk-select", { "aria-label": "Spilltype for rader uten egen" });
+      store.gamePresets().forEach(function (g) {
+        game.appendChild(h("option", { value: g.id, selected: store.defaultGame() === g.id }, g.label));
+      });
+      game.addEventListener("change", function () {
+        c.gameType = game.value;
+        changed();
+      });
+      dom.common.appendChild(ctl("Spilltype", game, "Brukes der arket ikke har spilltype eller vinnersjanse"));
+      var grid = h("input", { type: "checkbox", checked: !!c.showVinnerOnNewsgrid });
+      grid.addEventListener("change", function () {
+        c.showVinnerOnNewsgrid = grid.checked;
+        changed();
+      });
+      dom.common.appendChild(h("label.bk-check", { title: "Bare ved vinnerpott – av som standard, som i Norsk Tipping-fanen" }, grid, h("span", null, "Vinnersjanse på 190×190")));
+    }
+    dom.common.appendChild(
+      ctl("«Les mer»", ui.seg([["text", "Tekst"], ["button", "Knapp"]], c.lesMerStyle, function (v) {
+        c.lesMerStyle = v;
+        changed();
+      }, "Stil på «Les mer»"))
+    );
+    var color = h("input.bk-color", { type: "color", value: c.accentColor, "aria-label": "Farge på «Les mer»" });
+    color.addEventListener("input", function () {
+      c.accentColor = color.value;
+      clearTimeout(later);
+      later = setTimeout(changed, 200);
+    });
+    dom.common.appendChild(ctl("Farge", color));
   }
 
   /** Select-all, the status filters, search and sort. */
@@ -194,11 +284,28 @@
       link("Alle som vises", function () { selectWhere(function () { return true; }); }),
       link("Bare klare", function () { selectWhere(function (r) { return r.level === "ok"; }); }, "Velg radene som er klare"),
       link("Ingen", function () { selectWhere(null); }),
-      h("span.bk-sep"),
-      h("span.bk-ctl__label", null, "Skrift"),
-      weight("Halvfet", "bold"),
-      weight("Normal", "regular"),
-      weight("Som resten", "", "Følg valget for hele kjøringen"),
+      dom.selWeight = h(
+        "span.bk-selbar__group",
+        null,
+        h("span.bk-sep"),
+        h("span.bk-ctl__label", null, "Skrift"),
+        weight("Halvfet", "bold"),
+        weight("Normal", "regular"),
+        weight("Som resten", "", "Følg valget for hele kjøringen")
+      ),
+      dom.selGame = h(
+        "span.bk-selbar__group",
+        null,
+        h("span.bk-sep"),
+        h("span.bk-ctl__label", null, "Spilltype"),
+        (dom.selGamePick = h("select.bk-select", { "aria-label": "Spilltype for valgte rader" })),
+        act("Sett", function (rows) {
+          var preset = store.gamePresets().filter(function (g) { return g.id === dom.selGamePick.value; })[0];
+          rows.forEach(function (row) {
+            store.updateRow(row, { gameType: preset ? preset.label : "", vinnersjanse: "" }, { refit: true, touch: true });
+          });
+        }, null, "Gi de valgte radene denne spilltypen (og spillets vinnersjanse)")
+      ),
       h("span.bk-sep"),
       act("Tekststørrelse til Auto", function (rows) {
         rows.forEach(function (row) {
@@ -253,7 +360,11 @@
     dom.sourceLine.innerHTML = "";
     dom.sourceLine.appendChild(h("span.bk-srcline__what", null, what));
     if (src.sheetName) dom.sourceLine.appendChild(h("span.bk-srcline__muted", null, "· fane «" + src.sheetName + "»"));
-    var mapped = state.columns.filter(function (c) { return c.field; }).map(function (c) { return c.header; });
+    // Only the columns this product reads: an Ingress column in a Houseads
+    // sheet is there, but not used.
+    var mapped = state.columns
+      .filter(function (c) { return c.field && store.has(c.field); })
+      .map(function (c) { return c.header; });
     if (mapped.length) dom.sourceLine.appendChild(h("span.bk-srcline__muted", { title: "Kolonner som brukes" }, "· " + mapped.join(", ")));
     if (src.url) {
       var again = h("button.bk-link", { type: "button" }, "Hent på nytt");
@@ -359,7 +470,10 @@
   }
 
   function applyDensity() {
-    dom.list.style.setProperty("--bk-scale", DENSITY[state.density] || DENSITY.m);
+    // ReadPeak's and Norsk Tipping's formats are a third the width of the
+    // widest house formats; drawn at the house scale they would be stamps.
+    var boost = state.product === "houseads" ? 1 : SMALL_FORMAT_BOOST;
+    dom.list.style.setProperty("--bk-scale", (DENSITY[state.density] || DENSITY.m) * boost);
     Object.keys(cards).forEach(function (rid) { stale[rid] = true; });
     redrawVisible();
   }
@@ -389,6 +503,21 @@
     });
     headline.addEventListener("blur", function () { store.flushEdits(key); });
 
+    // The Ingress, where the product has one: edited in place like the headline.
+    var subtitle = null;
+    if (store.has("subtitle")) {
+      subtitle = h("textarea.bk-sub", { rows: 2, maxlength: 120, placeholder: "Ingress (valgfri)", "aria-label": "Ingress, " + label });
+      subtitle.value = row.subtitle;
+      var subKey = "grid-sub:" + row.rid;
+      subtitle.addEventListener("input", function () {
+        store.deferEdit(subKey, function () {
+          if (state.rows.indexOf(row) === -1) return;
+          store.updateRow(row, { subtitle: subtitle.value.replace(/\s+/g, " ").trim() }, { refit: true });
+        }, HEADLINE_DEBOUNCE_MS);
+      });
+      subtitle.addEventListener("blur", function () { store.flushEdits(subKey); });
+    }
+
     var count = h("span.bk-count");
     var file = h("span.bk-file");
     var issues = h("ul.bk-issues");
@@ -416,12 +545,13 @@
           adjust
         ),
         headline,
+        subtitle,
         h("div.bk-card__sub", null, count, file),
         issues
       ),
       thumbs
     );
-    cards[row.rid] = { card: card, select: select, include: include, headline: headline, count: count, file: file, issues: issues, badge: badge, thumbs: thumbs, runMark: runMark, built: false };
+    cards[row.rid] = { card: card, select: select, include: include, headline: headline, subtitle: subtitle, count: count, file: file, issues: issues, badge: badge, thumbs: thumbs, runMark: runMark, built: false };
     if (observer) observer.observe(card);
     return card;
   }
@@ -440,7 +570,15 @@
     var c = cards[row.rid];
     if (!c) return;
     var base = store.fileBaseOf(row);
-    c.file.textContent = base + (row.weight ? " · " + (row.weight === "regular" ? "Normal" : "Halvfet") : "");
+    var extra = [];
+    if (state.product === "houseads" && row.weight) extra.push(row.weight === "regular" ? "Normal" : "Halvfet");
+    if (store.has("brandLabel") && store.brandOf(row)) extra.push(store.brandOf(row));
+    if (store.has("gameType")) {
+      var game = window.BULK_PRODUCTS.matchGame(row.gameType || store.defaultGame(), store.gamePresets());
+      if (String(row.vinnersjanse || "").trim()) extra.push("egen vinnersjanse");
+      else if (game) extra.push(game.label);
+    }
+    c.file.textContent = [base].concat(extra).join(" · ");
     c.file.title = "Filnavn i ZIP-en: " + base + "-…" + (row.filename ? "" : " (laget fra overskriften)");
   }
 
@@ -455,6 +593,7 @@
     c.include.setAttribute("aria-pressed", row.include ? "false" : "true");
     c.include.title = row.include ? "Ikke ta med denne i nedlastingen" : "Ta med denne i nedlastingen igjen";
     if (document.activeElement !== c.headline && c.headline.value !== row.headline) c.headline.value = row.headline;
+    if (c.subtitle && document.activeElement !== c.subtitle && c.subtitle.value !== row.subtitle) c.subtitle.value = row.subtitle;
     var n = window.BannerAutofit.countChars(row.headline);
     c.count.textContent = n + " tegn";
     renderFile(row);
@@ -649,6 +788,10 @@
       // Only the run mark changed: the banners themselves stay as drawn.
       state.rows.forEach(updateMeta);
       renderListTools();
+    } else if (what === "product") {
+      renderProductControls();
+      renderSourceLine();
+      applyDensity();
     } else if (what === "evaluated" || what === "formats" || what === "crop") {
       state.rows.forEach(refreshRow);
       refreshCountsSoon();

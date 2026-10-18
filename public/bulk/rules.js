@@ -127,7 +127,7 @@
     BULK.fit.loadFonts().then(function () {
       store.allSpecs().forEach(function (spec) {
         var rule = A.cleanRule(draft[spec.label], spec.autoFit);
-        var r = A.fit(spec.type, { product: BULK.PRODUCT, headline: text, houseWeight: state.weight }, rule);
+        var r = A.fit(spec.type, { product: "houseads", headline: text, houseWeight: state.weight }, rule);
         var label = !r.fits ? "for lang" : r.scale < r.ruleScale ? pct(r.ruleScale) + " → " + pct(r.scale) + " %" : pct(r.scale) + " %";
         dom.testOut.appendChild(h("span.bk-test__chip" + (r.fits ? "" : ".is-bad"), null, h("b", null, spec.width + "×" + spec.height), label));
       });

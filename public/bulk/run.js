@@ -69,7 +69,7 @@
       setOutput({ layout: v });
       renderResult();
     }, "Mappestruktur");
-    dom.name = h("input.bk-input.bk-name", { type: "text", maxlength: 60, placeholder: "houseads-bulk", value: o.name || "", "aria-label": "Navn på ZIP-filen" });
+    dom.name = h("input.bk-input.bk-name", { type: "text", maxlength: 60, placeholder: "navn på ZIP-filen", value: o.name || "", "aria-label": "Navn på ZIP-filen" });
     dom.name.addEventListener("input", function () { state.output.name = dom.name.value; store.persist(); });
     dom.click = h("input.bk-input", { type: "url", placeholder: "https://… brukes der arket ikke har klikk-lenke", value: o.clickUrl || "", spellcheck: "false", "aria-label": "Standard klikk-lenke" });
     var ct = null;
@@ -123,6 +123,7 @@
   /** The button's wording and the line beside it. */
   function refresh() {
     if (!dom.go) return;
+    dom.name.placeholder = window.BULK_NAMES.sanitizeFilename(defaultName());
     var running = isRunning(state.job) || starting;
     var c = BULK.fit.counts();
     var ready = store.sendable().length;
@@ -173,9 +174,19 @@
           scales: scales,
           autoTypes: autoTypes,
           clickUrl: row.clickUrl,
+          // Resolved here (the run's defaults filled in), exactly as the
+          // previews drew them.
+          subtitle: store.has("subtitle") ? row.subtitle : "",
+          brandLabel: store.brandOf(row),
+          ctaText: store.ctaOf(row),
+          vinnersjanse: store.vinnerOf(row),
         };
       }),
       options: {
+        product: state.product,
+        lesMerStyle: state.common.lesMerStyle,
+        accentColor: state.common.accentColor,
+        showVinnerOnNewsgrid: !!state.common.showVinnerOnNewsgrid,
         formats: state.formats.slice(),
         outputType: state.output.type,
         format: state.output.format,
@@ -188,7 +199,7 @@
 
   function defaultName() {
     var src = state.source || {};
-    var base = src.sheetName || (src.name ? src.name.replace(/\.[a-z0-9]+$/i, "") : "") || "houseads-bulk";
+    var base = src.sheetName || (src.name ? src.name.replace(/\.[a-z0-9]+$/i, "") : "") || state.product + "-bulk";
     return base;
   }
 

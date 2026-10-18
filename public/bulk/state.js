@@ -18,8 +18,14 @@
   var BULK = (window.BULK = window.BULK || {});
   var F = window.BannerFormats;
   var NAMES = window.BULK_NAMES;
-  var PRODUCT = "houseads";
+  var P = window.BULK_PRODUCTS;
   var STORE_KEY = "bulk.session.v1";
+  // Formats without a text-size rule (ReadPeak, Norsk Tipping) start at the
+  // size the single tab uses and step down only until nothing is cut, never
+  // below this — smaller than that, the copy should be shorter instead.
+  var MEASURED_FLOOR = 0.75;
+  // The fields a row carries from the sheet, as text.
+  var TEXT_FIELDS = ["headline", "imageUrl", "filename", "clickUrl", "weight", "subtitle", "brandLabel", "ctaText", "gameType", "vinnersjanse"];
 
   var listeners = [];
   var seq = 1;
@@ -31,8 +37,14 @@
     warnings: [],
     guessed: false,
     rows: [],
-    // Which house formats to preview and produce.
-    formats: F.getProduct(PRODUCT).specs.map(function (s) { return s.key; }),
+    // Which banner product the sheet makes: "houseads" | "readpeak" | "norsktipping".
+    product: P.DEFAULT,
+    // Which of the product's formats to preview and produce.
+    formats: F.getProduct(P.DEFAULT).specs.map(function (s) { return s.key; }),
+    // «Felles for alle rader»: what a row gets when its own cell is empty,
+    // and the run-wide look of the call to action — the single form's
+    // controls, with its defaults.
+    common: defaultCommon(),
     weight: "bold",
     smartCrop: true,
     density: "m",
@@ -60,25 +72,37 @@
     if (what !== "job" && what !== "fit" && what !== "run-rows" && what !== "view") persistSoon();
   }
 
+  function defaultCommon() {
+    return {
+      brandLabel: { readpeak: F.getProduct("readpeak").brandLabelDefault, norsktipping: F.getProduct("norsktipping").brandLabelDefault },
+      ctaText: P.get("readpeak").ctaDefault,
+      gameType: "", // "" = the first game in Innstillinger
+      showVinnerOnNewsgrid: false,
+      lesMerStyle: "text",
+      accentColor: "#2f2f2f",
+    };
+  }
+
   function specs() {
-    return F.getProduct(PRODUCT).specs.filter(function (s) {
+    return F.getProduct(state.product).specs.filter(function (s) {
       return state.formats.indexOf(s.key) !== -1;
     });
   }
   function allSpecs() {
-    return F.getProduct(PRODUCT).specs;
+    return F.getProduct(state.product).specs;
+  }
+  function has(field) {
+    return P.hasField(state.product, field);
   }
 
   /** A row as read from the sheet (see lib/bulk/sheet.js readTable). */
   function makeRow(src, rid) {
-    return {
+    var row = {
       rid: rid || "r" + seq++,
       sheetRow: src.sheetRow || null,
-      headline: src.headline || "",
-      imageUrl: src.imageUrl || "",
-      filename: src.filename || "",
-      clickUrl: src.clickUrl || "",
-      weight: src.weight || "", // "" = the run's default
+      // headline, imageUrl, filename, clickUrl, weight ("" = the run's
+      // default), subtitle, brandLabel, ctaText, gameType, vinnersjanse
+      // ("" = the run's default) — filled in below
       sheetFocus: src.focus || null,
       zoom: src.zoom == null ? 0 : src.zoom,
       pos: null, // set by dragging in the editor; wins over everything
@@ -92,6 +116,27 @@
       level: "pending",
       run: null, // status from the last run, if any
     };
+    TEXT_FIELDS.forEach(function (k) { row[k] = src[k] == null ? "" : String(src[k]); });
+    return row;
+  }
+
+  /**
+   * Make the sheet another product's: its formats, its fields, its checks.
+   * The rows stay — the columns the new product reads were read from the
+   * sheet all along — but sizes set by hand belong to the old formats and
+   * are dropped.
+   */
+  function setProduct(id) {
+    if (!P.isId(id) || id === state.product) return;
+    state.product = id;
+    state.formats = allSpecs().map(function (s) { return s.key; });
+    state.rows.forEach(function (row) {
+      row.manual = {};
+      row.fit = {};
+      row.run = null;
+    });
+    emit("product");
+    emit("rows", { keepScroll: true });
   }
 
   function applySheet(rows, meta) {
@@ -165,6 +210,12 @@
     });
   }
 
+  function sheetFields(row) {
+    var out = {};
+    TEXT_FIELDS.forEach(function (k) { out[k] = row[k]; });
+    return out;
+  }
+
   // ---- adding and removing rows ----------------------------------------------
   // "list" rather than "rows": the other rows stay as they are, so only the
   // cards involved are built or dropped and only new rows are fitted.
@@ -175,10 +226,7 @@
 
   /** A copy of a row right below it — same photo, same choices. */
   function duplicateRow(row) {
-    var copy = makeRow({
-      sheetRow: row.sheetRow, headline: row.headline, imageUrl: row.imageUrl, filename: row.filename,
-      clickUrl: row.clickUrl, weight: row.weight, focus: row.sheetFocus, zoom: row.zoom,
-    });
+    var copy = makeRow(Object.assign(sheetFields(row), { sheetRow: row.sheetRow, focus: row.sheetFocus, zoom: row.zoom }));
     copy.pos = row.pos ? Object.assign({}, row.pos) : null;
     copy.manual = Object.assign({}, row.manual);
     copy.include = row.include;
@@ -233,6 +281,40 @@
     return row.weight || state.weight;
   }
 
+  function gamePresets() {
+    return (BULK.settings && BULK.settings.gamePresets) || [];
+  }
+
+  /** The Merkevare a row shows: its own, else the run's. */
+  function brandOf(row) {
+    if (!has("brandLabel")) return "";
+    return String(row.brandLabel || "").trim() || String(state.common.brandLabel[state.product] || "").trim();
+  }
+
+  /** The call to action: ReadPeak's own or the run's; Norsk Tipping's fixed one. */
+  function ctaOf(row) {
+    if (!has("ctaText")) return P.get(state.product).ctaFixed || "Les mer";
+    return String(row.ctaText || "").trim() || String(state.common.ctaText || "").trim();
+  }
+
+  /** The default game, as an id: the run's choice, else the first preset. */
+  function defaultGame() {
+    var presets = gamePresets();
+    return state.common.gameType || (presets[0] && presets[0].id) || "";
+  }
+
+  /** The odds line (Norsk Tipping): the row's text, its game's, or the run's game's. */
+  function vinnerOf(row) {
+    if (!F.getProduct(state.product).vinnersjanse) return "";
+    return P.vinnersjanseFor(row, gamePresets(), defaultGame());
+  }
+
+  function ageIconUrl() {
+    var icon = BULK.settings && BULK.settings.ageIcon;
+    if (!icon || !icon.path) return "";
+    return icon.path + (icon.version ? "?v=" + icon.version : "");
+  }
+
   /** Where the crop is held: dragged > sheet's «Fokus» > the photo's own > centre. */
   function positionOf(row) {
     if (row.pos) return row.pos;
@@ -254,9 +336,12 @@
     allSpecs().forEach(function (s) {
       scales[s.type] = scaleOf(row, s.type);
     });
+    var badges = (BULK.settings && BULK.settings.staticBadges) || {};
+    var c = state.common;
+    // The same fields app.js buildData() gives the single tabs' previews.
     return {
-      product: PRODUCT,
-      hideAgeBadge: true,
+      product: state.product,
+      hideAgeBadge: !F.getProduct(state.product).ageBadge,
       imageDataUrl: row.image && row.image.previewUrl ? row.image.previewUrl : "",
       placeholderUrl: "",
       imagePositionX: pos.x,
@@ -264,13 +349,28 @@
       imageZoom: row.zoom,
       headline: row.headline,
       headlineScales: scales,
+      subtitle: has("subtitle") ? row.subtitle : "",
+      brandLabel: brandOf(row),
+      ctaText: ctaOf(row),
+      vinnersjanse: vinnerOf(row),
+      showVinnerOnNewsgrid: !!c.showVinnerOnNewsgrid,
+      subtitleScale: 1,
+      lesMerSize: 17,
+      lesMerStyle: c.lesMerStyle,
+      accentColor: c.accentColor,
       houseWeight: weightOf(row),
       houseLogoUrl: "assets/abc-shopping.png",
-      annonseText: (BULK.settings && BULK.settings.staticBadges && BULK.settings.staticBadges.annonseText) || "Annonse",
+      ageIconUrl: ageIconUrl(),
+      annonseText: badges.annonseText || "Annonse",
+      ageBadgeText: badges.ageBadgeText || "18+ | Hjelpelinjen.no",
     };
   }
 
+  var MEASURED_RULE = { min: MEASURED_FLOOR, max: 1, tiers: [[100000, 1]] };
+
+  /** A format's text-size rule; formats without one are measured from 100 %. */
   function rule(spec) {
+    if (!spec.autoFit) return MEASURED_RULE;
     return window.BannerAutofit.cleanRule(F.autoFitRule(spec, state.rules), spec.autoFit);
   }
 
@@ -340,12 +440,11 @@
         return;
       }
       var rows = state.rows.map(function (r) {
-        return {
-          rid: r.rid, sheetRow: r.sheetRow, headline: r.headline, imageUrl: r.imageUrl, filename: r.filename,
-          clickUrl: r.clickUrl, weight: r.weight, sheetFocus: r.sheetFocus, zoom: r.zoom, pos: r.pos,
+        return Object.assign(sheetFields(r), {
+          rid: r.rid, sheetRow: r.sheetRow, sheetFocus: r.sheetFocus, zoom: r.zoom, pos: r.pos,
           manual: r.manual, include: r.include, touched: r.touched,
           image: r.image && r.image.status === "ok" ? r.image : null,
-        };
+        });
       });
       localStorage.setItem(
         STORE_KEY,
@@ -353,6 +452,7 @@
           v: 1,
           savedAt: Date.now(),
           source: state.source, columns: state.columns, warnings: state.warnings, guessed: state.guessed,
+          product: state.product, common: state.common,
           formats: state.formats, weight: state.weight, smartCrop: state.smartCrop, density: state.density,
           output: state.output, sort: state.sort, rows: rows,
           job: savedJob(state.job),
@@ -393,6 +493,16 @@
     state.columns = saved.columns || [];
     state.warnings = saved.warnings || [];
     state.guessed = !!saved.guessed;
+    state.product = P.isId(saved.product) ? saved.product : P.DEFAULT;
+    state.formats = allSpecs().map(function (s) { return s.key; });
+    if (saved.common && typeof saved.common === "object") {
+      var c = defaultCommon();
+      Object.keys(c).forEach(function (k) {
+        if (k === "brandLabel") Object.assign(c.brandLabel, saved.common.brandLabel || {});
+        else if (saved.common[k] != null) c[k] = saved.common[k];
+      });
+      state.common = c;
+    }
     var known = allSpecs().map(function (s) { return s.key; });
     if (Array.isArray(saved.formats)) {
       var formats = saved.formats.filter(function (k) { return known.indexOf(k) !== -1; });
@@ -412,10 +522,7 @@
         seen[rid] = true;
         seq = Math.max(seq, Number(rid.slice(1)) + 1);
       }
-      var row = makeRow({
-        sheetRow: r.sheetRow, headline: r.headline, imageUrl: r.imageUrl, filename: r.filename,
-        clickUrl: r.clickUrl, weight: r.weight, focus: r.sheetFocus, zoom: r.zoom,
-      }, rid);
+      var row = makeRow(Object.assign(sheetFields(r), { sheetRow: r.sheetRow, focus: r.sheetFocus, zoom: r.zoom }), rid);
       row.pos = r.pos || null;
       row.manual = r.manual || {};
       row.include = r.include !== false;
@@ -428,7 +535,6 @@
     return { job: job, savedAt: saved.savedAt };
   }
 
-  BULK.PRODUCT = PRODUCT;
   BULK.state = state;
   BULK.store = {
     on: on,
@@ -450,6 +556,13 @@
     inView: inView,
     viewRows: viewRows,
     weightOf: weightOf,
+    has: has,
+    setProduct: setProduct,
+    gamePresets: gamePresets,
+    defaultGame: defaultGame,
+    brandOf: brandOf,
+    ctaOf: ctaOf,
+    vinnerOf: vinnerOf,
     positionOf: positionOf,
     scaleOf: scaleOf,
     bannerData: bannerData,
