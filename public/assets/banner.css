@@ -189,6 +189,11 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The odds line is a regulatory text, so the three standard wordings
+   (Lotto, Vikinglotto, Eurojackpot — 205–210px at 10px) must fit whole. On
+   the 320×400 the strip may use everything right of the Annonse pill (which
+   ends at 68px) minus a gap, instead of a flat 62 % that cut them with «…». */
+.bn--mobile .bn__vinner { max-width: calc(100% - 85px); }
 .bn--readpeak .bn__vinner { font-size: 9px; max-width: 70%; bottom: 7px; right: 7px; }
 
 /* Desktop is a much larger canvas (580×500) than mobile (320×400). Scale the
@@ -251,7 +256,9 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   bottom: 7px;
   right: 7px;
   font-size: 8px;
-  max-width: 68%;
+  /* No Annonse pill down here (it lives in the top bar), so the strip may run
+     nearly edge to edge and the standard wordings fit whole. */
+  max-width: calc(100% - 14px);
   padding: 3px 6px;
   background: rgba(255, 255, 255, 0.9);
   color: #111111;
