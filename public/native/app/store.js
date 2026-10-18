@@ -21,9 +21,9 @@
    (the state stays "conflict" and leaving the page warns) until the user
    reloads or saves their version as a copy.
 
-   save() resolves once the project as it is now is on the server, and
-   rejects when it is not (conflict, network error): actions that work on
-   the server's copy — send a round, publish, export — must stop then.
+   save() resolves once the project as it is when called is on the server,
+   and rejects when it is not (conflict, network error): actions that work
+   on the server's copy — send a round, publish, export — must stop then.
    ========================================================================= */
 (function () {
   "use strict";
@@ -459,6 +459,8 @@
 
   /** Saves nobody waits for (the timers, leaving the page): failures show in the save state. */
   function autoSave() {
+    // A save in flight schedules the next one itself when it ends.
+    if (saving) return;
     save().catch(function () {});
   }
 
@@ -505,10 +507,11 @@
       .then(function () {
         saving = null;
       });
+    // Done when what was sent is saved. Edits made meanwhile ("dirty") go
+    // out on the timer the success handler set, not right away.
     return saving.then(function () {
       if (!state || state.project.id !== id) throw saveError();
-      if (state.save === "dirty") return save();
-      if (state.save !== "saved") throw saveError();
+      if (state.save !== "saved" && state.save !== "dirty") throw saveError();
     });
   }
 

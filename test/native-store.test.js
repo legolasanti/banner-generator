@@ -46,7 +46,20 @@ function harness() {
   };
   ctx.window = ctx;
   ctx.self = ctx;
+  // The UI leave.js uses: dialogs are recorded, buttons are { label, onClick }.
+  const dialogs = [];
+  const toasts = [];
   ctx.NP = {
+    ui: {
+      h: (tag, attrs, ...kids) => ({ tag, kids }),
+      button: (label, o) => ({ label, onClick: o.onClick }),
+      modal: (o) => {
+        const d = { opts: o, closed: false, close: () => { if (!d.closed) { d.closed = true; if (o.onClose) o.onClose(); } } };
+        dialogs.push(d);
+        return d;
+      },
+      toast: (text, kind) => toasts.push({ text, kind }),
+    },
     api: {
       saveProject(id, project, rev) {
         calls.push({ kind: "save", id, project, rev });
@@ -59,7 +72,7 @@ function harness() {
     },
   };
   vm.createContext(ctx);
-  ["schema.js", "doc.js", "app/store.js"].forEach((f) => {
+  ["schema.js", "doc.js", "app/store.js", "app/leave.js"].forEach((f) => {
     vm.runInContext(fs.readFileSync(path.join(PUBLIC, f), "utf8"), ctx, { filename: f });
   });
   const D = ctx.NativeDoc;
@@ -68,6 +81,9 @@ function harness() {
   store.load(project);
   return {
     store,
+    leave: ctx.NP.leave,
+    dialogs,
+    toasts,
     D,
     calls,
     pending,
@@ -132,24 +148,40 @@ test("save() rejects on a network error, so actions on the server copy stop", as
   assert.equal(t.store.get().save, "error");
 });
 
-test("save() waits for edits made while a save was in flight", async () => {
+test("save() waits for edits made before it was called, even with a save in flight", async () => {
   const t = harness();
   edit(t, "Først");
   const first = t.store.save();
   edit(t, "Så");
   const second = t.store.save();
-  let done = 0;
-  first.then(() => done++);
-  second.then(() => done++);
+  let done = [];
+  first.then(() => done.push("first"));
+  second.then(() => done.push("second"));
   await t.answer(0, { rev: 2 });
-  assert.equal(t.calls.length, 2, "the newer state goes out right after");
+  assert.deepEqual(plain(done), ["first"], "«Først» is saved; «Så» is not yet");
+  assert.equal(t.calls.length, 2, "the caller who asked after «Så» gets it sent right away");
   assert.equal(t.calls[1].rev, 2);
   assert.equal(t.calls[1].project.pages[0].sections[0].props.title, "Så");
-  assert.equal(done, 0, "neither caller is told «saved» while «Så» is not on the server");
   await t.answer(1, { rev: 3 });
-  await Promise.all([first, second]);
+  await second;
   assert.equal(t.store.get().save, "saved");
-  assert.equal(t.calls.length, 2);
+});
+
+test("typing during a save does not fire saves back to back: the timer takes the rest", async () => {
+  const t = harness();
+  edit(t, "En");
+  t.tick(1300); // the autosave goes out
+  assert.equal(t.calls.length, 1);
+  edit(t, "En to");
+  t.tick(1300); // its timer fires while the first save is still in flight
+  assert.equal(t.calls.length, 1, "no second request while one is in flight");
+  await t.answer(0, { rev: 2 });
+  assert.equal(t.calls.length, 1, "not immediately after it either");
+  assert.equal(t.store.get().save, "dirty");
+  t.tick(1300);
+  assert.equal(t.calls.length, 2, "the next save goes on the timer");
+  await t.answer(1, { rev: 3 });
+  assert.equal(t.store.get().save, "saved");
 });
 
 test("after a conflict nothing is saved, every save rejects, and leaving warns", async () => {
@@ -269,4 +301,55 @@ test("a plain select ends the group; picking one section is a plain select", () 
   t.store.pick([ids[2]]);
   assert.equal(t.store.get().selected, ids[2]);
   assert.deepEqual(plain(t.store.get().picked), []);
+});
+
+// ---- leaving the editor inside the app ---------------------------------------------------
+const click = (dialog, label) => dialog.opts.actions.find((b) => b.label === label).onClick();
+
+test("leaving with nothing unsaved goes straight on; unsaved edits are saved first", async () => {
+  const t = harness();
+  assert.equal(await t.leave.confirm(), true);
+  edit(t, "Ny tittel");
+  const p = t.leave.confirm();
+  await t.answer(0, { rev: 2 });
+  assert.equal(await p, true);
+  assert.equal(t.dialogs.length, 0, "no question when the save worked");
+});
+
+test("leaving after a conflict asks; «Bli her» stays, the copy keeps the edits and then leaves", async () => {
+  const t = harness();
+  edit(t, "Min tekst");
+  const s = assert.rejects(t.store.save());
+  await t.fail(0, 409);
+  await s;
+
+  const stay = t.leave.confirm();
+  await flush();
+  assert.equal(t.dialogs.length, 1);
+  assert.match(t.dialogs[0].opts.title, /ikke lagret/);
+  click(t.dialogs[0], "Bli her");
+  assert.equal(await stay, false);
+
+  const copy = t.leave.confirm();
+  await flush();
+  click(t.dialogs[1], "Lagre min versjon som kopi");
+  assert.equal(await copy, true);
+  assert.equal(t.calls[t.calls.length - 1].kind, "create");
+  assert.equal(t.calls[t.calls.length - 1].body.copyOf.pages[0].sections[0].props.title, "Min tekst");
+
+  const drop = t.leave.confirm();
+  await flush();
+  click(t.dialogs[2], "Forlat uten å lagre");
+  assert.equal(await drop, true);
+});
+
+test("leaving while offline asks instead of dropping the edits", async () => {
+  const t = harness();
+  edit(t, "Uten nett");
+  const p = t.leave.confirm();
+  await t.fail(0, 500, "Ingen forbindelse");
+  await flush();
+  assert.equal(t.dialogs.length, 1);
+  t.dialogs[0].close(); // Esc / the close button = stay
+  assert.equal(await p, false);
 });

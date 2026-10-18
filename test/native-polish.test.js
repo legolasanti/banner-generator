@@ -125,6 +125,33 @@ test("status: only «back to draft» can be set by hand", async () => {
   assert.equal((await json("POST", "/api/native/projects/" + p.id + "/status", { status: "draft" })).status, 200);
 });
 
+test("unpublishing goes back to the status the page had, or draft if it was edited", async () => {
+  const status = async (id) => (await json("GET", "/api/native/projects/" + id)).data.project.status;
+  // Never approved: back to draft (it used to become «approved»).
+  const a = (await json("POST", "/api/native/projects", { name: "Avpubliser utkast" })).data.project;
+  await json("POST", "/api/native/projects/" + a.id + "/publish");
+  assert.equal(await status(a.id), "published");
+  const ra = await json("DELETE", "/api/native/projects/" + a.id + "/publish");
+  assert.equal(ra.data.status, "draft");
+  assert.equal(await status(a.id), "draft");
+
+  // Approved, published (twice), unpublished: approved again.
+  const b = (await json("POST", "/api/native/projects", { name: "Avpubliser godkjent" })).data.project;
+  const r = await json("POST", "/api/native/projects/" + b.id + "/review");
+  await json("POST", "/api/review/" + r.data.review.token + "/approve", { name: "Kari Kunde", round: 1 });
+  assert.equal(await status(b.id), "approved");
+  await json("POST", "/api/native/projects/" + b.id + "/publish");
+  await json("POST", "/api/native/projects/" + b.id + "/publish");
+  assert.equal((await json("DELETE", "/api/native/projects/" + b.id + "/publish")).data.status, "approved");
+
+  // Approved, published, then edited: what the advertiser approved is gone, so draft.
+  await json("POST", "/api/native/projects/" + b.id + "/publish");
+  const cur = (await json("GET", "/api/native/projects/" + b.id)).data.project;
+  await json("PUT", "/api/native/projects/" + b.id, { project: Object.assign({}, cur, { name: "Endret etter publisering" }), baseRev: cur.rev });
+  assert.equal(await status(b.id), "published");
+  assert.equal((await json("DELETE", "/api/native/projects/" + b.id + "/publish")).data.status, "draft");
+});
+
 // ---- 3. "Lagre min versjon som kopi" ----------------------------------------------------
 test("a conflicted editor state can be saved as a new project", async () => {
   const p = (await json("POST", "/api/native/projects", { name: "Original", advertiser: { name: "Ford" } })).data.project;
@@ -289,6 +316,26 @@ test("safe-fetch streams a body to a file with the size cap, and cleans up on re
   }
 });
 
+test("a stalled download says it timed out, and leaves no temp file", async () => {
+  const srv = http.createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "video/mp4" });
+    res.write(fakeMp4(1000)); // … then nothing more
+  });
+  await new Promise((r) => srv.listen(0, r));
+  const dir = tmp("np-stall-");
+  const url = "http://127.0.0.1:" + srv.address().port + "/v.mp4";
+  try {
+    const file = path.join(dir, "stall.tmp");
+    await assert.rejects(safeFetch._requestOnce(url, { maxBytes: 1e6, timeoutMs: 200, file }), /Tidsavbrudd/);
+    await assert.rejects(safeFetch._requestOnce(url, { maxBytes: 1e6, timeoutMs: 200 }), /Tidsavbrudd/);
+    await new Promise((r) => setTimeout(r, 100));
+    assert.equal(fs.existsSync(file), false, "the partial file is removed");
+  } finally {
+    srv.closeAllConnections();
+    srv.close();
+  }
+});
+
 test("Drive import stores a video from a temp file, never from a buffer", async () => {
   const dir = tmp("np-drive-");
   const assets = createAssetStore({ dir: path.join(dir, "uploads") });
@@ -345,6 +392,25 @@ test("export puts a video in the ZIP straight from disk", async () => {
   assert.equal(zip.text(name), video.toString("utf8"));
 });
 
+test("export: a video whose file is gone is reported, not listed", async () => {
+  const video = fakeMp4(5000);
+  video.write("gone", 100, "latin1"); // a different file than the other test's
+  const fd = new FormData();
+  fd.append("file", new Blob([video], { type: "video/mp4" }), "borte.mp4");
+  const up = await (await fetch(base + "/api/native/assets/video", { method: "POST", body: fd })).json();
+  const p = (await json("POST", "/api/native/projects", { name: "Borte", advertiser: { name: "Ford" } })).data.project;
+  p.assets = { [up.asset.id]: up.asset };
+  p.theme.fonts = { heading: { family: "x", source: "system", weight: 700 }, body: { family: "x", source: "system", weight: 400 } };
+  p.pages[0].sections = [{ type: "video", props: { video: up.asset.id } }];
+  await json("PUT", "/api/native/projects/" + p.id, { project: p, baseRev: p.rev });
+  fs.rmSync(path.join(root, "uploads", "native", up.asset.id));
+  const res = await fetch(base + "/api/native/projects/" + p.id + "/export", { method: "POST" });
+  assert.equal(res.status, 200);
+  const zip = _readZip(Buffer.from(await res.arrayBuffer()));
+  assert.equal(zip.has("assets/video/" + up.asset.id), false);
+  assert.match(zip.text("LES-MEG.txt"), /Fant ikke filen for borte\.mp4/);
+});
+
 // ---- 11. rate limit (last: it spends this app's budget) ----------------------------------------------------
 test("anonymous review reads are rate-limited", async () => {
   let last = 0;
@@ -353,6 +419,37 @@ test("anonymous review reads are rate-limited", async () => {
     if (last === 429) break;
   }
   assert.equal(last, 429);
+  // The review page itself answers a person with a page, not JSON.
+  const page = await fetch(base + "/p/" + "z".repeat(24) + "/");
+  assert.equal(page.status, 429);
+  assert.match(page.headers.get("content-type"), /text\/html/);
+  assert.match(await page.text(), /For mange forespørsler/);
+});
+
+test("the limiter lets a retrying client back in, and forgets the least recently seen first", () => {
+  const { createLimiter } = require("../lib/native/public-routes");
+  const realNow = Date.now;
+  let now = 1e12;
+  Date.now = () => now;
+  try {
+    const limited = createLimiter(3);
+    const a = { ip: "a" };
+    assert.deepEqual([1, 2, 3, 4].map(() => limited(a)), [false, false, false, true]);
+    for (let i = 0; i < 50; i++) { now += 1000; limited(a); } // hammering while refused …
+    now += 10 * 60 * 1000 - 40000; // … the first three are now out of the window
+    assert.equal(limited(a), false, "refused requests were not counted");
+
+    const one = createLimiter(1);
+    one({ ip: "old" });
+    one({ ip: "kept" });
+    for (let i = 0; i < 4998; i++) one({ ip: "x" + i });
+    one({ ip: "kept" }); // seen again: now the most recent
+    one({ ip: "new" }); // 5001 addresses: the least recently seen goes
+    assert.equal(one({ ip: "old" }), false, "«old» was forgotten, so it starts afresh");
+    assert.equal(one({ ip: "kept" }), true, "«kept» is still remembered (and over its limit)");
+  } finally {
+    Date.now = realNow;
+  }
 });
 
 // ---- project card thumbnail ------------------------------------------------------------------

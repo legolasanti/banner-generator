@@ -258,8 +258,9 @@
   function saveCopy() {
     NP.store.saveAsCopy().then(function (p) {
       ui.toast("Din versjon er lagret som «" + p.name + "»", "ok");
-      location.hash = "#/p/" + p.id;
-    }, function (err) {
+      // Nothing is lost now: close without the "not saved" question, then open the copy.
+      return NP.store.close().then(function () { location.hash = "#/p/" + p.id; });
+    }).catch(function (err) {
       ui.toast(err.message, "err");
     });
   }

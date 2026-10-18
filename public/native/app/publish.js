@@ -139,8 +139,8 @@
           mine ? ui.button("Avpubliser", { kind: "ghost", onClick: function () {
             ui.confirm("Avpublisere?", "Siden slutter å virke på " + base + "/n/" + mine + "/.", "Avpubliser", true).then(function (ok) {
               if (!ok) return;
-              NP.api.unpublish(p.id).then(function () {
-                NP.store.adopt({ status: "approved" });
+              NP.api.unpublish(p.id).then(function (r) {
+                NP.store.adopt({ status: r.status || "draft" });
                 ui.toast("Siden er avpublisert", "ok");
                 drawPublish();
               }, function (err) { ui.toast(err.message, "err"); });

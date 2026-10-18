@@ -33,12 +33,42 @@
     topbar.appendChild(tabs);
   }
 
+  // The address the app is showing, and a pass for the one navigation the
+  // user has just confirmed.
+  var shown = null;
+  var confirmed = false;
+
+  function inEditor(hash) {
+    return /^#\/p\//.test(hash || "");
+  }
+
+  /**
+   * Leaving a project with edits that are not on the server: put the old
+   * address back while asking (leave.js), and go on only if the user says so.
+   */
+  function guarded(hash) {
+    if (confirmed || !inEditor(shown) || hash === shown || !NP.store.get() || !NP.store.hasUnsaved()) return false;
+    history.replaceState(null, "", shown);
+    NP.leave.confirm().then(function (ok) {
+      if (!ok) return;
+      confirmed = true;
+      location.hash = hash;
+    });
+    return true;
+  }
+
   function route() {
     var hash = location.hash || "#/";
+    if (guarded(hash)) return Promise.resolve();
+    confirmed = false;
+    shown = hash;
     var m = /^#\/p\/([A-Za-z0-9_-]{4,40})(\/ai)?$/.exec(hash);
     document.body.classList.toggle("nx-in-editor", !!m);
     if (m) {
-      if (m[2]) history.replaceState(null, "", "#/p/" + m[1]);
+      if (m[2]) {
+        history.replaceState(null, "", "#/p/" + m[1]);
+        shown = "#/p/" + m[1];
+      }
       return NP.editor.open(m[1], main, topbar).then(function () {
         if (m[2]) setTimeout(function () { NP.ai.open(); }, 300);
       });
