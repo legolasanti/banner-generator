@@ -130,6 +130,7 @@
         io.disconnect();
         demo().then(function (d) {
           frame.style.transform = "scale(" + (view.clientWidth / 1280).toFixed(4) + ")";
+          frame.addEventListener("load", function () { view.classList.add("is-ready"); }, { once: true });
           frame.srcdoc = documentFor(projectFrom(tpl, d, opts.useDemo ? opts.useDemo() : true), { thumb: true });
         });
       }, { rootMargin: "200px" });

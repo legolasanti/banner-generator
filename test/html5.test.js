@@ -218,3 +218,23 @@ test("no creative references a file it does not contain", async (t) => {
     }
   }
 });
+
+test("headline hover underline ships in every creative", async (t) => {
+  // The banners copy abcnyheter.no's article cue: hovering the ad underlines
+  // the headline. The rule lives in banner.css, which index.html embeds
+  // verbatim, so it has to survive pruneFontFaces and reach the package.
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const css = fs.readFileSync(path.join(__dirname, "../public/assets/banner.css"), "utf8");
+
+  await t.test("banner.css underlines the headline on hover and on keyboard focus", () => {
+    assert.match(css, /\.bn:hover \.bn__headline,\s*\n\.ad-exit:focus-visible \.bn__headline\s*\{\s*text-decoration-color: currentColor;/);
+    // At rest the underline is transparent, so PNG/JPEG screenshots never show it.
+    assert.match(css, /\.bn__headline \{[^}]*text-decoration: underline transparent;/);
+  });
+
+  await t.test("the rule is still there after the stylesheet is packaged", () => {
+    const html = html5.buildIndexHtml(SPEC, MARKUP, html5.pruneFontFaces(css, []), "https://example.com/", "Test");
+    assert.ok(html.includes(".bn:hover .bn__headline"));
+  });
+});

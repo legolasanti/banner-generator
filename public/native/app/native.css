@@ -497,6 +497,13 @@ p { margin: 0; }
 .nx-tplgal__cat:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .nx-tplgal__n { font-size: 11px; font-weight: 700; color: var(--ink-3); }
 .nx-tplgal__card[hidden] { display: none; }
+/* Until the live thumbnail has rendered (the first gallery of a fresh server
+   also has to prepare the demo photos), the card shows a soft shimmer. */
+.nx-tplgal__view:not(.is-ready) { background: linear-gradient(100deg, #e9ece4 30%, #f4f6f0 50%, #e9ece4 70%) 0 0 / 300% 100%; animation: nx-tpl-shimmer 1.6s linear infinite; }
+.nx-tplgal__view:not(.is-ready) .nx-tplgal__frame { opacity: 0; }
+.nx-tplgal__frame { transition: opacity 0.25s; }
+@keyframes nx-tpl-shimmer { to { background-position: -300% 0; } }
+@media (prefers-reduced-motion: reduce) { .nx-tplgal__view:not(.is-ready) { animation: none; } }
 .nx-modal--xl { width: min(1180px, 100%); }
 .nx-tplgal { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
 .nx-tplgal__card { position: relative; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
