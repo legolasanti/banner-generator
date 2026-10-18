@@ -74,6 +74,8 @@
       function (v) {
         start = v;
         tplWrap.hidden = v !== "template";
+        // The gallery needs the room; the plain form does not.
+        m.node.classList.toggle("nx-modal--xl", v === "template");
       }
     );
     var tplWrap = h(

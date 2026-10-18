@@ -8,6 +8,7 @@
    reports).
 
    A template may carry:
+     category the gallery filter it is listed under (see CATEGORIES)
      theme    its own look (used when the project has no brand kit)
      extras   page-level options (progress bar, chapter menu, floating button)
      sections the page, with "demo:<name>" for photos from the demo kit
@@ -42,6 +43,7 @@
       id: "bil-premium",
       name: "Bil-lansering premium",
       premium: true,
+      category: "Bil",
       description: "Bildet vokser ut av skjermen, ord som lyser opp, delt scrollfortelling, interiør med klikkbare punkter og sammenligningstabell.",
       use: "Bil, elbil, båt, premium teknologi",
       theme: {
@@ -74,6 +76,7 @@
       id: "topp5",
       name: "Topp 5 – nedtelling",
       premium: true,
+      category: "Underholdning",
       description: "Mørk og filmatisk: gigantiske tall i scener som står fast, lysbildeserie, nedtelling til premieren, snu-kort og avstemning.",
       use: "Film, konsert, reise, «5 grunner til …»",
       theme: {
@@ -105,6 +108,7 @@
       id: "wrapped",
       name: "Året i tall («Wrapped»)",
       premium: true,
+      category: "Finans",
       description: "Spotify Wrapped-stil: store tall, skrivemaskin, topplister, snu-kort, diagrammer og løpende tekst i en sterk fargepalett.",
       use: "Årsoppsummering, bank, forsikring, handel, tjenester med data",
       theme: {
@@ -135,6 +139,7 @@
       id: "reise",
       name: "Reise – immersiv",
       premium: true,
+      category: "Reise",
       description: "Stemningsfull og bildetung: tittel ord for ord, sidelengs scroll, parallakse, tidslinje, mosaikk og scrollfortelling med sirkel-overgang.",
       use: "Reiseliv, hotell, opplevelser, mat og drikke",
       theme: {
@@ -166,6 +171,7 @@
       id: "utforsker",
       name: "Interaktiv guide («utforsker»)",
       premium: true,
+      category: "Handel",
       description: "Leseren velger selv: faner per rom eller målgruppe, produktkarusell, steg for steg, lenkefliser og spørsmål og svar.",
       use: "Interiør, dagligvare, bank-råd, forsikring, retail",
       theme: {
@@ -193,6 +199,7 @@
       id: "rapport",
       name: "Rapport og innsikt",
       premium: true,
+      category: "Finans",
       description: "Erstatter PDF-en: kapittelmeny, nøkkeltall, diagrammer, ekspertsitater, tre søyler, steg, spørsmål og kilder.",
       use: "Bank, finans, energi, helse, offentlig sektor",
       theme: {
@@ -227,6 +234,7 @@
       id: "smak",
       name: "Mat og smak",
       premium: true,
+      category: "Mat",
       description: "Varm og appetittvekkende: delt åpning, løpende tekst, oppskrift i steg med bilder, kort over bilder, quiz og produkter.",
       use: "Dagligvare, restaurant, drikke, sesongkampanjer",
       theme: {
@@ -342,7 +350,7 @@
       extras: { progress: true, chapterNav: "top", readTime: true, stickyCta: true, stickyLabel: "Få finansieringsbevis", stickyAfter: 30 },
       sections: [
         { type: "hero", props: { layout: "framed", image: "demo:couple-news", kicker: "Fjordbank", title: "Slik kjøper du din første bolig", ingress: "Fra sparekonto til nøkkeloverlevering: alt du må vite, forklart av rådgiverne som hjelper tusenvis av førstegangskjøpere hvert år.", titleSize: "xl", titleFx: "words", height: "auto" } },
-        { type: "stats", props: { look: "lines", items: [{ value: "10", unit: "%", label: "egenkapital er minstekravet" }, { value: "5 ×", unit: "", label: "inntekten er normalt maks lånebeløp" }, { value: "2,5", unit: "%", label: "eksempel på dokumentavgift ved kjøp av selveier" }] }, style: { pad: "l", anim: "stagger" } },
+        { type: "stats", props: { look: "lines", items: [{ value: "10", unit: "%", label: "egenkapital er minstekravet" }, { value: "5 ×", unit: "", label: "inntekten er normalt maks lånebeløp" }, { value: "34", unit: "år", label: "er siste året du kan spare i BSU" }] }, style: { pad: "l", anim: "stagger" } },
         { type: "chapter", props: { label: "01", title: "Før du begynner å se", intro: "Det viktigste arbeidet gjør du før den første visningen.", layout: "number" }, style: { bg: "none", pad: "l", chapter: "Forberedelser" } },
         { type: "steps", props: { title: "Fem steg til nøkkelen", layout: "column", items: [{ title: "Finn ut hva du kan låne", text: "Inntekt, gjeld og egenkapital avgjør. Lånekalkulatoren gir deg et anslag på to minutter." }, { title: "Få finansieringsbevis", text: "Beviset viser selgeren at du kan by. Det gjelder vanligvis i tre måneder." }, { title: "Gå på visning", text: "Les tilstandsrapporten før du går, og ta med en liste med spørsmål." }, { title: "Legg inn bud", text: "Bestem deg for en smertegrense før budrunden – og hold den." }, { title: "Overtakelse", text: "Sjekk at alt er som avtalt, og les av strømmen samme dag." }] }, style: { anim: "stagger" } },
         { type: "tabs", props: { title: "Hvem kjøper?", look: "line", items: [{ label: "Alene", title: "Kjøper du alene?", html: P("Mange kjøper sammen med noen for å klare egenkapitalen. Alene er det ekstra viktig å ha en buffer.") + "<ul><li>Vurder en mindre bolig først</li><li>BSU gir skattefradrag frem til du er 34</li></ul>", image: "demo:house-snow", ctaLabel: "Regn på lånet" }, { label: "Sammen", title: "Kjøper dere sammen?", html: P("Skriv en samboeravtale som sier hvem som eier hva – særlig hvis dere har ulik egenkapital.") + "<ul><li>Felles lån, felles ansvar</li><li>Avtal hva som skjer ved brudd</li></ul>", image: "demo:couple-kitchen", ctaLabel: "Book en rådgiver" }, { label: "Med hjelp", title: "Får du hjelp fra foreldre?", html: P("Foreldre kan stille tilleggssikkerhet i sin egen bolig, slik at du slipper å ha hele egenkapitalen selv.") + "<ul><li>Sikkerheten kan begrenses i tid og beløp</li><li>Alle parter bør få råd</li></ul>", image: "demo:houses-mountains", ctaLabel: "Les om tilleggssikkerhet" }] }, style: { bg: "soft", pad: "l", chapter: "Din situasjon" } },
@@ -407,9 +415,9 @@
         { type: "statement", props: { text: "Vi ville bygge boliger vi selv ønsket å bo i: lyse, stille og med naturen rett utenfor døra.", accent: "naturen rett utenfor døra", fx: "scroll", size: "l" }, style: { pad: "xl" } },
         { type: "hScroll", props: { title: "Livet rundt Tunet", panel: "l", items: [{ image: "demo:mountain-lake", label: "Natur", title: "Fem minutter til vannet", text: "Bading om sommeren, skøyter om vinteren." }, { image: "demo:forest-mist", label: "Tur", title: "Lysløypa starter her", text: "Sju kilometer, belyst til klokka 22." }, { image: "demo:cafe", label: "Hverdag", title: "Kafé og butikk", text: "I første etasje i hovedbygget." }, { image: "demo:city-park", label: "By", title: "20 minutter til sentrum", text: "Buss hvert tiende minutt i rushtiden." }] }, style: { bg: "dark", chapter: "Nabolaget" } },
         { type: "chapter", props: { label: "Boligene", title: "Lys fra tre sider", intro: "Alle leilighetene har vinduer i minst to retninger og balkong mot vest.", layout: "center" }, style: { bg: "none", pad: "l", chapter: "Boligene" } },
-        { type: "hotspots", props: { title: "Kjøkkenet i en tremannsleilighet", image: "demo:kitchen-bright", alt: "Lyst kjøkken med spisebord", size: "full", items: [{ x: 70, y: 40, title: "Integrerte hvitevarer", text: "Kjøleskap, oppvaskmaskin og induksjon er med i prisen." }, { x: 38, y: 62, title: "Spiseplass for seks", text: "Plass til et stort bord ved vinduet." }, { x: 52, y: 22, title: "Takhøyde 2,7 meter", text: "Gir luft og lys i hele rommet." }] } },
+        { type: "hotspots", props: { title: "Kjøkkenet i en tremannsleilighet", image: "demo:kitchen-bright", alt: "Lyst kjøkken med spisebord", size: "wide", items: [{ x: 70, y: 40, title: "Integrerte hvitevarer", text: "Kjøleskap, oppvaskmaskin og induksjon er med i prisen." }, { x: 38, y: 62, title: "Spiseplass for seks", text: "Plass til et stort bord ved vinduet." }, { x: 52, y: 22, title: "Takhøyde 2,7 meter", text: "Gir luft og lys i hele rommet." }] } },
         { type: "cards", props: { title: "Velg din bolig", look: "boxed", columns: "3", items: [{ image: "demo:kitchen-modern", title: "2-roms", text: "48–55 m². Fra 3 490 000 kr.", linkLabel: "Se planløsning" }, { image: "demo:sofa", title: "3-roms", text: "68–82 m². Fra 4 790 000 kr.", linkLabel: "Se planløsning" }, { image: "demo:house-red", title: "Rekkehus", text: "118 m² og egen hage. Fra 7 290 000 kr.", linkLabel: "Se planløsning" }] }, style: { bg: "soft", pad: "l", anim: "stagger" } },
-        { type: "gallery", props: { mode: "slideshow", items: [{ image: "demo:kitchen-bright", alt: "Kjøkken", caption: "Kjøkken i 3-roms (illustrasjon)." }, { image: "demo:dining", alt: "Spisestue", caption: "Spisestue mot vest." }, { image: "demo:sofa", alt: "Stue", caption: "Stue med vinduer i to retninger." }] } },
+        { type: "gallery", props: { mode: "slideshow", items: [{ image: "demo:kitchen-modern", alt: "Kjøkken", caption: "Kjøkken i 2-roms, mørk variant (illustrasjon)." }, { image: "demo:dining", alt: "Spisestue", caption: "Spisestue mot vest." }, { image: "demo:sofa", alt: "Stue", caption: "Stue med vinduer i to retninger." }] } },
         { type: "timeline", props: { title: "Veien til innflytting", items: [{ label: "Mars 2027", title: "Salgsstart", text: "Visning i salgslokalet og på nett." }, { label: "Høsten 2027", title: "Byggestart", text: "Når 60 prosent er solgt." }, { label: "Vår 2029", title: "Innflytting", text: "Trinn 1 med 24 leiligheter." }] }, style: { chapter: "Tidsplan" } },
         { type: "countdown", props: { title: "Salgsstart om", date: "2027-03-01 18:00", done: "Salget er i gang!", ctaLabel: "Meld interesse" }, style: { bg: "dark", pad: "xl" } },
         { type: "factBox", props: { title: "Godt å vite", variant: "soft", collapsible: false, items: [{ text: "Priser er eksempler i malen og inkluderer ikke omkostninger." }, { text: "Bildene er illustrasjoner." }, { text: "Energiklasse B, felles parkeringskjeller med lading." }] } },
@@ -434,7 +442,7 @@
       },
       extras: { progress: true, stickyCta: true, stickyLabel: "Se ukens tilbud", stickyAfter: 30, feedback: true, feedbackQ: "Fikk du middagsinspirasjon?" },
       sections: [
-        { type: "hero", props: { layout: "split", image: "demo:shopper", kicker: "Torget Mat", title: "Fem middager for hele uka – under 200 kroner", ingress: "Kokk Jonas Lie har satt sammen ukemenyen. Alt kjøpes i én handletur, og ingenting går til spille.", titleSize: "xl", titleFx: "words", height: "tall" } },
+        { type: "hero", props: { layout: "split", image: "demo:shopper", kicker: "Torget Mat", title: "Fem middager for hele uka – under 200 kroner", ingress: "Kokk Jonas Lie har satt sammen ukemenyen. Alt kjøpes i én handletur, og ingenting går til spille.", titleSize: "l", titleFx: "words", height: "tall" } },
         { type: "marquee", props: { text: "Ukemenyen · Én handletur · Null matsvinn", sep: "star", size: "l", speed: "normal" }, style: { bg: "brand", pad: "s" } },
         { type: "tabs", props: { title: "Hva blir det til middag?", look: "big", items: [{ label: "Mandag", title: "Ovnsbakt laks med rotgrønnsaker", html: P("Alt på ett brett, 30 minutter i ovnen. Rester blir til lunsj tirsdag.") + "<ul><li>4 laksefileter</li><li>Gulrot, pastinakk og poteter</li></ul>", image: "demo:vegetables", ctaLabel: "Se oppskriften" }, { label: "Tirsdag", title: "Pasta med grønnsakssaus", html: P("Bruk restene av rotgrønnsakene fra mandag – blendet til en kremet saus.") + "<ul><li>500 g pasta</li><li>Revet ost</li></ul>", image: "demo:cooking-family", ctaLabel: "Se oppskriften" }, { label: "Onsdag", title: "Taco med kylling", html: P("Ukens høydepunkt for barna. Kyllingen kan stekes kvelden før.") + "<ul><li>600 g kyllingfilet</li><li>Lomper og grønnsaker</li></ul>", image: "demo:kitchen-bright", ctaLabel: "Se oppskriften" }, { label: "Torsdag", title: "Grønnsakssuppe med brød", html: P("Rester av grønnsaker gjør seg best i suppe. Bak brødet selv – det tar ti minutter å elte.") + "<ul><li>1 liter kraft</li><li>Hjemmebakt brød</li></ul>", image: "demo:baking", ctaLabel: "Se oppskriften" }, { label: "Fredag", title: "Hjemmelaget pizza", html: P("Deigen lages torsdag og hviler i kjøleskapet til fredag.") + "<ul><li>Hvetemel og gjær</li><li>Tomatsaus og mozzarella</li></ul>", image: "demo:cooking-family", ctaLabel: "Se oppskriften" }] }, style: { pad: "l" } },
         { type: "productCards", props: { title: "Ukens tilbud", columns: "4", layout: "carousel", buttonLabel: "Legg i handlelisten", items: [{ image: "demo:produce-shelf", name: "Norske epler", text: "1 kg", price: "24,90", oldPrice: "34,90", badge: "-30 %" }, { image: "demo:vegetables", name: "Rotgrønnsaker", text: "Pose, 1,5 kg", price: "29,90" }, { image: "demo:strawberries", name: "Jordbær", text: "400 g", price: "34,90", oldPrice: "44,90", badge: "Tilbud" }, { image: "demo:honey", name: "Norsk honning", text: "350 g", price: "79,90" }] }, style: { bg: "soft", anim: "stagger" } },
@@ -505,7 +513,7 @@
         { type: "quiz", props: { title: "Hvor mye vet du om trening?", questions: [{ q: "Hvor mange økter i uka trenger en nybegynner?", options: "1\n2–3\n6", correct: 2, explain: "To til tre økter gir god fremgang og tid til restitusjon." }, { q: "Når skjer muskelveksten?", options: "Under økta\nI hvilen etterpå\nKun om morgenen", correct: 2, explain: "Muskelen bygges opp i hvilen mellom øktene." }, { q: "Hva bør du øke først?", options: "Vekten\nAntall repetisjoner\nTempoet", correct: 2, explain: "Flere repetisjoner med god teknikk før tyngre vekter." }], results: [{ min: 0, title: "Helt fersk", text: "Perfekt – programmet er laget for deg." }, { min: 2, title: "Godt i gang", text: "Du kan teorien. Nå gjenstår bare øktene." }], ctaLabel: "Start programmet" }, style: { bg: "soft" } },
         { type: "testimonials", props: { title: "De gjorde det", layout: "grid", items: [{ image: "demo:portrait-hiker", quote: "Jeg hadde aldri løftet en vekt. Etter 12 uker tar jeg knebøy med 60 kilo.", name: "Stine, 38", role: "Medlem i Tromsø" }, { image: "demo:run-sunset", quote: "Ryggen har aldri vært bedre.", name: "Henrik, 52", role: "Medlem i Bodø" }, { image: "demo:walk-forest", quote: "Tre økter i uka passet inn i småbarnslivet.", name: "Amalie, 33", role: "Medlem i Ålesund" }] }, style: { anim: "stagger" } },
         { type: "specTable", props: { title: "Velg medlemskap", head1: "Basis", head2: "Pluss", head3: "Premium", highlight: "2", rows: [{ label: "Pris per måned", v1: "349 kr", v2: "499 kr", v3: "749 kr" }, { label: "Alle sentre", v1: "–", v2: "✓", v3: "✓" }, { label: "Gruppetimer", v1: "–", v2: "✓", v3: "✓" }, { label: "Personlig trener", v1: "–", v2: "1 time", v3: "1 time i måneden" }, { label: "Bindingstid", v1: "Ingen", v2: "Ingen", v3: "Ingen" }], note: "Eksempelpriser i malen. Bytt ut med annonsørens priser og vilkår." } },
-        { type: "countdown", props: { title: "Ingen innmeldingsavgift i", date: "2026-11-30 23:59", done: "Kampanjen er over – følg med på neste!", ctaLabel: "Bli medlem" }, style: { bg: "gradient", bgGradient: "radial", pad: "xl", grain: true } },
+        { type: "countdown", props: { title: "Ingen innmeldingsavgift i", date: "2026-11-30 23:59", done: "Kampanjen er over – følg med på neste!", ctaLabel: "Bli medlem" }, style: { bg: "dark", pad: "xl", grain: true } },
         { type: "cta", props: { variant: "band", title: "Prøv gratis i 7 dager", text: "Ingen binding, ingen innmeldingsavgift. Programmet ligger klart i appen.", label: "Start gratis prøveuke" }, style: { bg: "brand", pad: "xl", shapeTop: "slant" } },
       ],
     },
@@ -516,6 +524,7 @@
     {
       id: "lansering",
       name: "Lansering",
+      category: "Grunnmal",
       description: "Nytt produkt eller ny modell: stor åpning, fortelling i scroll, nøkkeltall og prøv-det-selv.",
       use: "Bil, elektronikk, nye tjenester",
       sections: [
@@ -532,6 +541,7 @@
     {
       id: "kampanje",
       name: "Kampanje og produkter",
+      category: "Grunnmal",
       description: "Butikk eller netthandel: tilbud, produktkort med pris og tydelige knapper.",
       use: "Jula, dagligvare, interiør, sesongkampanjer",
       sections: [
@@ -546,6 +556,7 @@
     {
       id: "guide",
       name: "Guide og råd",
+      category: "Grunnmal",
       description: "Nyttig, tekstdrevet sak: steg for steg, spørsmål og svar, faktaboks.",
       use: "Bank, forsikring, helse, bolig",
       sections: [
@@ -560,6 +571,7 @@
     {
       id: "portrett",
       name: "Portrett og intervju",
+      category: "Grunnmal",
       description: "Menneskene først: stort bilde, sitater og en personlig historie.",
       use: "Kampanjer med ambassadører, kunder eller ansatte",
       sections: [
@@ -574,6 +586,7 @@
     {
       id: "scroll",
       name: "Scrollfortelling",
+      category: "Grunnmal",
       description: "Visuell sak med video, fast bakgrunn og parallakse. Krever gode bilder og helst video.",
       use: "Reise, mat, bil, livsstil – når bildene bærer saken",
       sections: [
@@ -586,6 +599,9 @@
       ],
     },
   ];
+
+  // Gallery filter order. "Grunnmal" holds the plain workhorses.
+  var CATEGORIES = ["Bil", "Finans", "Helse", "Mat", "Bolig", "Energi", "Handel", "Reise", "Jobb", "Underholdning", "Grunnmal"];
 
   function find(id) {
     for (var i = 0; i < TEMPLATES.length; i++) if (TEMPLATES[i].id === id) return TEMPLATES[i];
@@ -641,5 +657,5 @@
     };
   }
 
-  return { TEMPLATES: TEMPLATES, find: find, demoNames: demoNames, expand: expand, themeOf: themeOf };
+  return { TEMPLATES: TEMPLATES, CATEGORIES: CATEGORIES, find: find, demoNames: demoNames, expand: expand, themeOf: themeOf };
 });

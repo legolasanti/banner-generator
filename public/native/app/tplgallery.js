@@ -148,9 +148,47 @@
     }
 
     T.TEMPLATES.forEach(function (t) { grid.appendChild(card(t)); });
-    grid.select = select;
-    grid.addCard = function (node) { grid.appendChild(node); };
-    return grid;
+
+    var wrap = h("div.nx-tplgal-wrap", null, toolbar(), grid);
+    wrap.select = select;
+    wrap.addCard = function (node) { grid.appendChild(node); };
+    return wrap;
+
+    // Twenty templates is past the point where scrolling finds the right
+    // one, so the gallery gets an industry filter and a search over name,
+    // use and description. Filtering only hides cards: thumbnails that were
+    // already rendered stay rendered, the rest load lazily when shown.
+    function toolbar() {
+      var category = "";
+      var search = h("input.nx-input.nx-tplgal__search", { type: "search", placeholder: "Søk etter bransje eller mal …", "aria-label": "Søk i malene" });
+      var count = h("span.nx-muted.nx-tplgal__count", { "aria-live": "polite" });
+      var used = (T.CATEGORIES || []).filter(function (c) {
+        return T.TEMPLATES.some(function (t) { return t.category === c; });
+      });
+      var chips = h("div.nx-tplgal__cats", { role: "group", "aria-label": "Bransje" },
+        [["", "Alle"]].concat(used.map(function (c) { return [c, c === "Grunnmal" ? "Grunnmaler" : c]; })).map(function (pair) {
+          var n = pair[0] ? T.TEMPLATES.filter(function (t) { return t.category === pair[0]; }).length : T.TEMPLATES.length;
+          return h("button.nx-tplgal__cat", { type: "button", "aria-pressed": String(pair[0] === category), "data-cat": pair[0], on: { click: function () {
+            category = pair[0];
+            Array.prototype.forEach.call(chips.children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-cat") === category)); });
+            apply();
+          } } }, pair[1], h("span.nx-tplgal__n", null, String(n)));
+        })
+      );
+      function apply() {
+        var q = search.value.trim().toLowerCase();
+        var shown = 0;
+        T.TEMPLATES.forEach(function (t) {
+          var text = (t.name + " " + (t.use || "") + " " + (t.description || "") + " " + (t.category || "")).toLowerCase();
+          var visible = (!category || t.category === category) && (!q || text.indexOf(q) !== -1);
+          cards[t.id].hidden = !visible;
+          if (visible) shown++;
+        });
+        count.textContent = shown === T.TEMPLATES.length ? "" : shown ? shown + " av " + T.TEMPLATES.length + " maler" : "Ingen maler passer – prøv et annet ord.";
+      }
+      search.addEventListener("input", ui.debounce(apply, 100));
+      return h("div.nx-tplgal__bar", null, h("div.nx-row", null, search, count), chips);
+    }
   }
 
   NP.tplGallery = { gallery: gallery, preview: preview, projectFrom: projectFrom, documentFor: documentFor, demo: demo };
