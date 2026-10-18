@@ -132,3 +132,56 @@ test("every block type renders in every mode without throwing", () => {
     S.ORDER.forEach((type) => assert.ok(html.includes('data-np-type="' + type + '"'), mode + ":" + type));
   });
 });
+
+test("hotspots at full size: the picture is edge to edge, the title keeps the side margins", () => {
+  const p = project([{ type: "hotspots", props: { image: IMG, size: "full", title: "Se detaljene" } }]);
+  const html = R.renderSection(ctxFor(p), p.pages[0].sections[0], 0);
+  assert.match(html, /<div class="np-wrap np-w-wide"><h2 class="np-h2 np-hs__title"/);
+  assert.match(html, /<div class="np-wrap np-w-full"><div class="np-hs"/);
+  assert.doesNotMatch(html, /np-w-full"><h2/);
+  const wide = R.renderSection(ctxFor(p), Object.assign({}, p.pages[0].sections[0], { props: Object.assign({}, p.pages[0].sections[0].props, { size: "wide" }) }), 0);
+  assert.match(wide, /<div class="np-wrap np-w-wide"><h2[^>]*>Se detaljene<\/h2><div class="np-hs"/, "other sizes unchanged");
+});
+
+test("stats carry the width of the widest number + unit, so the row's size fits its cards", () => {
+  const p = project([{ type: "stats", props: { look: "cards", items: [{ value: "98", unit: "", label: "b" }, { value: "16 000", unit: "kWh", label: "a" }] } }]);
+  const html = R.renderSection(ctxFor(p), p.pages[0].sections[0], 0);
+  const widths = [...html.matchAll(/--np-vw:([\d.]+)/g)].map((m) => Number(m[1]));
+  assert.equal(widths.length, 1, "one value for the row");
+  assert.ok(Math.abs(widths[0] - (6 * 0.62 + 0.1 + 3 * 0.62 * 0.45) * 1.04) < 0.02, "the widest one");
+});
+
+// ---- dark themes: the theme's colours decide a section's tone ------------------------------
+const DARK_THEME = { colors: { primary: "#c6ff3d", accent: "#c6ff3d", dark: "#0b0b0b", soft: "#18181a", text: "#111111", link: "#4f7f00", page: "#0f0f10" } };
+
+function toneOf(theme, style) {
+  const p = project([{ type: "richText", style }], { theme });
+  const html = R.renderSection(ctxFor(p), p.pages[0].sections[0], 0);
+  return /class="([^"]+)"/.exec(html)[1].split(" ").filter((c) => /^np-on-/.test(c)).sort().join(" ");
+}
+
+test("section tone follows the theme's colours: dark soft, pale brand, dark page", () => {
+  assert.equal(toneOf(DARK_THEME, { bg: "soft" }), "np-on-dark", "a dark «soft» band has light text");
+  assert.equal(toneOf(DARK_THEME, { bg: "brand" }), "np-on-light np-on-light-sec", "a lime band has dark text, and is not also np-on-dark");
+  assert.equal(toneOf(DARK_THEME, { bg: "dark" }), "np-on-dark");
+  assert.equal(toneOf(DARK_THEME, { bg: "none" }), "np-on-dark", "the dark page itself");
+  assert.equal(toneOf(DARK_THEME, { bg: "brand", tone: "light" }), "np-on-dark", "a manual tone still wins");
+  // A light theme is unchanged.
+  const light = { colors: { primary: "#0b4fb3", accent: "#e8590c", dark: "#14213d", soft: "#f2f4f7", text: "#111111", link: "#0b4fb3", page: "#ffffff" } };
+  assert.equal(toneOf(light, { bg: "soft" }), "np-on-light-sec");
+  assert.equal(toneOf(light, { bg: "brand" }), "np-on-dark");
+  assert.equal(toneOf(light, { bg: "dark" }), "np-on-dark");
+  assert.equal(toneOf(light, { bg: "none" }), "np-on-light-sec");
+});
+
+test("theme CSS gives dark themes readable cards and buttons", () => {
+  const css = R.themeCss(D.normalizeTheme(DARK_THEME));
+  assert.match(css, /--np-soft-card:rgba\(0, 0, 0, 0\.06\)/, "cards on a light band are not the dark soft colour");
+  assert.match(css, /--np-on-soft:#f4f5f7/);
+  assert.match(css, /--np-btn-dark-bg:#c6ff3d;--np-btn-dark-fg:#111111/, "a lime button with dark text on dark sections");
+  assert.match(css, /--np-brand-accent:#111111/, "a lime accent on a lime band falls back to dark");
+  const light = R.themeCss(D.normalizeTheme({ colors: { primary: "#0b4fb3", soft: "#f2f4f7", text: "#1b1f27" } }));
+  assert.match(light, /--np-btn-dark-bg:#ffffff;--np-btn-dark-fg:#0b4fb3/, "light themes keep the white button");
+  assert.match(light, /--np-soft-card:#f2f4f7/);
+  assert.match(light, /--np-ink:#1b1f27/);
+});

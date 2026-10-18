@@ -40,11 +40,12 @@ async function launch() {
   return null;
 }
 
-function pageHtml(sections, extras) {
+function pageHtml(sections, extras, theme) {
   const project = D.normalizeProject({
     name: "Runtime",
     advertiser: { name: "Ford", url: "https://www.ford.no/" },
     extras: extras || {},
+    theme,
     pages: [{ sections }],
   });
   return R.renderDocument({
@@ -244,5 +245,75 @@ test("re-rendering sections in the editor does not pile up handlers, listeners o
   assert.equal(result.resizeAdded, result.resizeRemoved, "every resize listener of a dropped section is removed");
   assert.ok(result.ticked, "the live countdown still ticks");
   assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
+test("stats: a number and its unit stay on one line and fit the card", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const items = [
+    { value: "16 000", unit: "kWh", label: "Strøm i året" },
+    { value: "1 250 000", unit: "kroner", label: "Pris" },
+    { value: "98", unit: "%", label: "Fornøyde" },
+  ];
+  for (const look of ["cards", "lines", "huge", "plain"]) {
+    for (const width of [1280, 390]) {
+      const page = await open(pageHtml([{ type: "stats", props: { look, countUp: false, items } }]));
+      await page.setViewport({ width, height: 900 });
+      const lines = await page.$$eval(".np-stat__v", (vs) =>
+        vs.map((v) => {
+          const lineHeight = parseFloat(getComputedStyle(v).fontSize) * 1.3;
+          const stat = v.closest(".np-stat");
+          const box = stat.getBoundingClientRect();
+          const cs = getComputedStyle(stat);
+          const inner = box.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          return { oneLine: v.getBoundingClientRect().height < lineHeight, fits: v.scrollWidth <= Math.ceil(inner) + 1 };
+        })
+      );
+      lines.forEach((l, i) => {
+        assert.ok(l.oneLine, look + " @" + width + ": value " + i + " wraps");
+        assert.ok(l.fits, look + " @" + width + ": value " + i + " overflows its card");
+      });
+      await page.close();
+    }
+  }
+});
+
+test("dark theme with a lime brand: text, cards and buttons all read", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const theme = { colors: { primary: "#c6ff3d", accent: "#c6ff3d", dark: "#0b0b0b", soft: "#18181a", text: "#111111", link: "#4f7f00", page: "#0f0f10" } };
+  const page = await open(pageHtml([
+    { type: "quiz", style: { bg: "soft" }, props: { questions: [{ q: "Hvor mange økter?", options: "1\n2–3", correct: 2 }] } },
+    { type: "rankList", props: { layout: "cards" } },
+    { type: "stats", props: { look: "cards" } },
+    { type: "poll", style: { bg: "soft" } },
+    { type: "factBox", props: { variant: "soft" } },
+    { type: "cta", style: { bg: "brand" }, props: { label: "Start gratis", url: "https://x.no/" } },
+    { type: "cta", style: { bg: "none" }, props: { label: "Bli medlem", url: "https://x.no/" } },
+  ], {}, theme));
+  const results = await page.evaluate(() => {
+    const parse = (c) => { const m = c.match(/[\d.]+/g).map(Number); return { r: m[0], g: m[1], b: m[2], a: m.length > 3 ? m[3] : 1 }; };
+    const over = (top, under) => ({ r: top.r * top.a + under.r * (1 - top.a), g: top.g * top.a + under.g * (1 - top.a), b: top.b * top.a + under.b * (1 - top.a), a: 1 });
+    function background(el) {
+      const layers = [];
+      for (let n = el; n; n = n.parentElement) {
+        const c = parse(getComputedStyle(n).backgroundColor);
+        if (c.a > 0) layers.push(c);
+        if (c.a === 1) break;
+      }
+      return layers.reverse().reduce((acc, c) => over(c, acc), { r: 255, g: 255, b: 255, a: 1 });
+    }
+    const lum = (c) => [c.r, c.g, c.b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    const pick = { "quiz question": ".np-quiz__qt", "quiz option": ".np-quiz__opt", "rank card title": ".np-rank--cards .np-rank__t", "rank card text": ".np-rank--cards .np-rank__body p, .np-rank--cards .np-rank__body div", "stat value": ".np-stat__v", "stat label": ".np-stat__l", "poll option": ".np-poll__opt", "fact box": ".np-fact--soft li", "button on lime band": ".np-bg-brand .np-btn", "button on dark page": ".np-bg-none.np-t-cta .np-btn" };
+    return Object.keys(pick).map((name) => {
+      const el = document.querySelector(pick[name]);
+      if (!el) return { name, missing: true };
+      return { name, ratio: Math.round(ratio(parse(getComputedStyle(el).color), background(el)) * 10) / 10 };
+    });
+  });
+  results.forEach((r) => {
+    assert.ok(!r.missing, r.name + " not found");
+    assert.ok(r.ratio >= 4.5, r.name + ": contrast " + r.ratio + " < 4.5");
+  });
   await page.close();
 });

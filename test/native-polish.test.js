@@ -354,3 +354,30 @@ test("anonymous review reads are rate-limited", async () => {
   }
   assert.equal(last, 429);
 });
+
+// ---- project card thumbnail ------------------------------------------------------------------
+test("the project card falls back to the hero video's poster, then the first picture on the page", async () => {
+  const s = createProjectStore({ dataDir: tmp("np-thumb-") });
+  const poster = "c".repeat(64) + ".jpg";
+  const bg = "d".repeat(64) + ".jpg";
+  const later = "e".repeat(64) + ".jpg";
+  const video = "f".repeat(64) + ".mp4";
+  const assets = {
+    [poster]: { name: "poster" },
+    [bg]: { name: "bakgrunn" },
+    [later]: { name: "senere" },
+    [video]: { name: "film", poster },
+  };
+  const withPoster = await s.create(D.normalizeProject({ name: "Video", assets, pages: [{ sections: [{ type: "hero", props: { image: "", video } }, { type: "image", props: { image: later } }] }] }));
+  const noPoster = await s.create(D.normalizeProject({
+    name: "Bakgrunn",
+    assets: Object.assign({}, assets, { [video]: { name: "film" } }),
+    pages: [{ sections: [{ type: "hero", props: { image: "", video } }, { type: "richText", style: { bg: "image", bgImage: bg } }, { type: "image", props: { image: later } }] }],
+  }));
+  const empty = await s.create(D.normalizeProject({ name: "Tom", pages: [{ sections: [{ type: "richText" }] }] }));
+  const list = await s.findAll();
+  const thumb = (id) => list.find((p) => p.id === id).thumb;
+  assert.equal(thumb(withPoster.id), poster);
+  assert.equal(thumb(noPoster.id), bg, "a section background counts, in page order");
+  assert.equal(thumb(empty.id), "");
+});

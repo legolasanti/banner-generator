@@ -102,6 +102,17 @@
     var headH = opts && opts.hasVariants ? 104 : 56;
     var page = c.page || "#ffffff";
     var darkPage = isDark(page);
+    // Text for light surfaces: the theme's text colour when it is dark (it
+    // always is on a light theme), else near-black.
+    var ink = isDark(c.text) ? c.text : "#111111";
+    // In a band filled with the brand colour, an accent too close to it
+    // disappears: there it falls back to the text colour of that band.
+    var brandFg = onColor(c.primary) === "#ffffff" ? "#ffffff" : ink;
+    var accentOnBrand = contrast(c.accent, c.primary) < 2 ? brandFg : c.accent;
+    // The main button on a dark section is white with brand-coloured text —
+    // unless the brand colour is too pale to read on white (lime): then the
+    // button is the brand colour itself.
+    var paleBrand = contrast(c.primary, "#ffffff") < 3;
     return (
       ":root{" +
       "--np-page:" + page + ";" +
@@ -118,6 +129,15 @@
       "--np-link:" + c.link + ";" +
       "--np-on-primary:" + onColor(c.primary) + ";" +
       "--np-on-accent:" + onColor(c.accent) + ";" +
+      "--np-brand:" + c.primary + ";" +
+      "--np-ink:" + ink + ";" +
+      // Cards on a light section: the soft colour, unless the theme's soft is dark.
+      "--np-soft-card:" + (isDark(c.soft) ? "rgba(0, 0, 0, 0.06)" : c.soft) + ";" +
+      "--np-on-soft:" + (isDark(c.soft) ? "#f4f5f7" : c.text) + ";" +
+      "--np-brand-accent:" + accentOnBrand + ";" +
+      "--np-brand-on-accent:" + onColor(accentOnBrand) + ";" +
+      "--np-btn-dark-bg:" + (paleBrand ? c.primary : "#ffffff") + ";" +
+      "--np-btn-dark-fg:" + (paleBrand ? onColor(c.primary) : c.primary) + ";" +
       "--np-radius:" + theme.radius + "px;" +
       "--np-font-h:" + fontStack(theme.fonts.heading) + ";" +
       "--np-font-b:" + fontStack(theme.fonts.body) + ";" +
@@ -328,14 +348,20 @@
   }
 
   // ---- sections ------------------------------------------------------------------
-  /** Is the section's own background dark (so its text should be light)? */
+  /**
+   * Is the section's own background dark (so its text should be light)? The
+   * theme's colours decide, not their names: a dark theme can have a dark
+   * "soft" and a pale (lime) brand colour.
+   */
   function darkBg(st, theme) {
     var bg = st.bg || "none";
-    if (bg === "brand" || bg === "dark" || bg === "image" || bg === "video") return true;
+    if (bg === "image" || bg === "video") return true;
+    if (bg === "brand") return isDark(theme.colors.primary);
+    if (bg === "dark") return isDark(theme.colors.dark);
+    if (bg === "soft") return isDark(theme.colors.soft);
     if (bg === "custom") return !!st.bgColor && isDark(st.bgColor);
     if (bg === "gradient") return isDark(mix(st.bgColor || theme.colors.primary, st.bgColor2 || theme.colors.dark));
-    if (bg === "none") return isDark(theme.colors.page || "#ffffff");
-    return false;
+    return isDark(theme.colors.page || "#ffffff");
   }
 
   function sectionClasses(section, extra, mode, theme) {
@@ -373,8 +399,8 @@
     return cls.concat(extra || []).join(" ");
   }
 
-  // The brand background flips text colour with the theme: a pale brand colour
-  // needs dark text.
+  // A pale brand colour needs dark text (the section is np-on-light-sec then;
+  // np-on-light is kept for custom CSS written against it).
   function brandTextFix(ctx, section) {
     if (section.style.bg !== "brand" || section.style.tone !== "auto") return "";
     return isDark(ctx.project.theme.colors.primary) ? "" : " np-on-light";
@@ -750,6 +776,18 @@
     return wrapSection(ctx, s, '<div class="np-para np-para--' + p.height + '">' + image + title + "</div>");
   };
 
+  /**
+   * How wide a number + unit is, in em of the number's font (digits about
+   * 0.62 em, the unit at 0.45 em size). np.css divides the card's width by the
+   * widest in the row, so "16 000 kWh" shrinks to fit instead of breaking at
+   * the thousands space.
+   */
+  function statWidth(value, unit) {
+    var w = String(value || "").length * 0.62;
+    if (unit) w += 0.1 + String(unit).length * 0.62 * 0.45;
+    return Math.max(1, Math.round(w * 1.04 * 100) / 100);
+  }
+
   R.stats = function (ctx, s) {
     var p = s.props;
     var items = p.items.map(function (it, i) {
@@ -764,7 +802,9 @@
     });
     var inner =
       (p.title ? '<h2 class="np-h2 np-stats__title"' + ed(ctx, "title") + ">" + esc(p.title) + "</h2>" : "") +
-      '<div class="np-stats np-stats--' + (p.look || "plain") + '" style="--np-cols:' + Math.max(1, Math.min(4, p.items.length)) + '">' + items.join("") + "</div>";
+      // One size for the row: the widest number decides, so the cards match.
+      '<div class="np-stats np-stats--' + (p.look || "plain") + '" style="--np-cols:' + Math.max(1, Math.min(4, p.items.length)) +
+      ";--np-vw:" + Math.max.apply(null, p.items.map(function (it) { return statWidth(it.value, it.unit); }).concat([1])) + '">' + items.join("") + "</div>";
     return wrapSection(ctx, s, wrap("wide", inner));
   };
 
@@ -1152,11 +1192,12 @@
       );
     });
     var list = '<ol class="np-hs__list">' + p.items.map(function (it) { return "<li><strong>" + esc(it.title) + "</strong> " + esc(it.text) + "</li>"; }).join("") + "</ol>";
-    var inner =
-      heading(ctx, p.title, "title", "np-hs__title") +
-      '<div class="np-hs" data-np-hotspots' + (ctx.mode === "editor" ? ' data-np-hs-edit="1"' : "") + ">" + img(ctx, p.image, { alt: p.alt, sizes: p.size === "full" ? "100vw" : "(max-width: 1148px) 100vw, 1100px", field: "image" }) + pts.join("") + "</div>" +
-      list;
-    return wrapSection(ctx, s, wrap(p.size, inner));
+    var title = heading(ctx, p.title, "title", "np-hs__title");
+    var picture = '<div class="np-hs" data-np-hotspots' + (ctx.mode === "editor" ? ' data-np-hs-edit="1"' : "") + ">" + img(ctx, p.image, { alt: p.alt, sizes: p.size === "full" ? "100vw" : "(max-width: 1148px) 100vw, 1100px", field: "image" }) + pts.join("") + "</div>";
+    // Full size: only the picture goes edge to edge; the title and the
+    // no-script list keep the page's side margins.
+    if (p.size === "full") return wrapSection(ctx, s, (title ? wrap("wide", title) : "") + wrap("full", picture) + wrap("wide", list));
+    return wrapSection(ctx, s, wrap(p.size, title + picture + list));
   };
 
   R.flipCards = function (ctx, s) {
