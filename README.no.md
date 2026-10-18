@@ -67,10 +67,12 @@ i `.bn--house-rectangle`-blokken i `public/assets/banner.css`. Det samme
 gjelder 980×500: toppbannerets oppsett med et 520×420-bilde, så overskriften får
 en kolonne som er bred nok til lange norske sammensatte ord.
 
-### Bulk (Houseads fra regneark)
+### Bulk (mange bannere fra regneark)
 
-**Bulk**-fanen lager mange Houseads på én gang: én rad i regnearket per
-banner, hver rad i alle valgte størrelser, levert som én ZIP.
+**Bulk**-fanen lager mange bannere på én gang — **Houseads, ReadPeak eller
+Norsk Tipping** (velg øverst): én rad i regnearket per banner, hver rad i alle
+valgte størrelser, levert som én ZIP. Bannerne er nøyaktig de samme som
+enkeltfanene lager (samme faste innhold, 18+-merket bare på Norsk Tipping).
 
 1. **Hent arket** — lim inn en Google Sheets-lenke (arket må være delt som
    *Alle med lenken → Leser*; en lenke til en bestemt fane bruker den fanen),
@@ -81,16 +83,29 @@ banner, hver rad i alle valgte størrelser, levert som én ZIP.
    format, og hver rad sier *Klar*, *Sjekk* eller *Feil* med årsak (mangler
    bilde, død lenke, overskrift for lang for et format, et ord for langt for én
    linje, bilde for lite til skarpt resultat). Rett en overskrift direkte, eller
-   *Juster* en rad: dra fokuspunktet i bildet, zoom, bytt bilde, endre skrift,
-   filnavn eller klikk-lenke, og sett størrelsen for hånd i et format.
+   *Juster* en rad: dra fokuspunktet i bildet (eller flytt det med piltastene,
+   Shift for større steg), zoom, bytt eller hent bildet på nytt, endre skrift,
+   filnavn eller klikk-lenke, og sett størrelsen for hånd i et format. Hvert kort
+   viser det endelige filnavnet (`hotell-host-2` når to rader ville kollidert).
+   **Mange rader samtidig:** huk av rader (eller *Alle som vises* / *Bare
+   klare*) og sett skrift eller spilltype, tilbakestill størrelser til Auto, ta
+   med/ta ut, dupliser eller fjern. Søk på overskrift, filnavn eller radnummer,
+   sorter på rekkefølge i arket, lengde eller status, og legg til en tom rad med
+   *+ Ny rad*. *Feilrapport (CSV)* lister alle rader med problemer — radnummer,
+   overskrift og årsak — til å sende tilbake til den som fylte ut arket.
 3. **Last ned** — PNG, JPEG, Auto eller HTML5 (CM360), 1×/1,5×/2×, og ZIP-en
    ordnet per størrelse (`320x400/…`), per banner eller alt i én mappe.
    Kjøringen går i bakgrunnen med fremdrift og tidsanslag; den kan avbrytes
-   (ferdige bannere beholdes), og den havner i *Historikk*. Hver ZIP har
-   `rapport.csv` (overskrift, brukt størrelse og filstørrelse per fil).
+   (ferdige bannere beholdes), og den havner i *Historikk* mens den går. Hver
+   ZIP har `rapport.csv` (overskrift, brukt størrelse og filstørrelse per fil;
+   formater serveren måtte gjøre mindre enn planlagt, er merket). Rader som
+   feilet, listes i resultatpanelet.
 
-Rader med feil hoppes over – de leveres aldri ødelagte. Arbeidet overlever at
-siden lastes på nytt.
+Rader med feil hoppes over – de leveres aldri ødelagte. Arbeidet — og en
+kjøring som går eller er ferdig, med nedlastingen — overlever at siden lastes på
+nytt. *Hent på nytt* leser arket igjen og beholder justeringene for rader der
+overskriften er uendret. Bilder som er ryddet bort fra serveren, hentes på nytt
+fra lenkene.
 
 **Arket.** Første rad er kolonnenavn; rekkefølgen spiller ingen rolle, og andre
 kolonner ignoreres (norske, engelske og tyrkiske navn virker).
@@ -103,6 +118,16 @@ kolonner ignoreres (norske, engelske og tyrkiske navn virker).
 | `Skrift` | nei | Halvfet / Normal | Tomt = valget for hele kjøringen |
 | `Fokus` | nei | topp · bunn venstre · 30/70 | Hvor bildet holdes ved beskjæring. Tomt = automatisk |
 | `Klikk-lenke` | nei | https://www.abcnyheter.no/… | Bare HTML5. Tomt = standardlenken ved nedlasting |
+| `Ingress` | nei | Nybrent hver morgen … | ReadPeak og Norsk Tipping |
+| `Merkevare` | nei | KAFFEHUSET | ReadPeaks grønne etikett. Tomt = *Felles for alle rader* |
+| `Knappetekst` | nei | Sjekk utvalget her | ReadPeak. Tomt = «Les mer her» |
+| `Spilltype` | nei | Lotto / Vikinglotto / Eurojackpot / Sport | Norsk Tipping. Bestemmer vinnersjanse-linjen |
+| `Vinnersjanse` | nei | Vinnersjanse 1.premie … | Norsk Tipping, egen ordlyd i stedet for spillets |
+
+ReadPeak og Norsk Tipping har et *Felles for alle rader*-panel for verdiene de
+fleste radene deler (merkevare, knappetekst, spill, stil og farge på «Les mer»).
+Overskriftene deres måles per format og trappes ned (til minst 75 %) til ingenting
+klippes; en avkuttet ingress eller en knapp som brytes, gir *Feil*.
 
 Nyttig i arket: `=LEN(A2)` for antall tegn, `=IMAGE(C2)` for å se bildet. Et
 demoark: *Houseads bulk – mal* (Google Sheets).
@@ -567,6 +592,21 @@ mellomlagret side — det er ikke en mislykket oppdatering. Tving oppdatering me
 La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
 
 ### Hva du får i denne versjonen
+
+- **Bulk for alle produkter:** ReadPeak og Norsk Tipping fra regneark, ikke bare
+  Houseads — pluss valg av rader med felles handlinger, søk og sortering, en
+  feilrapport å sende tilbake, og kjøringer som overlever at siden lastes på nytt.
+- **Native Premium:** åtte nye bransjemaler (apotek, lokal produsent, bank,
+  energi, bolig, dagligvare, arbeidsgiver, trening) med egne demobilder, et
+  galleri som filtrerer på bransje, tryggere lagring (konflikter, å forlate
+  siden), interne kommentarer som aldri når annonsøren, flervalg, en
+  snarveioversikt og en strengere *Kontroll*.
+- **Understrek ved hover** på alle bannernes overskrifter, og standardlinjene
+  for vinnersjanse får nå plass i sin helhet på 320×400 og 190×190.
+- Bruker du `npm run dev`, start den på nytt én gang: nodemon overser nå data-
+  og historikkfilene (den startet før på nytt midt i en kjøring).
+
+Tidligere:
 
 - Tre produkter i fanene i stedet for ett: **Norsk Tipping** (uendret),
   **ReadPeak** (de samme to plasseringene uten 18+-merket og uten

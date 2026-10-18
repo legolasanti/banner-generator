@@ -68,10 +68,12 @@ If a Canva version turns up, the numbers to match are in
 layout with a 520×420 photo, leaving the headline a column wide enough for long
 Norwegian compound words.
 
-### Bulk (Houseads from a spreadsheet)
+### Bulk (many banners from a spreadsheet)
 
-The **Bulk** tab makes many Houseads at once: one spreadsheet row per banner,
-every row in every chosen size, delivered as one ZIP.
+The **Bulk** tab makes many banners at once — **Houseads, ReadPeak or Norsk
+Tipping** (switch at the top): one spreadsheet row per banner, every row in
+every chosen size, delivered as one ZIP. The banners are exactly the ones the
+single tabs make (same furniture, 18+ mark only on Norsk Tipping).
 
 1. **Bring the sheet in** — paste a Google Sheets link (the sheet must be
    shared as *Anyone with the link → Viewer*; a link to a specific tab uses
@@ -82,16 +84,29 @@ every row in every chosen size, delivered as one ZIP.
    each row says *Klar*, *Sjekk* or *Feil* with the reason (missing photo, dead
    link, a headline too long for a format, a word too long for one line, a
    photo too small for sharp output). Edit a headline in place, or *Juster* a
-   row: drag the focus point on the photo, zoom, swap the photo, change weight,
-   filename or click link, and set any format's size by hand.
+   row: drag the focus point on the photo (or nudge it with the arrow keys,
+   Shift for bigger steps), zoom, swap or re-fetch the photo, change weight,
+   filename or click link, and set any format's size by hand. Each card shows
+   the final filename (`hotell-host-2` when two rows would collide).
+   **Work on many rows at once:** tick rows (or *Alle som vises* / *Bare
+   klare*) and set Skrift or Spilltype, reset sizes to Auto, include/exclude,
+   duplicate or remove them. Search by headline, filename or row number,
+   sort by sheet order, length or status, add a blank row with *+ Ny rad*.
+   *Feilrapport (CSV)* lists every row with a problem — row number, headline,
+   reason — to send back to whoever filled in the sheet.
 3. **Download** — PNG, JPEG, Auto or HTML5 (CM360), 1×/1.5×/2×, and the ZIP
    laid out per size (`320x400/…`), per banner, or flat. The run happens in the
    background with progress and an estimate; it can be cancelled (finished
-   banners are kept), and it lands in *Historikk*. Every ZIP holds
-   `rapport.csv` (headline, size used and file size per file).
+   banners are kept), and it lands in *Historikk* while it runs. Every ZIP
+   holds `rapport.csv` (headline, size used and file size per file; formats
+   the server had to set smaller than planned are marked). Failed rows are
+   listed in the result panel.
 
-Rows with errors are skipped, never shipped broken. The work survives a reload
-of the page.
+Rows with errors are skipped, never shipped broken. The work — and a running
+or finished run, with its download — survives a reload of the page. *Hent på
+nytt* re-reads the sheet and keeps your adjustments for rows whose headline
+did not change. Photos that have expired from the server are fetched again
+from their links.
 
 **The sheet.** The first row names the columns; order does not matter and
 other columns are ignored (Norwegian, English and Turkish names work).
@@ -104,6 +119,16 @@ other columns are ignored (Norwegian, English and Turkish names work).
 | `Skrift` | no | Halvfet / Normal | Empty = the run's choice |
 | `Fokus` | no | topp · bunn venstre · 30/70 | Where to hold the crop. Empty = automatic |
 | `Klikk-lenke` | no | https://www.abcnyheter.no/… | HTML5 only. Empty = the default set at download |
+| `Ingress` | no | Nybrent hver morgen … | ReadPeak and Norsk Tipping |
+| `Merkevare` | no | KAFFEHUSET | ReadPeak's green label. Empty = *Felles for alle rader* |
+| `Knappetekst` | no | Sjekk utvalget her | ReadPeak. Empty = "Les mer her" |
+| `Spilltype` | no | Lotto / Vikinglotto / Eurojackpot / Sport | Norsk Tipping. Sets the Vinnersjanse line |
+| `Vinnersjanse` | no | Vinnersjanse 1.premie … | Norsk Tipping, own wording instead of the game's |
+
+ReadPeak and Norsk Tipping have a *Felles for alle rader* panel for the values
+most rows share (merkevare, button text, game, the "Les mer" style and colour).
+Their headlines are measured per format and stepped down (to 75 % at most) until
+nothing is clipped; a cut ingress or a wrapping button makes the row *Feil*.
 
 Helpful extras in the sheet: `=LEN(A2)` for a character count, `=IMAGE(C2)` to
 see the photo. A demo sheet: *Houseads bulk – mal* (Google Sheets).
@@ -578,6 +603,21 @@ cached page, not a failed update — hard-refresh with **`Cmd + Shift + R`**
 Leave the Terminal window open while you work. Closing it stops the app.
 
 ### What you get in this version
+
+- **Bulk for every product:** ReadPeak and Norsk Tipping from a sheet, not just
+  Houseads — plus row selection with bulk actions, search and sort, an error
+  report to send back, and runs that survive a reload.
+- **Native Premium:** eight new industry templates (pharmacy, local producer,
+  bank, energy, property, grocery, employer, gym) with their own photo kit, a
+  gallery that filters by industry, safer saving (conflicts, leaving the page),
+  internal comments that never reach the advertiser, multi-select, a shortcut
+  sheet and a stricter *Kontroll*.
+- **Hover underline** on every banner headline, and the standard Vinnersjanse
+  lines now fit whole on 320×400 and 190×190.
+- If you run `npm run dev`, restart it once: nodemon now ignores the data and
+  history files (it used to restart mid-run).
+
+Earlier:
 
 - Three products in the tab bar instead of one: **Norsk Tipping** (unchanged),
   **ReadPeak** (same two placements without the 18+ mark and the Vinnersjanse
