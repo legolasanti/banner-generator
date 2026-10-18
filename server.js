@@ -1625,17 +1625,22 @@ const bulkJobs = createBulkJobs({
   findAgeIcon,
   // A run's entry is written after its first banner and replaced in place
   // after every one after it (see lib/bulk/history.js).
-  upsertHistoryEntry: (entry) =>
+  // Only the first save inserts; a later one finding the entry gone (deleted
+  // in Historikk, or trimmed out) reports false instead of re-adding it.
+  upsertHistoryEntry: (entry, opts) =>
     withHistoryLock(async () => {
       let history = await loadHistory();
       const idx = history.findIndex((e) => e.id === entry.id);
       if (idx >= 0) {
         history = history.map((e, i) => (i === idx ? entry : e));
-      } else {
+      } else if (opts && opts.insert) {
         history.unshift(entry);
         history = await trimHistory(history);
+      } else {
+        return false;
       }
       await writeHistory(history);
+      return history.some((e) => e.id === entry.id);
     }),
 });
 registerBulkRoutes(app, {
@@ -1668,7 +1673,7 @@ async function start() {
   if (!(await pathExists(HISTORY_JSON))) await writeHistory([]);
   bulkImages.cleanUp().catch((e) => console.warn("[bulk] clean-up: " + e.message));
   bulkHistory
-    .tidy({ historyDir: HISTORY_DIR, withLock: withHistoryLock, loadHistory, writeHistory })
+    .tidy({ historyDir: HISTORY_DIR, historyJson: HISTORY_JSON, withLock: withHistoryLock, writeHistory })
     .catch((e) => console.warn("[bulk] history tidy-up: " + e.message));
 
   if (!imageTools.isAvailable()) {

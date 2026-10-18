@@ -322,8 +322,10 @@ function fakeJobs(opts) {
       }
       return out;
     },
-    upsertHistoryEntry: async (entry) => {
-      upserts.push(JSON.parse(JSON.stringify(entry)));
+    upsertHistoryEntry: async (entry, upsertOpts) => {
+      upserts.push({ ...JSON.parse(JSON.stringify(entry)), _insert: !!(upsertOpts && upsertOpts.insert) });
+      if (o.upsert) return o.upsert(entry, upsertOpts, upserts.length);
+      return true;
     },
   });
   return { service, upserts, historyDir };
@@ -412,6 +414,33 @@ test("a size the renderer had to step below the plan is reported", async () => {
   assert.match(csv, /Tekst satt ned fra 70 % ved generering/);
 });
 
+test("a run deleted in Historikk while going stops instead of bringing its entry back", async () => {
+  // Inserted by the first save; gone (deleted) by the second.
+  const { service, upserts } = fakeJobs({ upsert: (entry, opts) => !!(opts && opts.insert) });
+  const job = await finish(service, (await service.create(runBody([{}, {}, {}, {}]))).id);
+  assert.equal(job.status, "failed");
+  assert.match(job.error, /slettet fra Historikk/);
+  assert.equal(job.entryId, null);
+  assert.equal(upserts.filter((u) => u._insert).length, 1, "only the first save may add the entry");
+  assert.equal(upserts.length, 2, "nothing written after it was found gone");
+  assert.deepEqual(job.rows.map((r) => r.status), ["done", "done", "skipped", "skipped"]);
+});
+
+test("a final save that fails leaves the entry stopped, not «lages …»", async () => {
+  const { service, upserts } = fakeJobs({
+    upsert: (entry) => {
+      if (!entry.partial && !entry.interrupted) throw new Error("disk full");
+      return true;
+    },
+  });
+  const job = await finish(service, (await service.create(runBody([{}, {}]))).id);
+  assert.equal(job.status, "failed");
+  const last = upserts[upserts.length - 1];
+  assert.equal(last.interrupted, true);
+  assert.equal(last.partial, undefined);
+  assert.match(last.headline, /stoppet underveis/);
+});
+
 // ---------------------------------------------------------------------------
 // History
 // ---------------------------------------------------------------------------
@@ -442,21 +471,82 @@ test("old entries' inline rows move to rows.json; /api/history gets summaries", 
   assert.equal(entry.rows.length, 1, "summarize does not touch the stored entry");
 });
 
-test("folders without an entry are swept only when old and named like ours", async () => {
+// A folder in a history dir: `bulk` gives it the rows.json only a bulk run
+// writes, `ageMs` backdates it.
+async function makeFolder(dir, name, ageMs, bulk) {
+  await fsp.mkdir(path.join(dir, name));
+  if (bulk) await fsp.writeFile(path.join(dir, name, bulkHistory.ROWS_FILE), "[]");
+  const t = new Date(Date.now() - ageMs);
+  await fsp.utimes(path.join(dir, name), t, t);
+}
+const HOUR = 3600 * 1000;
+
+test("only old bulk folders without an entry are swept, into the trash", async () => {
   const dir = tmpDir("bulk-sweep-");
-  const make = async (name, ageMs) => {
-    await fsp.mkdir(path.join(dir, name));
-    const t = new Date(Date.now() - ageMs);
-    await fsp.utimes(path.join(dir, name), t, t);
-  };
-  const HOUR = 3600 * 1000;
-  await make("1700000000001-known-aaa", 5 * HOUR);
-  await make("1700000000002-orphan-bbb", 5 * HOUR);
-  await make("1700000000003-fresh-ccc", 60 * 1000); // a run being written now
-  await make("not-a-history-id", 5 * HOUR);
+  await makeFolder(dir, "1700000000001-known-aaa", 5 * HOUR, true);
+  await makeFolder(dir, "1700000000002-orphan-bbb", 5 * HOUR, true);
+  await makeFolder(dir, "1700000000003-fresh-ccc", 60 * 1000, true); // a run being written now
+  await makeFolder(dir, "1700000000004-single-ddd", 5 * HOUR, false); // a single banner or wallpaper
+  await makeFolder(dir, "not-a-history-id", 5 * HOUR, true);
   await fsp.writeFile(path.join(dir, "history.json"), "[]");
-  const removed = await bulkHistory.sweepOrphans(dir, [{ id: "1700000000001-known-aaa" }]);
-  assert.deepEqual(removed, ["1700000000002-orphan-bbb"]);
+  const now = Date.now();
+  const moved = await bulkHistory.sweepOrphans(dir, [{ id: "1700000000001-known-aaa" }], now);
+  assert.deepEqual(moved, ["1700000000002-orphan-bbb"]);
   const left = (await fsp.readdir(dir)).sort();
-  assert.deepEqual(left, ["1700000000001-known-aaa", "1700000000003-fresh-ccc", "history.json", "not-a-history-id"]);
+  assert.deepEqual(left, [
+    ".trash", "1700000000001-known-aaa", "1700000000003-fresh-ccc", "1700000000004-single-ddd", "history.json", "not-a-history-id",
+  ]);
+  assert.deepEqual(await fsp.readdir(path.join(dir, ".trash")), ["1700000000002-orphan-bbb~" + now], "moved, not deleted");
+
+  // The trash keeps a folder for 30 days, then lets it go.
+  const later = [{ id: "1700000000001-known-aaa" }, { id: "1700000000003-fresh-ccc" }];
+  await bulkHistory.sweepOrphans(dir, later, now + 31 * 24 * HOUR);
+  assert.deepEqual(await fsp.readdir(path.join(dir, ".trash")), []);
+});
+
+async function tidyIn(dir, historyText) {
+  const json = path.join(dir, "..", path.basename(dir) + "-history.json");
+  if (historyText != null) await fsp.writeFile(json, historyText);
+  let written = null;
+  const result = await bulkHistory.tidy({
+    historyDir: dir,
+    historyJson: json,
+    withLock: (fn) => fn(),
+    writeHistory: async (h) => { written = h; },
+  });
+  return { result, written };
+}
+
+test("a corrupt or missing history.json never sweeps anything", async () => {
+  for (const text of ['[{"id": "1700000000001-known-aaa"', null, '{"not": "a list"}']) {
+    const dir = tmpDir("bulk-tidy-");
+    await makeFolder(dir, "1700000000001-known-aaa", 5 * HOUR, true);
+    await makeFolder(dir, "1700000000002-other-bbb", 5 * HOUR, true);
+    const { result, written } = await tidyIn(dir, text);
+    assert.equal(result.skipped, true, String(text));
+    assert.equal(written, null, "nothing written back");
+    assert.equal((await fsp.readdir(dir)).length, 2, "every folder still there");
+  }
+});
+
+test("an empty history next to existing folders is treated as lost, not empty", async () => {
+  const dir = tmpDir("bulk-tidy-");
+  await makeFolder(dir, "1700000000002-orphan-bbb", 5 * HOUR, true);
+  const { result } = await tidyIn(dir, "[]");
+  assert.equal(result.skipped, true);
+  assert.deepEqual(await fsp.readdir(dir), ["1700000000002-orphan-bbb"]);
+});
+
+test("a clean history.json lets tidy recover a stopped run and sweep a real orphan", async () => {
+  const dir = tmpDir("bulk-tidy-");
+  await makeFolder(dir, "1700000000001-known-aaa", 5 * HOUR, true);
+  await makeFolder(dir, "1700000000002-orphan-bbb", 5 * HOUR, true);
+  await makeFolder(dir, "1700000000003-single-ccc", 5 * HOUR, false);
+  const { result, written } = await tidyIn(
+    dir,
+    JSON.stringify([{ id: "1700000000001-known-aaa", kind: "bulk", partial: true, count: 1, formats: ["a"] }])
+  );
+  assert.deepEqual(result.removed, ["1700000000002-orphan-bbb"]);
+  assert.equal(written[0].interrupted, true);
+  assert.ok((await fsp.readdir(dir)).includes("1700000000003-single-ccc"), "non-bulk folders are left alone");
 });
