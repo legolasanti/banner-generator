@@ -231,6 +231,8 @@ test("headline hover underline ships in every creative", async (t) => {
     assert.match(css, /\.bn:hover \.bn__headline,\s*\n\.ad-exit:focus-visible \.bn__headline\s*\{\s*text-decoration-color: currentColor;/);
     // At rest the underline is transparent, so PNG/JPEG screenshots never show it.
     assert.match(css, /\.bn__headline \{[^}]*text-decoration: underline transparent;/);
+    // 1.6× the first version's 0.06em — a line that reads as deliberate, not as a hairline.
+    assert.match(css, /\.bn__headline \{[^}]*text-decoration-thickness: 0\.096em;/);
   });
 
   await t.test("the rule is still there after the stylesheet is packaged", () => {

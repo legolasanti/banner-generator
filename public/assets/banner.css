@@ -284,7 +284,7 @@ img.bn__age-icon { width: auto; object-fit: contain; }
   -webkit-box-orient: vertical;
   word-break: break-word;
   text-decoration: underline transparent;
-  text-decoration-thickness: 0.06em;
+  text-decoration-thickness: 0.096em; /* 1.6× the original 0.06em, per request */
   text-underline-offset: 0.1em;
 }
 
