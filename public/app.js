@@ -185,6 +185,7 @@
     viewHistory: $("#view-history"),
     viewWallpaper: $("#view-wallpaper"),
     viewBulk: $("#view-bulk"),
+    viewLive: $("#view-live"),
     historyCount: $("#historyCount"),
 
     dropzone: $("#dropzone"),
@@ -1407,7 +1408,7 @@
       const tag = document.createElement("span");
       tag.className = "hcard__tag";
       tag.textContent =
-        entry.kind === "wallpaper" ? "Wallpaper" : entry.kind === "bulk" ? "Bulk" : F.getProduct(entry.product).label;
+        entry.kind === "wallpaper" ? "Wallpaper" : entry.kind === "bulk" ? "Bulk" : entry.kind === "live" ? "NT Live" : F.getProduct(entry.product).label;
       name.appendChild(tag);
       const head = document.createElement("div");
       head.className = "hcard__head";
@@ -1451,6 +1452,19 @@
 
       actions.appendChild(dl);
       if (htmlDl) actions.appendChild(htmlDl);
+      // An NT Live run keeps its sheet rows and settings (project.json), so
+      // it can be reopened, changed and exported again.
+      if (entry.kind === "live" && entry.project) {
+        const edit = document.createElement("button");
+        edit.className = "btn-ghost btn-sm";
+        edit.type = "button";
+        edit.textContent = "Åpne";
+        edit.addEventListener("click", () => {
+          switchTab("live");
+          window.NTLIVE.main.openProject("/" + entry.folderPath + entry.project);
+        });
+        actions.appendChild(edit);
+      }
       // A wallpaper export keeps its design (project.json), so it can be
       // reopened in the editor and changed — not just re-downloaded.
       if (entry.kind === "wallpaper" && entry.project) {
@@ -1494,7 +1508,7 @@
   // is the history log.
   // The open tab lives in the URL (#/houseads), so a reload or a shared link
   // lands on the same tab.
-  const TAB_IDS = () => F.ORDER.concat("bulk", "wallpaper", "history");
+  const TAB_IDS = () => ["norsktipping", "live", "readpeak", "houseads", "bulk", "wallpaper", "history"];
   function tabFromHash() {
     const m = /^#\/([\w-]+)/.exec(location.hash || "");
     return m && TAB_IDS().includes(m[1]) ? m[1] : null;
@@ -1505,7 +1519,8 @@
     const isHistory = tab === "history";
     const isWallpaper = tab === "wallpaper";
     const isBulk = tab === "bulk";
-    const isBuilder = !isHistory && !isWallpaper && !isBulk;
+    const isLive = tab === "live";
+    const isBuilder = !isHistory && !isWallpaper && !isBulk && !isLive;
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -1517,10 +1532,16 @@
     el.viewHistory.classList.toggle("is-hidden", !isHistory);
     el.viewWallpaper.classList.toggle("is-hidden", !isWallpaper);
     el.viewBulk.classList.toggle("is-hidden", !isBulk);
+    el.viewLive.classList.toggle("is-hidden", !isLive);
     el.viewNew.tabIndex = isBuilder ? 0 : -1;
     el.viewHistory.tabIndex = isHistory ? 0 : -1;
     if (isHistory) {
       loadHistory();
+      return;
+    }
+    // NT Live is its own workspace, built on first use.
+    if (isLive) {
+      if (window.NTLIVE && window.NTLIVE.main) window.NTLIVE.main.activate();
       return;
     }
     // Bulk is its own workspace too, built on first use.
@@ -1889,6 +1910,7 @@
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);
     window.addEventListener("bulk:exported", loadHistory);
+    window.addEventListener("live:exported", loadHistory);
     // Text-size rules saved from the Bulk tab apply here at once.
     window.addEventListener("autofit:rules", (e) => {
       state.settings.autoFit = e.detail || {};

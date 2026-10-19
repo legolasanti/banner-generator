@@ -32,6 +32,38 @@ The regulated placements: 18+/Hjelpelinjen mark and a Vinnersjanse strip.
 | **Mobile**    | 320 × 400  | Mobile ad            |
 | **Nyhetsgrid**| 190 × 190  | Front-page news grid |
 
+### NT Live (dynamic HTML5 for Norsk Tipping)
+
+The same four Norsk Tipping sizes, but the creative decides its own content when
+it is shown. You keep a Google Sheet of matches (date, kick-off, home team, away
+team, and optionally competition, link, photo, video, animation, button text,
+odds); the ad shows the matches that are on **today in Norway**, one slide per
+match: a photo, a looping video or a CSS animation on top, then the teams, the
+kick-off time ("I dag kl. 21:00", a ticking countdown, or "Pågår nå" once it has
+started) and a button. With no match today it shows the next day's ("I morgen
+kl. 21:00", "Lørdag kl. 18:00") or a fallback poster.
+
+- **Sheet in, Campaign Manager 360 packages out.** Paste the Sheets link (shared
+  as "anyone with the link") or the cells themselves, check the matches and the
+  warnings, tune the texts, timing and look while the four formats run live on
+  the right, then export one ready-to-upload ZIP per format plus backup images.
+  Example sheet: `/api/live/template.csv`.
+- **Live refresh.** The package carries the rows it was built with, and may also
+  re-read the sheet every time the ad is shown (the public Sheets CSV endpoints
+  send CORS headers), so matches added to the sheet appear without a new upload.
+  If the fetch fails the baked rows are used.
+- **Clicks.** Either every click goes to `clickTag` (tracked by CM360), or a
+  match's own link from the sheet wins when it has one — that bypasses CM360
+  click tracking unless the sheet holds tracking links, and the UI says so.
+- **Photos.** Photos for the next N days are fetched, shrunk and packed into the
+  ZIP (`media/`); anything further out, and all video, loads from its https link
+  at serve time. Drive share links are rewritten to direct ones.
+- Runtime: `public/assets/live-data.js` (reading the sheet, picking today's rows,
+  Norwegian time labels — shared by server, app and creative), `live.js` (the
+  slides, rotation, countdown, media fallbacks, exit) and `live.css`. Server:
+  `lib/live/`. The regulated furniture (Annonse, 18+ | Hjelpelinjen.no,
+  Vinnersjanse) is banner.js's own markup.
+
 ### ReadPeak
 
 The same two ReadPeak placements sold to any advertiser — so **without** the

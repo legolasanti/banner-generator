@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="wallpaper/wallpaper.css" />
     <link rel="stylesheet" href="bulk/bulk.css" />
+    <link rel="stylesheet" href="assets/live.css" />
+    <link rel="stylesheet" href="live/live-ui.css" />
   </head>
   <body>
     <!-- ============================ TOP BAR ============================ -->
@@ -43,6 +45,7 @@
            the furniture on the banner itself (see public/assets/formats.js). -->
       <nav class="tabs" role="tablist" aria-label="Visning">
         <button class="tab is-active" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="true" aria-controls="view-new">Norsk Tipping</button>
+        <button class="tab" data-tab="live" id="tab-live" role="tab" aria-selected="false" aria-controls="view-live" tabindex="-1" title="Dynamiske HTML5-annonser for Norsk Tipping: dagens kamper fra et regneark, med nedtelling, video og knapp">NT Live</button>
         <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">ReadPeak</button>
         <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">Houseads</button>
         <button class="tab" data-tab="bulk" id="tab-bulk" role="tab" aria-selected="false" aria-controls="view-bulk" tabindex="-1" title="Mange Houseads fra ett regneark">Bulk</button>
@@ -358,6 +361,10 @@
            time the tab is opened. -->
       <section class="view is-hidden" id="view-bulk" role="tabpanel" aria-labelledby="tab-bulk" tabindex="-1"></section>
 
+      <!-- NT Live: dynamic Norsk Tipping creatives. Built by live/main.js the
+           first time the tab is opened. -->
+      <section class="view is-hidden" id="view-live" role="tabpanel" aria-labelledby="tab-live" tabindex="-1"></section>
+
       <!-- =========================== WALLPAPER ============================ -->
       <!-- The design editor for the 1920×850 + 1000×300 wallpaper. Built by
            wallpaper/editor/main.js the first time the tab is opened. -->
@@ -538,6 +545,13 @@
     <script src="bulk/rules.js"></script>
     <script src="bulk/run.js"></script>
     <script src="bulk/main.js"></script>
+    <!-- NT Live: the shared data and runtime (also inlined into every package),
+         then the tab itself. -->
+    <script src="assets/live-data.js"></script>
+    <script src="assets/live.js"></script>
+    <script src="live/form.js"></script>
+    <script src="live/preview.js"></script>
+    <script src="live/main.js"></script>
     <script src="app.js"></script>
     <script src="/shared/session.js"></script>
   </body>

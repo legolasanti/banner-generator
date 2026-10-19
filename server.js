@@ -54,6 +54,7 @@ const { sanitizeFilename } = require("./public/bulk/names.js");
 const bulkLinks = require("./lib/bulk/links");
 const { registerBulkRoutes } = require("./lib/bulk/routes");
 const { createNative } = require("./lib/native");
+const { createLive } = require("./lib/live");
 const { createAuth } = require("./lib/auth");
 
 // --------------------------------------------------------------------------
@@ -875,6 +876,8 @@ auth.routes(app);
 app.use("/api/wallpaper", express.json({ limit: "8mb" }));
 // A pasted sheet or a 300-row run can pass 1 MB too.
 app.use("/api/bulk", express.json({ limit: "6mb" }));
+// NT Live: a few hundred match rows plus a fallback photo as a data URL.
+app.use("/api/live", express.json({ limit: "16mb" }));
 // Native Premium registers its own parsers (projects can be several MB).
 const native = createNative({
   dataDir: path.join(DATA_DIR, "native"),
@@ -1278,6 +1281,14 @@ app.get("/api/history/:id/download", async (req, res) => {
     });
   }
 
+  if (entry.kind === "live") {
+    return live.sendDownload(res, entry, req.query.type).catch((err) => {
+      console.error("[live:download] " + err.message);
+      if (!res.headersSent) res.status(500).json({ error: "Kunne ikke laste ned" });
+      else res.destroy();
+    });
+  }
+
   if (entry.kind === "bulk") {
     const send =
       req.query.row != null
@@ -1650,6 +1661,35 @@ registerBulkRoutes(app, {
   // Merged into what is stored, so nothing else in settings.json is touched.
   updateAutoFit: async (autoFit) => saveSettings({ ...(await loadSettings()), autoFit }),
 });
+
+// NT Live — dynamic HTML5 creatives for Norsk Tipping: today's matches from a
+// sheet, one Campaign Manager 360 package per format. Shares the browser, the
+// render queue, the settings and the history with the banner builder.
+const live = createLive({
+  historyDir: HISTORY_DIR,
+  publicDir: PUBLIC_DIR,
+  formats,
+  imageTools,
+  safeFetch,
+  html5,
+  renderSpec,
+  getBrowser,
+  enqueue,
+  loadSettings,
+  budgetFor,
+  findAgeIcon,
+  normalizeClickUrl,
+  sanitizeFilename,
+  fileStamp,
+  saveEntry: (entry) =>
+    withHistoryLock(async () => {
+      let history = await loadHistory();
+      history.unshift(entry);
+      history = await trimHistory(history);
+      await writeHistory(history);
+    }),
+});
+live.register(app);
 
 // SPA-ish fallback to index for unknown non-API GETs
 app.get(/^(?!\/api\/).*/, (req, res, next) => {

@@ -1,0 +1,363 @@
+/* =========================================================================
+   live.css — the NT Live creative: a Norsk Tipping banner whose content is
+   decided at serve time (today's matches from a sheet), with a media area
+   that can be a photo, a looping video or a CSS animation, and a body with
+   competition, teams, kick-off time (or countdown) and a button.
+
+   Loaded AFTER banner.css, which it extends: the ad sizes, the fonts, the
+   18+/Annonse/Vinnersjanse furniture and the headline hover underline all
+   come from there. Everything here is scoped to .bn--live so a static banner
+   never picks any of it up. Shipped inside every NT Live package next to
+   banner.css, so keep it lean.
+   ========================================================================= */
+
+.bn--live {
+  --live-accent: #1a6b1a;
+  --live-ink: #2f2f2f;
+  --live-muted: #5c6157;
+  background: #ffffff;
+}
+
+/* ------------------------------ Slides ----------------------------------- */
+/* Every slide is a full-size layer with its own photo area and body; the
+   active one is visible and the rest wait underneath. Crossfading the whole
+   slide keeps the photo and the text in step. */
+.bn__live-stage {
+  position: absolute;
+  inset: 0;
+}
+.bn__live-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.55s ease, visibility 0s linear 0.55s, transform 0.55s ease;
+}
+.bn__live-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.55s ease, visibility 0s, transform 0.55s ease;
+  z-index: 1;
+}
+/* "Glidende" variant: the new slide comes in from the right. */
+.bn--live-slide .bn__live-slide { transform: translateX(28px); }
+.bn--live-slide .bn__live-slide.is-active { transform: translateX(0); }
+.bn--live-slide .bn__live-slide.is-leaving { transform: translateX(-28px); }
+/* "Ingen" variant and the backup render: no motion at all. */
+.bn--live-none .bn__live-slide,
+.bn--still .bn__live-slide { transition: none; transform: none; }
+
+/* The regulated furniture sits in its own layer over the photo area of
+   whichever slide is showing — one set of badges, never per slide. */
+.bn--live .bn__live-badges.bn__media {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  /* It borrows .bn__media so the badge rules position it, but it must never
+     paint: the slide underneath owns the photo. */
+  background: transparent;
+}
+
+/* ------------------------------ Photo area -------------------------------- */
+.bn--live .bn__media {
+  flex: none;
+  background: #0f4a10;
+}
+.bn--live .bn__live-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #0f4a10;
+}
+
+/* Heights per format. These are free to differ from the static banners —
+   the ad SIZE is the contract, what happens inside it is not. */
+.bn--live.bn--desktop  .bn__media, .bn--live.bn--desktop  .bn__live-badges { height: 300px; }
+.bn--live.bn--mobile   .bn__media, .bn--live.bn--mobile   .bn__live-badges { height: 215px; }
+.bn--live.bn--readpeak .bn__media, .bn--live.bn--readpeak .bn__live-badges { height: 160px; }
+.bn--live.bn--newsgrid .bn__media, .bn--live.bn--newsgrid .bn__live-badges { height: 100px; }
+
+/* ------------------------------ Animations -------------------------------- */
+.bn__anim {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #ffffff;
+  background: var(--live-accent);
+}
+/* The two team names fill the stage when a match has no photo or video, so
+   the area carries the matchup instead of sitting empty. */
+.bn__anim-teams {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18em;
+  padding: 0 10%;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-size: 30px;
+}
+.bn__anim-teams span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bn__anim-teams em {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.42em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.bn--mobile   .bn__anim-teams { font-size: 22px; }
+.bn--readpeak .bn__anim-teams { font-size: 19px; }
+.bn--newsgrid .bn__anim-teams { font-size: 13px; gap: 0.1em; }
+
+/* gradient — a slow drift through the accent and two darker greens. */
+.bn__anim--gradient {
+  background: linear-gradient(120deg, var(--live-accent), #0f4a10 45%, #0b5e8a 75%, var(--live-accent));
+  background-size: 300% 300%;
+  animation: bnLiveGradient 9s ease-in-out infinite;
+}
+@keyframes bnLiveGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* lys — a stadium-light sweep across a deep green. */
+.bn__anim--lys { background: radial-gradient(120% 100% at 50% 110%, #1d7f2a, #0d3f0f 70%); }
+.bn__anim--lys::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -30%;
+  width: 36%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+  transform: skewX(-18deg);
+  animation: bnLiveSweep 3.6s ease-in-out infinite;
+}
+@keyframes bnLiveSweep {
+  0% { left: -40%; }
+  60%, 100% { left: 120%; }
+}
+
+/* striper — moving diagonal pitch stripes. */
+.bn__anim--striper {
+  background-color: var(--live-accent);
+  background-image: repeating-linear-gradient(-55deg, rgba(255, 255, 255, 0.11) 0 18px, rgba(255, 255, 255, 0) 18px 36px);
+  background-size: 200% 200%;
+  animation: bnLiveStripes 2.4s linear infinite;
+}
+@keyframes bnLiveStripes {
+  from { background-position: 0 0; }
+  to { background-position: 88px 0; }
+}
+
+/* puls — rings pulsing out from the centre, like a kick-off whistle. */
+.bn__anim--puls { background: radial-gradient(circle at 50% 50%, #22852a, #0f4a10 70%); }
+.bn__anim--puls::before,
+.bn__anim--puls::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40%;
+  padding-top: 40%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  animation: bnLivePulse 2.8s ease-out infinite;
+}
+.bn__anim--puls::after { animation-delay: 1.4s; }
+@keyframes bnLivePulse {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+/* konfetti — a dozen small squares falling and tumbling. */
+.bn__anim--konfetti { background: linear-gradient(180deg, #11531a, #0b3a0e); }
+.bn__confetti {
+  position: absolute;
+  top: -8%;
+  width: 7px;
+  height: 11px;
+  border-radius: 1px;
+  opacity: 0.9;
+  animation: bnLiveConfetti 3.4s linear infinite;
+}
+@keyframes bnLiveConfetti {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(380px) rotate(540deg); }
+}
+
+/* The backup image is a screenshot and viewers who asked for less motion get
+   a still frame: animations freeze on their first keyframe. */
+.bn--still .bn__anim,
+.bn--still .bn__anim::before,
+.bn--still .bn__anim::after,
+.bn--still .bn__confetti {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bn--live .bn__anim,
+  .bn--live .bn__anim::before,
+  .bn--live .bn__anim::after,
+  .bn--live .bn__confetti { animation-play-state: paused; }
+  .bn--live .bn__live-slide { transition: none; transform: none; }
+}
+
+/* ------------------------------ Body -------------------------------------- */
+.bn--live .bn__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #ffffff;
+}
+.bn--live.bn--readpeak .bn__body { background: #edf5ed; }
+
+/* Competition / product line: small, bold, in the accent. */
+.bn__live-kicker {
+  flex: none;
+  max-width: 100%;
+  color: var(--live-accent);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The match itself. banner.css already gives .bn__headline its colour,
+   weight, clamp and the hover underline; here only the metrics. */
+.bn--live .bn__headline {
+  flex: none;
+  max-width: 100%;
+  -webkit-line-clamp: 2;
+  letter-spacing: -0.012em;
+}
+/* A headline that still would not fit at full size steps down (set by
+   live.js, which measures). */
+.bn--live .bn__headline.is-fit-1 { font-size: calc(var(--live-hl) * 0.86) !important; }
+.bn--live .bn__headline.is-fit-2 { font-size: calc(var(--live-hl) * 0.74) !important; }
+
+/* Kick-off: "I dag kl. 21:00", "Starter om 2 t 14 min", "Pågår nå".
+   Tabular digits so a ticking countdown does not jitter. */
+.bn__live-time {
+  flex: none;
+  max-width: 100%;
+  color: var(--live-muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bn__live-time.is-live { color: #c52b22; }
+.bn__live-time.is-live::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 0.05em;
+  animation: bnLiveBlink 1.2s ease-in-out infinite;
+}
+@keyframes bnLiveBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.bn--still .bn__live-time.is-live::before { animation: none; }
+
+/* Odds, when the sheet carries them: "2,10 · 3,40 · 3,20". */
+.bn__live-odds {
+  flex: none;
+  color: var(--live-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* The button. Pinned to the bottom of the body so the text above can breathe. */
+.bn__live-cta {
+  flex: none;
+  display: inline-block;
+  margin-top: auto;
+  max-width: 100%;
+  background: var(--live-accent);
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+.bn:hover .bn__live-cta { filter: brightness(1.08); }
+/* Text-only variant, for the smallest format. */
+.bn__live-cta--text {
+  background: transparent;
+  color: var(--live-accent);
+  padding: 0;
+  box-shadow: none;
+  font-weight: 800;
+}
+.bn__live-cta--text::after { content: " →"; }
+
+/* ------------------------------ Per format -------------------------------- */
+.bn--live.bn--desktop .bn__body { padding: 15px 20px 18px; gap: 6px; }
+.bn--live.bn--desktop .bn__live-kicker { font-size: 13px; }
+.bn--live.bn--desktop .bn__headline { --live-hl: calc(33px * var(--hl-scale, 1)); font-size: var(--live-hl); line-height: 1.08; }
+.bn--live.bn--desktop .bn__live-time { font-size: 18px; }
+.bn--live.bn--desktop .bn__live-odds { font-size: 15px; }
+.bn--live.bn--desktop .bn__live-cta { font-size: 15px; padding: 11px 20px; }
+
+.bn--live.bn--mobile .bn__body { padding: 12px 16px 14px; gap: 5px; }
+.bn--live.bn--mobile .bn__live-kicker { font-size: 11px; }
+.bn--live.bn--mobile .bn__headline { --live-hl: calc(24px * var(--hl-scale, 1)); font-size: var(--live-hl); line-height: 1.1; }
+.bn--live.bn--mobile .bn__live-time { font-size: 14.5px; }
+.bn--live.bn--mobile .bn__live-odds { font-size: 13px; }
+.bn--live.bn--mobile .bn__live-cta { font-size: 13.5px; padding: 10px 16px; }
+
+.bn--live.bn--readpeak .bn__body { padding: 14px 14px 14px; gap: 5px; }
+.bn--live.bn--readpeak .bn__live-kicker { font-size: 10.5px; letter-spacing: 0.7px; color: #29741d; }
+.bn--live.bn--readpeak .bn__headline { --live-hl: calc(23px * var(--hl-scale, 1)); font-size: var(--live-hl); line-height: 1.14; -webkit-line-clamp: 3; }
+.bn--live.bn--readpeak .bn__live-time { font-size: 15px; }
+.bn--live.bn--readpeak .bn__live-odds { font-size: 13px; }
+.bn--live.bn--readpeak .bn__live-cta { font-size: 13px; padding: 10px 0; width: 100%; text-align: center; border-radius: 4px; }
+
+.bn--live.bn--newsgrid .bn__body { padding: 8px 10px 8px; gap: 3px; }
+.bn--live.bn--newsgrid .bn__live-kicker { display: none; }
+.bn--live.bn--newsgrid .bn__headline { --live-hl: calc(14.5px * var(--hl-scale, 1)); font-size: var(--live-hl); line-height: 1.15; letter-spacing: -0.006em; }
+.bn--live.bn--newsgrid .bn__live-time { font-size: 11px; }
+.bn--live.bn--newsgrid .bn__live-odds { display: none; }
+.bn--live.bn--newsgrid .bn__live-cta { font-size: 10.5px; }

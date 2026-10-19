@@ -32,6 +32,29 @@ De regulerte plasseringene: 18+/Hjelpelinjen-merket og vinnersjanse-stripen.
 | **Mobil**      | 320 × 400  | Mobil-annonse       |
 | **Nyhetsgrid** | 190 × 190  | Nyhetsgrid på forsiden |
 
+### NT Live (dynamisk HTML5 for Norsk Tipping)
+
+De samme fire Norsk Tipping-størrelsene, men annonsen bestemmer innholdet selv når
+den vises. Du holder et Google-regneark med kamper (dato, avspark, hjemmelag,
+bortelag og valgfritt turnering, lenke, bilde, video, animasjon, knappetekst,
+odds); annonsen viser kampene som går **i dag (norsk tid)**, én etter én: bilde,
+video eller animasjon øverst, så lagene, avsparket («I dag kl. 21:00», nedtelling
+eller «Pågår nå») og en knapp. Uten kamper i dag vises neste dag med kamper
+(«I morgen kl. 21:00») eller en reserveplakat.
+
+- Lim inn Sheets-lenken (delt som «Alle med lenken») eller cellene, se kampene og
+  advarslene, juster tekster, tempo og utseende mens de fire formatene kjører på
+  høyre side, og eksporter én opplastingsklar ZIP per format pluss reservebilder.
+  Eksempelark: `/api/live/template.csv`.
+- **Live-oppdatering:** pakken har med radene den ble laget av, og kan i tillegg
+  lese arket på nytt hver gang annonsen vises, så nye kamper kommer med uten ny
+  opplasting. Feiler hentingen, brukes de innpakkede radene.
+- **Klikk:** enten går alt til `clickTag` (spores av CM360), eller kampens egen
+  lenke fra arket vinner når den finnes – det går utenom CM360-sporingen hvis
+  arket ikke har sporingslenker, og verktøyet sier fra.
+- **Bilder** for de neste N dagene pakkes inn (`media/`); resten, og all video,
+  hentes fra https-lenken når annonsen vises.
+
 ### ReadPeak
 
 De samme to ReadPeak-plasseringene solgt til hvilken som helst annonsør — altså

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <title>NT Live</title>
+    <link rel="stylesheet" href="../public/assets/banner.css" />
+    <link rel="stylesheet" href="../public/assets/live.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="banner-root"></div>
+    <script src="../public/assets/banner.js"></script>
+    <script src="../public/assets/live-data.js"></script>
+    <script src="../public/assets/live.js"></script>
+    <script>
+      /* The backup image for an NT Live creative: the first slide, as it
+         would look at the moment of export, with video replaced by its poster
+         and every animation frozen on its first frame. The server injects
+         window.__DATA__ = { config, now, __type } before this runs (see
+         renderSpec in server.js), and waits for __BANNER_READY__. */
+      (function () {
+        window.__BANNER_READY__ = false;
+        window.__BANNER_ERROR__ = null;
+        function whenImagesLoaded(cb) {
+          var imgs = Array.prototype.slice.call(document.images);
+          var pending = imgs.length;
+          if (!pending) return cb();
+          var done = function () {
+            if (--pending === 0) cb();
+          };
+          imgs.forEach(function (img) {
+            if (img.complete) done();
+            else {
+              img.addEventListener("load", done);
+              img.addEventListener("error", done);
+            }
+          });
+        }
+        function start() {
+          try {
+            var data = window.__DATA__ || {};
+            var root = document.getElementById("banner-root");
+            window.LiveAd.mount(root, data.__type || "desktop", data.config || {}, {
+              now: data.now ? new Date(data.now) : null,
+              autoplay: false,
+              still: true,
+              refresh: false,
+            });
+            var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+            fontsReady
+              .catch(function () {})
+              .then(function () {
+                whenImagesLoaded(function () {
+                  requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                      window.__BANNER_READY__ = true;
+                    });
+                  });
+                });
+              });
+          } catch (err) {
+            window.__BANNER_ERROR__ = String((err && err.stack) || err);
+            window.__BANNER_READY__ = true;
+          }
+        }
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+        else start();
+      })();
+    </script>
+  </body>
+</html>

@@ -153,8 +153,38 @@
     return '<p class="bn__subtitle">' + escapeHtml(text) + "</p>";
   }
 
-  function renderReadpeak(data) {
+  // The overlays on the ReadPeak photo: the small ANNONSE tag top-left, the
+  // 18+ pill and the Vinnersjanse strip. Shared with the NT Live creative,
+  // whose photo area carries exactly the same furniture.
+  function readpeakOverlays(data) {
     var annonse = escapeHtml(data.annonseText || "Annonse");
+    return '<span class="bn__annonse-top">' + annonse + "</span>" + ageBadge(data) + vinnerBadge(data);
+  }
+
+  // Desktop and Mobile: the Annonse pill bottom-left, 18+ top-right,
+  // Vinnersjanse bottom-right.
+  function standardOverlays(data) {
+    return annonseBadge(data) + ageBadge(data) + vinnerBadge(data);
+  }
+
+  // Nyhetsgrid: Annonse + 18+ merged into one bar across the top of the
+  // photo, Vinnersjanse only when explicitly switched on (see renderNewsgrid).
+  function newsgridOverlays(data) {
+    var annonse = escapeHtml(data.annonseText || "Annonse");
+    var vinnerText = data.showVinnerOnNewsgrid ? String(data.vinnersjanse || "").trim() : "";
+    var vinner = vinnerText ? '<span class="bn__badge bn__vinner">' + escapeHtml(vinnerText) + "</span>" : "";
+    return (
+      '<span class="bn__topbar">' +
+      '<span class="bn__topbar-annonse">' +
+      annonse +
+      "</span>" +
+      ageBadge(data, "bn__topbar-age") +
+      "</span>" +
+      vinner
+    );
+  }
+
+  function renderReadpeak(data) {
     // The step above "Les mer" is an element rather than a margin so it can
     // shrink when the copy is long (see .bn__cta-gap in banner.css) — and it
     // only exists when there is a call to action to stand above.
@@ -165,11 +195,7 @@
       // Desktop/Mobile), no separate top bar.
       '<div class="bn__media">' +
       mediaImg(data) +
-      '<span class="bn__annonse-top">' +
-      annonse +
-      "</span>" +
-      ageBadge(data) +
-      vinnerBadge(data) +
+      readpeakOverlays(data) +
       "</div>" +
       '<div class="bn__body">' +
       brandLabelMarkup(data) +
@@ -186,9 +212,7 @@
     return (
       '<div class="bn__media">' +
       mediaImg(data) +
-      annonseBadge(data) +
-      ageBadge(data) +
-      vinnerBadge(data) +
+      standardOverlays(data) +
       "</div>" +
       '<div class="bn__body">' +
       '<h2 class="bn__headline">' +
@@ -205,19 +229,10 @@
   // Vinnersjanse defaults OFF here (too small to read) — only switched on
   // explicitly when fronting a jackpot ("vinnerpott"), per Monika.
   function renderNewsgrid(data) {
-    var annonse = escapeHtml(data.annonseText || "Annonse");
-    var vinnerText = data.showVinnerOnNewsgrid ? String(data.vinnersjanse || "").trim() : "";
-    var vinner = vinnerText ? '<span class="bn__badge bn__vinner">' + escapeHtml(vinnerText) + "</span>" : "";
     return (
       '<div class="bn__media">' +
       mediaImg(data) +
-      '<span class="bn__topbar">' +
-      '<span class="bn__topbar-annonse">' +
-      annonse +
-      "</span>" +
-      ageBadge(data, "bn__topbar-age") +
-      "</span>" +
-      vinner +
+      newsgridOverlays(data) +
       "</div>" +
       '<div class="bn__body">' +
       '<h2 class="bn__headline">' +
@@ -343,4 +358,18 @@
   global.renderBanner = renderBanner;
   // expose helpers for potential reuse/testing
   global.renderBanner.escapeHtml = escapeHtml;
+  // The pieces NT Live (live.js) composes its slides from, so the regulated
+  // furniture on a dynamic creative is the very same markup as on a static one.
+  global.renderBanner.parts = {
+    escapeHtml: escapeHtml,
+    safeColor: safeColor,
+    ageBadge: ageBadge,
+    vinnerBadge: vinnerBadge,
+    annonseBadge: annonseBadge,
+    overlaysFor: function (type, data) {
+      if (type === "newsgrid") return newsgridOverlays(data);
+      if (type === "readpeak") return readpeakOverlays(data);
+      return standardOverlays(data);
+    },
+  };
 })(typeof window !== "undefined" ? window : this);
