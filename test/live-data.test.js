@@ -152,7 +152,12 @@ test("the time line", async (t) => {
 
 test("the example sheet reads back cleanly", () => {
   const out = LD.readTable(LD.parseCsv(LD.templateCsv(new Date("2026-10-19T12:00:00Z"))));
-  assert.equal(out.rows.length, 5);
+  assert.equal(out.rows.length, 6);
   assert.equal(out.warnings.length, 0);
+  // Every column the tool reads is in the template, so it doubles as docs.
+  assert.deepEqual(
+    Object.keys(out.columns).sort(),
+    ["animation", "away", "cta", "date", "headline", "home", "image", "league", "link", "odds", "text", "time", "video"]
+  );
   assert.equal(out.rows[0].animation, "gradient");
 });

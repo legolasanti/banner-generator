@@ -1,30 +1,33 @@
 /* =========================================================================
-   live/form.js — the form pieces the NT Live tab is built from: labelled
-   fields, text/number/select/range/colour inputs, a segmented control and
-   collapsible sections. Each control takes a value and an onChange, so
-   main.js owns the state and this file owns no state at all.
+   live/form.js — the controls the NT Live tab is built from: labelled
+   fields, text/number/select/range inputs, segmented controls, switches,
+   colour swatches and cards. Each control takes a value and an onChange,
+   so the panels own the state and this file owns none.
    ========================================================================= */
 (function () {
   "use strict";
 
   var NTLIVE = (window.NTLIVE = window.NTLIVE || {});
   var h = window.WPE.util.h;
-
-  /** A label above a control, with an optional hint under the label. */
-  function field(label, control, hint) {
-    var wrap = h("div.lv-field");
-    var lab = h("label.lv-field__label", null, label);
-    if (control.id) lab.htmlFor = control.id;
-    wrap.appendChild(lab);
-    if (hint) wrap.appendChild(h("span.lv-field__hint", null, hint));
-    wrap.appendChild(control);
-    return wrap;
-  }
+  var icon = NTLIVE.icon;
 
   var uid = 0;
   function nextId(prefix) {
     uid++;
     return "lv-" + (prefix || "c") + "-" + uid;
+  }
+
+  /** A label above a control, with an optional hint under it. */
+  function field(label, control, hint, opts) {
+    var o = opts || {};
+    var wrap = h("div.lv-field" + (o.className ? "." + o.className : ""));
+    var labelFor = control && (control.getAttribute && (control.getAttribute("data-for") || control.id));
+    var head = h("div.lv-field__head", null, h("label.lv-field__label", labelFor ? { for: labelFor } : null, label));
+    if (o.aside) head.appendChild(h("span.lv-field__aside", null, o.aside));
+    wrap.appendChild(head);
+    wrap.appendChild(control);
+    if (hint) wrap.appendChild(h("p.lv-field__hint", null, hint));
+    return wrap;
   }
 
   function text(o) {
@@ -36,8 +39,17 @@
       maxlength: o.maxLength || null,
       spellcheck: "false",
       autocomplete: "off",
+      "aria-label": o.ariaLabel || null,
     });
     el.addEventListener("input", function () { o.onChange(el.value); });
+    if (o.onEnter) {
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          o.onEnter(el.value);
+        }
+      });
+    }
     if (o.onBlur) el.addEventListener("blur", function () { o.onBlur(el.value); });
     return el;
   }
@@ -49,29 +61,41 @@
     return el;
   }
 
+  /** A number with − / + steppers; the value is clamped to [min, max]. */
   function number(o) {
-    var el = h("input.lv-input.lv-input--num", { type: "number", id: nextId("n"), min: o.min, max: o.max, step: o.step || 1, value: o.value });
-    el.addEventListener("change", function () {
-      var v = Number(el.value);
-      if (!isFinite(v)) v = o.value;
-      v = Math.max(o.min, Math.min(o.max, v));
-      el.value = v;
-      o.onChange(v);
-    });
-    return el;
+    var id = nextId("n");
+    var input = h("input.lv-num__input", { type: "number", id: id, min: o.min, max: o.max, step: o.step || 1, value: o.value, inputmode: "numeric" });
+    function commit(v) {
+      var n = Number(v);
+      if (!isFinite(n)) n = o.value;
+      n = Math.max(o.min, Math.min(o.max, n));
+      input.value = n;
+      o.onChange(n);
+    }
+    var minus = h("button.lv-num__btn", { type: "button", "aria-label": "Mindre", tabindex: "-1" }, "−");
+    var plus = h("button.lv-num__btn", { type: "button", "aria-label": "Mer", tabindex: "-1" }, "+");
+    minus.addEventListener("click", function () { commit(Number(input.value) - (o.step || 1)); });
+    plus.addEventListener("click", function () { commit(Number(input.value) + (o.step || 1)); });
+    input.addEventListener("change", function () { commit(input.value); });
+    var wrap = h("div.lv-num", { "data-for": id }, minus, input, o.unit ? h("span.lv-num__unit", null, o.unit) : null, plus);
+    return wrap;
   }
 
   /** A slider with its value shown beside it. fmt(value) → label. */
   function range(o) {
     var out = h("output.lv-range__out", null, o.fmt(o.value));
     var el = h("input.lv-range", { type: "range", id: nextId("r"), min: o.min, max: o.max, step: o.step || 1, value: o.value });
+    function paint() {
+      var pct = ((Number(el.value) - o.min) / (o.max - o.min)) * 100;
+      el.style.setProperty("--fill", pct + "%");
+    }
     el.addEventListener("input", function () {
       out.textContent = o.fmt(Number(el.value));
+      paint();
       o.onChange(Number(el.value));
     });
-    var wrap = h("div.lv-range__row", null, el, out);
-    wrap.id = el.id;
-    return wrap;
+    paint();
+    return h("div.lv-range__row", { "data-for": el.id }, el, out);
   }
 
   function select(o) {
@@ -85,55 +109,112 @@
     return el;
   }
 
-  /** A row of buttons where one is active. items: [[value, label, title?]]. */
+  /** A row of buttons where one is active. items: [[value, label, title?, iconName?]]. */
   function seg(o) {
-    var wrap = h("div.segmented.lv-seg", { role: "group", "aria-label": o.label || null });
+    var wrap = h("div.lv-seg" + (o.size === "sm" ? ".lv-seg--sm" : "") + (o.block ? ".lv-seg--block" : ""), { role: "radiogroup", "aria-label": o.label || null });
+    function setActive(value) {
+      Array.prototype.forEach.call(wrap.children, function (x) {
+        var on = x.getAttribute("data-val") === String(value);
+        x.classList.toggle("is-active", on);
+        x.setAttribute("aria-checked", on ? "true" : "false");
+        x.tabIndex = on ? 0 : -1;
+      });
+    }
     o.items.forEach(function (it) {
-      var b = h("button.seg", { type: "button", "data-val": it[0], title: it[2] || null }, it[1]);
-      var active = String(it[0]) === String(o.value);
-      if (active) b.classList.add("is-active");
-      b.setAttribute("aria-pressed", active ? "true" : "false");
+      var b = h("button.lv-seg__btn", { type: "button", role: "radio", "data-val": String(it[0]), title: it[2] || null }, it[3] ? icon(it[3], 14) : null, it[1] ? h("span", null, it[1]) : null);
       b.addEventListener("click", function () {
-        Array.prototype.forEach.call(wrap.children, function (x) {
-          x.classList.toggle("is-active", x === b);
-          x.setAttribute("aria-pressed", x === b ? "true" : "false");
-        });
+        setActive(it[0]);
         o.onChange(it[0]);
+      });
+      b.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        var sib = e.key === "ArrowRight" ? b.nextElementSibling || wrap.firstElementChild : b.previousElementSibling || wrap.lastElementChild;
+        sib.focus();
+        sib.click();
       });
       wrap.appendChild(b);
     });
+    setActive(o.value);
+    wrap.setValue = setActive;
     return wrap;
+  }
+
+  /** A switch with a label and an optional hint. */
+  function toggle(o) {
+    var input = h("input.lv-switch__input", { type: "checkbox", id: nextId("sw"), role: "switch" });
+    input.checked = !!o.value;
+    input.addEventListener("change", function () { o.onChange(input.checked); });
+    var lab = h(
+      "label.lv-switch",
+      { for: input.id },
+      input,
+      h("span.lv-switch__track", { "aria-hidden": "true" }, h("span.lv-switch__thumb")),
+      h("span.lv-switch__text", null, h("span.lv-switch__label", null, o.label), o.hint ? h("span.lv-switch__hint", null, o.hint) : null)
+    );
+    return lab;
   }
 
   function checkbox(o) {
     var input = h("input", { type: "checkbox", id: nextId("cb") });
     input.checked = !!o.value;
     input.addEventListener("change", function () { o.onChange(input.checked); });
-    var lab = h("label.lv-check", { htmlFor: input.id }, input, h("span", null, o.label));
-    if (o.hint) lab.appendChild(h("span.lv-check__hint", null, o.hint));
-    return lab;
+    return h("label.lv-check", { for: input.id }, input, h("span.lv-check__box", { "aria-hidden": "true" }, icon("check", 12)), h("span.lv-check__label", null, o.label), o.aside ? h("span.lv-check__aside", null, o.aside) : null);
   }
 
+  /** Preset swatches plus a free colour picker and hex field. */
   function color(o) {
-    var input = h("input.lv-color", { type: "color", id: nextId("col"), value: o.value });
-    var hex = h("span.lv-color__hex", null, o.value);
-    input.addEventListener("input", function () {
-      hex.textContent = input.value;
-      o.onChange(input.value);
+    var value = o.value;
+    var wrap = h("div.lv-colors");
+    var swatches = h("div.lv-swatches", { role: "radiogroup", "aria-label": "Aksentfarge" });
+    var picker = h("input.lv-colors__picker", { type: "color", value: value, "aria-label": "Velg egen farge" });
+    var hex = h("input.lv-input.lv-colors__hex", { type: "text", value: value, maxlength: 7, spellcheck: "false", "aria-label": "Fargekode" });
+    function set(v, from) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+      value = v.toLowerCase();
+      if (from !== "picker") picker.value = value;
+      if (from !== "hex") hex.value = value;
+      Array.prototype.forEach.call(swatches.children, function (s) {
+        var on = s.getAttribute("data-hex") === value;
+        s.classList.toggle("is-active", on);
+        s.setAttribute("aria-checked", on ? "true" : "false");
+      });
+      o.onChange(value);
+    }
+    (o.presets || []).forEach(function (p) {
+      var b = h("button.lv-swatch", { type: "button", role: "radio", "data-hex": p.hex.toLowerCase(), title: p.name + " " + p.hex }, icon("check", 12));
+      b.style.setProperty("--sw", p.hex);
+      b.addEventListener("click", function () { set(p.hex.toLowerCase(), "swatch"); });
+      swatches.appendChild(b);
     });
-    var wrap = h("div.lv-color__row", null, input, hex);
-    wrap.id = input.id;
+    picker.addEventListener("input", function () { set(picker.value, "picker"); });
+    hex.addEventListener("input", function () {
+      var v = hex.value.trim();
+      if (v && v[0] !== "#") v = "#" + v;
+      set(v, "hex");
+    });
+    var custom = h("label.lv-colors__custom", { title: "Egen farge" }, picker, h("span.lv-colors__chip", { style: { background: value } }));
+    picker.addEventListener("input", function () { custom.lastChild.style.background = picker.value; });
+    wrap.appendChild(swatches);
+    wrap.appendChild(h("div.lv-colors__row", null, custom, hex));
+    set(value, "init");
     return wrap;
   }
 
-  /** A collapsible group of fields. */
-  function section(title, desc, children, open) {
-    var det = h("details.lv-section", { open: open !== false });
-    det.appendChild(h("summary.lv-section__sum", null, h("span.lv-section__title", null, title), desc ? h("span.lv-section__desc", null, desc) : null));
-    var body = h("div.lv-section__body");
-    children.forEach(function (c) { if (c) body.appendChild(c); });
-    det.appendChild(body);
-    return det;
+  /** A titled group of fields inside a panel. */
+  function card(title, children, opts) {
+    var o = opts || {};
+    var c = h("section.lv-card" + (o.className ? "." + o.className : ""));
+    if (title) {
+      var head = h("header.lv-card__head", null, h("div.lv-card__titles", null, h("h3.lv-card__title", null, title), o.desc ? h("p.lv-card__desc", null, o.desc) : null));
+      if (o.action) head.appendChild(o.action);
+      c.appendChild(head);
+    }
+    var body = h("div.lv-card__body");
+    (children || []).forEach(function (ch) { if (ch) body.appendChild(ch); });
+    c.appendChild(body);
+    c.body = body;
+    return c;
   }
 
   function row() {
@@ -142,5 +223,33 @@
     return wrap;
   }
 
-  NTLIVE.form = { field: field, text: text, textarea: textarea, number: number, range: range, select: select, seg: seg, checkbox: checkbox, color: color, section: section, row: row };
+  /** A button with an optional leading icon. kind: primary | ghost | quiet. */
+  function button(label, opts) {
+    var o = opts || {};
+    var b = h("button.lv-btn.lv-btn--" + (o.kind || "ghost") + (o.size ? ".lv-btn--" + o.size : ""), { type: "button", title: o.title || null, "aria-label": o.ariaLabel || null }, o.icon ? icon(o.icon, o.size === "sm" ? 14 : 16) : null, label ? h("span.lv-btn__label", null, label) : null);
+    if (o.onClick) b.addEventListener("click", o.onClick);
+    return b;
+  }
+
+  /** A small note: info, warn or ok. */
+  function note(kind, children) {
+    return h("div.lv-note.lv-note--" + kind, null, icon(kind === "warn" ? "alert" : kind === "ok" ? "check" : "info", 15), h("div.lv-note__body", null, children));
+  }
+
+  NTLIVE.form = {
+    field: field,
+    text: text,
+    textarea: textarea,
+    number: number,
+    range: range,
+    select: select,
+    seg: seg,
+    toggle: toggle,
+    checkbox: checkbox,
+    color: color,
+    card: card,
+    row: row,
+    button: button,
+    note: note,
+  };
 })();

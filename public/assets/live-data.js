@@ -579,24 +579,35 @@
     return clock;
   }
 
-  /** Example sheet (CSV text) with the columns the tool reads. */
-  function templateCsv(fromDate) {
+  /**
+   * The example sheet: every column the tool reads, in the order people fill
+   * them in, with a few days of realistic rows starting `fromDate`.
+   * @returns {string[][]} header row first
+   */
+  function templateRows(fromDate) {
     var base = fromDate ? new Date(fromDate) : new Date();
     function day(offset) {
       var d = new Date(base.getTime() + offset * DAY_MS);
       return pad2(d.getDate()) + "." + pad2(d.getMonth() + 1) + "." + d.getFullYear();
     }
-    var rows = [
-      ["Dato", "Tid", "Hjemmelag", "Bortelag", "Turnering", "Lenke", "Bilde", "Video", "Animasjon", "Knappetekst"],
-      [day(0), "18:45", "Arsenal", "PSG", "Champions League", "https://www.norsk-tipping.no/sport/oddsen", "", "", "gradient", "Spill nå"],
-      [day(0), "21:00", "Real Madrid", "Liverpool", "Champions League", "https://www.norsk-tipping.no/sport/oddsen", "", "", "lys", "Se oddsen"],
-      [day(0), "21:00", "Galatasaray", "Barcelona", "Champions League", "https://www.norsk-tipping.no/sport/oddsen", "", "", "striper", ""],
-      [day(1), "20:00", "Bodø/Glimt", "Rosenborg", "Eliteserien", "https://www.norsk-tipping.no/sport/oddsen", "", "", "", ""],
-      [day(2), "16:00", "Brann", "Molde", "Eliteserien", "https://www.norsk-tipping.no/sport/oddsen", "", "", "konfetti", ""],
+    var oddsen = "https://www.norsk-tipping.no/sport/oddsen";
+    return [
+      ["Dato", "Tid", "Hjemmelag", "Bortelag", "Turnering", "Odds", "Knappetekst", "Lenke", "Bilde", "Video", "Animasjon", "Overskrift", "Tekst"],
+      [day(0), "18:45", "Arsenal", "PSG", "Champions League", "2,05 - 3,60 - 3,40", "Spill nå", oddsen, "", "", "gradient", "", ""],
+      [day(0), "21:00", "Real Madrid", "Liverpool", "Champions League", "2,30 - 3,50 - 2,95", "Se oddsen", oddsen, "", "", "lys", "", "Over 2,5 mål?"],
+      [day(0), "21:00", "Galatasaray", "Barcelona", "Champions League", "3,90 - 3,80 - 1,85", "", oddsen, "", "", "striper", "", ""],
+      [day(1), "18:45", "Bodø/Glimt", "Lazio", "Europa League", "2,40 - 3,40 - 2,80", "", oddsen, "", "", "puls", "", ""],
+      [day(1), "21:00", "Tottenham", "Roma", "Europa League", "2,10 - 3,50 - 3,30", "", oddsen, "", "", "", "", ""],
+      [day(3), "18:00", "Brann", "Molde", "Eliteserien", "2,15 - 3,50 - 3,10", "Spill nå", oddsen, "", "", "konfetti", "Toppkamp i Bergen", ""],
     ];
-    return rows
+  }
+
+  /** The example sheet as CSV text (semicolons, like Norwegian Excel). */
+  function templateCsv(fromDate, delimiter) {
+    var d = delimiter || ";";
+    return templateRows(fromDate)
       .map(function (r) {
-        return r.map(function (c) { return /[",;\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(";");
+        return r.map(function (c) { return /[",;\t\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(d);
       })
       .join("\n") + "\n";
   }
@@ -622,6 +633,7 @@
     select: select,
     timeLabel: timeLabel,
     countdownWord: countdownWord,
+    templateRows: templateRows,
     templateCsv: templateCsv,
   };
 });
