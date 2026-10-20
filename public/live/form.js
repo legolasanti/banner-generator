@@ -121,7 +121,7 @@
       });
     }
     o.items.forEach(function (it) {
-      var b = h("button.lv-seg__btn", { type: "button", role: "radio", "data-val": String(it[0]), title: it[2] || null }, it[3] ? icon(it[3], 14) : null, it[1] ? h("span", null, it[1]) : null);
+      var b = h("button.lv-seg__btn", { type: "button", role: "radio", "data-val": String(it[0]), title: it[2] || null, "aria-label": !it[1] && it[2] ? it[2] : null }, it[3] ? icon(it[3], 14) : null, it[1] ? h("span", null, it[1]) : null);
       b.addEventListener("click", function () {
         setActive(it[0]);
         o.onChange(it[0]);
@@ -206,9 +206,9 @@
     var o = opts || {};
     var c = h("section.lv-card" + (o.className ? "." + o.className : ""));
     if (title) {
-      var head = h("header.lv-card__head", null, h("div.lv-card__titles", null, h("h3.lv-card__title", null, title), o.desc ? h("p.lv-card__desc", null, o.desc) : null));
-      if (o.action) head.appendChild(o.action);
-      c.appendChild(head);
+      // Title and action share the first line, so the description below gets the full width.
+      var bar = h("div.lv-card__titlebar", null, h("h3.lv-card__title", null, title), o.action || null);
+      c.appendChild(h("header.lv-card__head", null, bar, o.desc ? h("p.lv-card__desc", null, o.desc) : null));
     }
     var body = h("div.lv-card__body");
     (children || []).forEach(function (ch) { if (ch) body.appendChild(ch); });
@@ -226,14 +226,16 @@
   /** A button with an optional leading icon. kind: primary | ghost | quiet. */
   function button(label, opts) {
     var o = opts || {};
-    var b = h("button.lv-btn.lv-btn--" + (o.kind || "ghost") + (o.size ? ".lv-btn--" + o.size : ""), { type: "button", title: o.title || null, "aria-label": o.ariaLabel || null }, o.icon ? icon(o.icon, o.size === "sm" ? 14 : 16) : null, label ? h("span.lv-btn__label", null, label) : null);
+    var b = h("button.lv-btn.lv-btn--" + (o.kind || "ghost") + (o.size ? ".lv-btn--" + o.size : ""), { type: "button", title: o.title || o.ariaLabel || null, "aria-label": o.ariaLabel || null }, o.icon ? icon(o.icon, o.size === "sm" ? 14 : 16) : null, label ? h("span.lv-btn__label", null, label) : null);
     if (o.onClick) b.addEventListener("click", o.onClick);
     return b;
   }
 
-  /** A small note: info, warn or ok. */
+  var NOTICE_TONE = { info: "info", warn: "warning", ok: "success" };
+
+  /** A small note: info, warn or ok (the shared .notice, in the matching tone). */
   function note(kind, children) {
-    return h("div.lv-note.lv-note--" + kind, null, icon(kind === "warn" ? "alert" : kind === "ok" ? "check" : "info", 15), h("div.lv-note__body", null, children));
+    return h("div.notice.notice--" + NOTICE_TONE[kind] + ".lv-note.lv-note--" + kind, null, icon(kind === "warn" ? "alert" : kind === "ok" ? "check" : "info", 15), h("div.lv-note__body", null, children));
   }
 
   NTLIVE.form = {

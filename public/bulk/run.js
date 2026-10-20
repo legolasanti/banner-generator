@@ -69,15 +69,15 @@
       setOutput({ layout: v });
       renderResult();
     }, "Mappestruktur");
-    dom.name = h("input.bk-input.bk-name", { type: "text", maxlength: 60, placeholder: "navn på ZIP-filen", value: o.name || "", "aria-label": "Navn på ZIP-filen" });
+    dom.name = h("input.bk-input.bk-name", { type: "text", id: "bk-zipname", maxlength: 60, placeholder: "navn på ZIP-filen", value: o.name || "", "aria-label": "Navn på ZIP-filen" });
     dom.name.addEventListener("input", function () { state.output.name = dom.name.value; store.persist(); });
-    dom.click = h("input.bk-input", { type: "url", placeholder: "https://… brukes der arket ikke har klikk-lenke", value: o.clickUrl || "", spellcheck: "false", "aria-label": "Standard klikk-lenke" });
+    dom.click = h("input.bk-input", { type: "url", id: "bk-clickurl", placeholder: "https://… brukes der arket ikke har klikk-lenke", value: o.clickUrl || "", spellcheck: "false", "aria-label": "Standard klikk-lenke" });
     var ct = null;
     dom.click.addEventListener("input", function () {
       clearTimeout(ct);
       ct = setTimeout(function () { setOutput({ clickUrl: dom.click.value.trim() }); }, 250);
     });
-    dom.clickGroup = h("div.bk-ctl.bk-ctl--grow", null, h("span.bk-ctl__label", null, "Klikk-lenke"), dom.click);
+    dom.clickGroup = h("div.bk-ctl.bk-ctl--grow", null, h("label.bk-ctl__label", { for: "bk-clickurl" }, "Klikk-lenke"), dom.click);
 
     dom.summary = h("div.bk-run__summary");
     dom.go = h("button.btn-generate.bk-go", { type: "button" }, h("span.btn-generate__spinner", { "aria-hidden": "true" }), h("span.btn-generate__label", null, "Generer"));
@@ -104,7 +104,7 @@
           h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Filtype"), dom.typeSeg),
           dom.resGroup,
           h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Mapper i ZIP"), dom.layoutSeg),
-          h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Navn"), dom.name),
+          h("div.bk-ctl", null, h("label.bk-ctl__label", { for: "bk-zipname" }, "Navn på ZIP"), dom.name),
           dom.clickGroup
         ),
         h("div.bk-run__act", null, dom.summary, dom.go),
@@ -368,6 +368,7 @@
   function renderResult() {
     var job = state.job;
     dom.result.innerHTML = "";
+    dom.result.classList.toggle("is-bad", !!job && !job.entryId);
     if (!job || job.status === "queued" || job.status === "running") {
       dom.result.hidden = true;
       return;
@@ -389,7 +390,7 @@
         : (job.status === "cancelled" ? "Avbrutt: " : "Ferdig: ") +
           job.done + (job.done === 1 ? " banner" : " bannere") + " i " + job.formats.length + " størrelser" +
           (job.failed ? " · " + job.failed + " feilet" : "");
-    var main = h("a.btn-download", { href: downloadUrl(job, layout, html), download: "" }, "Last ned ZIP (" + layoutName + ")");
+    var main = h("a.btn-download", { href: downloadUrl(job, layout, html), download: "" }, BULK.ui.icon("download"), "Last ned ZIP (" + layoutName + ")");
     var alts = LAYOUTS.filter(function (l) { return l[0] !== layout; }).map(function (l) {
       return h("a.result__alt-link", { href: downloadUrl(job, l[0], html), download: "" }, l[1]);
     });
@@ -424,7 +425,7 @@
     if (!failed.length && !smaller.length) return;
     var item = function (f, cls) {
       var label = f.row ? (f.row.sheetRow ? "Rad " + f.row.sheetRow : "Ny rad") + ": " + (f.row.headline || "(uten overskrift)") : "(raden er fjernet)";
-      var btn = h("button.bk-link", { type: "button", disabled: !f.row }, label);
+      var btn = h("button.link.bk-link", { type: "button", disabled: !f.row }, label);
       if (f.row) btn.addEventListener("click", function () { BULK.editor.open(f.row.rid); });
       return h("li" + cls, null, btn, h("span", null, " – " + f.text));
     };
@@ -433,7 +434,7 @@
     smaller.slice(0, Math.max(0, MAX_LISTED_FAILURES - failed.length)).forEach(function (f) { list.appendChild(item(f, "")); });
     var more = failed.length + smaller.length - list.children.length;
     if (more > 0) list.appendChild(h("li.bk-result__more", null, "… og " + more + " til (se feilrapporten)"));
-    var report = h("button.btn-ghost.btn-sm", { type: "button" }, "Last ned feilrapport (CSV)");
+    var report = h("button.btn-ghost.btn-sm", { type: "button" }, BULK.ui.icon("download", 14), "Last ned feilrapport (CSV)");
     report.addEventListener("click", function () { BULK.ui.downloadProblemReport(state.rows, zipName()); });
     var title = [];
     if (failed.length) title.push(failed.length + (failed.length === 1 ? " banner ble ikke laget" : " bannere ble ikke laget"));

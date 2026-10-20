@@ -23,15 +23,16 @@
   var h = ui.h;
   var D = window.NativeDoc;
 
+  // [key, name, icon, what the panel is for]
   var PANELS = [
-    ["sections", "Seksjoner", "layers"],
-    ["assistant", "AI-assistent", "sparkles"],
-    ["media", "Medier", "images"],
-    ["theme", "Tema", "palette"],
-    ["extras", "Side", "panels-top-left"],
-    ["project", "Prosjekt", "settings"],
-    ["check", "Kontroll", "list-checks"],
-    ["review", "Gjennomgang", "message-square"],
+    ["sections", "Seksjoner", "layers", "Sidens innhold i rekkefølge. Dra for å flytte, klikk for å redigere."],
+    ["assistant", "AI-assistent", "sparkles", "Be AI-en om endringer i tekst, rekkefølge eller design."],
+    ["media", "Medier", "images", "Bilder og video i prosjektet. Gi hvert bilde en alt-tekst."],
+    ["theme", "Tema", "palette", "Farger, skrifter og logo for hele siden."],
+    ["extras", "Side", "panels-top-left", "Lesefremdrift, kapittelmeny, flytende knapp og avslutning."],
+    ["project", "Prosjekt", "settings", "Annonsør, varianter og hvordan siden ser ut når den deles."],
+    ["check", "Kontroll", "list-checks", "Det som bør rettes før siden sendes eller eksporteres."],
+    ["review", "Gjennomgang", "message-square", "Annonsørens kommentarer, godkjenning og tidligere versjoner."],
   ];
 
   var SAVE_TEXT = { saved: "Lagret", dirty: "Ikke lagret", saving: "Lagrer …", error: "Kunne ikke lagre", conflict: "Endret av andre" };
@@ -77,9 +78,10 @@
       { iconOnly: true, label: "Skjermstørrelse" }
     );
     var status = h("span.nx-status");
-    var motion = h("button.nx-btn.nx-btn--ghost.nx-btn--sm.nx-motion", {
+    var motion = h("button.nx-btn.nx-btn--ghost.nx-motion", {
       type: "button",
       title: "Vis siden slik den ser ut med «redusert bevegelse» slått på",
+      "aria-label": "Redusert bevegelse",
       "aria-pressed": "false",
       on: { click: function () {
         var on = motion.getAttribute("aria-pressed") !== "true";
@@ -92,9 +94,12 @@
       h(
         "div.nx-edbar",
         null,
-        h("a.nx-btn.nx-btn--ghost.nx-btn--sm", { href: "#/", title: "Alle prosjekter" }, ui.icon("arrow-left", 16)),
+        h("a.nx-btn.nx-btn--ghost", { href: "#/", title: "Alle prosjekter", "aria-label": "Tilbake til alle prosjekter" }, ui.icon("arrow-left", 16)),
         h("div.nx-edbar__name", null, name, h("div.nx-edbar__meta", null, status, saveState)),
-        h("div.nx-edbar__mid", null, undo, redo, h("span.nx-sep"), pageSel, device, motion),
+        h("div.nx-edbar__mid", null,
+          h("div.nx-edbar__group", { role: "group", "aria-label": "Historikk" }, undo, redo),
+          h("span.nx-sep", { "aria-hidden": "true" }),
+          h("div.nx-edbar__group", { role: "group", "aria-label": "Visning" }, pageSel, device, motion)),
         h(
           "div.nx-edbar__right",
           null,
@@ -104,9 +109,10 @@
             else NP.ai.open();
           } }),
           ui.button("", { icon: "keyboard", kind: "ghost", title: "Hurtigtaster (?)", onClick: function () { NP.shortcuts.open(); } }),
+          h("span.nx-sep", { "aria-hidden": "true" }),
           ui.button("Forhåndsvis", { icon: "eye", kind: "ghost", title: "Åpne siden i en ny fane", onClick: preview }),
           ui.button("Del", { icon: "send", kind: "ghost", title: "Send til gjennomgang", onClick: function () { openPanel("review"); } }),
-          ui.button("Eksporter", { icon: "download", kind: "primary", onClick: function () { NP.publish.dialog(); } })
+          ui.button("Eksporter", { icon: "download", kind: "primary", title: "Eksporter eller publiser siden", onClick: function () { NP.publish.dialog(); } })
         )
       )
     );
@@ -133,7 +139,9 @@
     // ---- layout ---------------------------------------------------------------------
     var rail = h("nav.nx-rail", { "aria-label": "Paneler" });
     var panelBox = h("div.nx-panel");
-    var panelHead = h("h2.nx-panel__title");
+    var panelTitle = h("h2.nx-panel__title");
+    var panelDesc = h("p.nx-panel__desc");
+    var panelHead = h("header.nx-panel__head", null, panelTitle, panelDesc);
     var panelBody = h("div.nx-panel__body");
     panelBox.appendChild(panelHead);
     panelBox.appendChild(panelBody);
@@ -151,8 +159,8 @@
     host.appendChild(h("div.nx-editor", null, rail, panelBox, center, right));
 
     PANELS.forEach(function (pn) {
-      var b = h("button.nx-rail__btn", { type: "button", title: pn[1], dataset: { panel: pn[0] }, on: { click: function () { openPanel(pn[0]); } } },
-        ui.icon(pn[2], 20), h("span", null, pn[1]), h("span.nx-badge", { hidden: true }));
+      var b = h("button.nx-rail__btn", { type: "button", title: pn[1] + " – " + pn[3], "aria-pressed": "false", dataset: { panel: pn[0] }, on: { click: function () { openPanel(pn[0]); } } },
+        ui.icon(pn[2], 20), h("span.nx-rail__label", null, pn[1]), h("span.nx-badge", { hidden: true }));
       rail.appendChild(b);
     });
 
@@ -160,9 +168,13 @@
       panelName = nameKey;
       if (panelNode && panelNode.destroy) panelNode.destroy();
       ui.clear(panelBody);
-      Array.prototype.forEach.call(rail.children, function (b) { b.classList.toggle("is-active", b.dataset.panel === nameKey); });
+      Array.prototype.forEach.call(rail.children, function (b) {
+        b.classList.toggle("is-active", b.dataset.panel === nameKey);
+        b.setAttribute("aria-pressed", String(b.dataset.panel === nameKey));
+      });
       var def = PANELS.filter(function (p) { return p[0] === nameKey; })[0];
-      panelHead.textContent = def ? def[1] : "";
+      panelTitle.textContent = def ? def[1] : "";
+      panelDesc.textContent = def ? def[3] : "";
       if (nameKey === "sections") panelNode = NP.sections.panel();
       if (nameKey === "assistant") panelNode = NP.assistant.panel();
       if (nameKey === "media") panelNode = NP.media.grid({});
@@ -194,7 +206,7 @@
       undo.disabled = !NP.store.canUndo();
       redo.disabled = !NP.store.canRedo();
       status.textContent = D.STATUS_LABELS[state.project.status] || "";
-      status.className = "nx-status is-" + state.project.status;
+      status.className = "nx-status badge is-" + state.project.status;
       conflictBar.hidden = state.save !== "conflict";
       if (document.activeElement !== name) name.value = state.project.name;
       ui.clear(pageSel);

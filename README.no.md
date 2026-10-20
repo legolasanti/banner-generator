@@ -616,6 +616,12 @@ La Terminal-vinduet stå åpent mens du jobber. Lukker du det, stopper appen.
 
 ### Hva du får i denne versjonen
 
+- **Ett designsystem for hele verktøyet:** alle skjermene (Annonser, NT Live,
+  Bulk, Wallpaper, Native Premium, gjennomgangslenken og innloggingen) bruker nå
+  de samme fargene, skriftstørrelsene, avstandene, knappene og feltene. En ny
+  **Oversikt**-startside (husikonet eller logoen) forklarer hvert verktøy og hva
+  det lager; fanene er gruppert, og hver har et verktøytips. Referansesiden
+  ligger på **/design-system.html**. Se [Designsystem](#designsystem).
 - **Bulk for alle produkter:** ReadPeak og Norsk Tipping fra regneark, ikke bare
   Houseads — pluss valg av rader med felles handlinger, søk og sortering, en
   feilrapport å sende tilbake, og kjøringer som overlever at siden lastes på nytt.
@@ -830,6 +836,34 @@ $env:PORT=8080; npm start   # Windows PowerShell
   kjør `npm install sharp` alene for å se den egentlige feilmeldingen.
 
 ---
+
+## Designsystem
+
+Verktøyets eget grensesnitt er bygd av to filer som lastes først på hver side:
+
+- `public/shared/tokens.css` — alle farger (`--color-*`), skriftstørrelser
+  (`--text-*`), avstander (`--space-*`, 4 px-rutenett), radier, kontrollhøyder
+  (26/30/36/44), skygger, lag og tider. De gamle navnene (`--ink`, `--green` …)
+  finnes fortsatt som alias.
+- `public/shared/ui.css` — det ene komponentbiblioteket: knapper (primær,
+  sekundær, stille, slett, AI; sm/md/lg/ikon), felt, nedtrekk, segmenterte
+  valg, avkrysning og brytere, merker og filterbrikker, kort, dialoger, menyer,
+  toasts, sidetopp, tom tilstand og beskjeder. Hvert områdes eldre klassenavn
+  (`lv-btn`, `wp-btn`, `nx-btn`, `bk-badge` …) står sammen med de kanoniske, så
+  JavaScript-koden slapp å endres.
+
+Områdenes egne stilark (`style.css`, `bulk/bulk.css`, `live/live-ui.css`,
+`wallpaper/wallpaper.css`, `native/app/native.css`) legger bare ut sine egne
+skjermer og leser tokens. `native/review/review.css` legges inn i annonsørens
+side, så den speiler token-verdiene i sitt eget omfang i stedet for å laste de
+delte filene. Selve annonsene (`assets/banner.css`, `assets/live.css`,
+`native/runtime/np.css`) er ikke en del av systemet — de følger annonsespesifikasjonene.
+
+Åpne **/design-system.html** for den levende referansen med alle tokens og
+komponenter, og reglene: én grønn handling per skjerm, farge bare når den betyr
+noe (grønt ferdig, gult advarsel, rødt feil/slett, blått info, fiolett AI), hver
+side og hvert panel sier hva det er til, ikonknapper har alltid verktøytips,
+kontrast minst 4,5:1.
 
 ## HTML5 til Campaign Manager 360
 

@@ -13,8 +13,9 @@
   var D = window.NativeDoc;
 
   function swatches(theme) {
+    var names = { primary: "Merkefarge", accent: "Knapp / aksent", dark: "Mørk", soft: "Lys bakgrunn" };
     return h("span.nx-kit__sw", null, ["primary", "accent", "dark", "soft"].map(function (k) {
-      return h("span", { style: { background: theme.colors[k] }, title: k });
+      return h("span", { style: { background: theme.colors[k] }, title: names[k] + " " + theme.colors[k] });
     }));
   }
 
@@ -89,21 +90,25 @@
   }
 
   function view(host) {
-    var root = h("div.nx-page");
+    var root = h("div.page.nx-page");
     var grid = h("div.nx-kits");
-    root.appendChild(h("div.nx-page__head", null,
-      h("div", null, h("h1", null, "Merkevarer"), h("p.nx-muted", null, "Logo, farger og skrifter per annonsør. Velg merkevaren når du lager et nytt prosjekt.")),
-      ui.button("Ny merkevare", { kind: "primary", icon: "plus", onClick: function () { editKit(null, load); } })
+    function create() { editKit(null, load); }
+    root.appendChild(ui.pageHead(
+      "Merkevarer",
+      "Logo, farger og skrifter per annonsør. Velg merkevaren når du lager et nytt prosjekt.",
+      ui.button("Ny merkevare", { kind: "primary", icon: "plus", onClick: create })
     ));
     root.appendChild(grid);
     host.appendChild(root);
 
     function load() {
       ui.clear(grid);
+      grid.appendChild(h("div.nx-loading", null, ui.spinner(), " Henter merkevarer …"));
       NP.api.brandKits().then(function (r) {
+        ui.clear(grid);
         var kits = r.brandKits || [];
         if (!kits.length) {
-          grid.appendChild(ui.empty("palette", "Ingen merkevarer ennå", "Lag en merkevare for annonsører dere jobber med ofte – da får nye saker riktig uttrykk med én gang."));
+          grid.appendChild(ui.empty("palette", "Ingen merkevarer ennå", "Lag en merkevare for annonsører dere jobber med ofte – da får nye saker riktig uttrykk med én gang.", ui.button("Ny merkevare", { kind: "primary", icon: "plus", onClick: create })));
           return;
         }
         kits.forEach(function (k) {
@@ -120,7 +125,7 @@
               ),
               h("div.nx-row", null,
                 ui.button("Rediger", { small: true, onClick: function () { editKit(k, load); } }),
-                ui.button("", { small: true, kind: "ghost", icon: "trash", title: "Slett", onClick: function () {
+                ui.button("", { small: true, kind: "ghost", icon: "trash", title: "Slett «" + k.name + "»", cls: "is-danger", onClick: function () {
                   ui.confirm("Slette «" + k.name + "»?", "Prosjekter som bruker merkevaren beholder fargene sine.", "Slett", true).then(function (ok) {
                     if (ok) NP.api.deleteBrandKit(k.id).then(load);
                   });
@@ -129,6 +134,9 @@
             )
           );
         });
+      }, function (err) {
+        ui.clear(grid);
+        grid.appendChild(ui.empty("circle-alert", "Kunne ikke hente merkevarene", err.message, ui.button("Prøv igjen", { icon: "refresh-cw", onClick: load })));
       });
     }
     load();

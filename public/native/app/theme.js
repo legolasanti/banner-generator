@@ -229,8 +229,8 @@
       var colors = h("div.nx-colors");
       S.THEME_COLORS.forEach(function (c) {
         var key = c[0];
-        var input = h("input.nx-color", { type: "color", value: theme.colors[key] });
-        var hex = h("input.nx-input.nx-hex", { type: "text", value: theme.colors[key], maxlength: 7, spellcheck: "false" });
+        var input = h("input.nx-color", { type: "color", value: theme.colors[key], "aria-label": c[1] + " – velg farge" });
+        var hex = h("input.nx-input.nx-hex", { type: "text", value: theme.colors[key], maxlength: 7, spellcheck: "false", "aria-label": c[1] + " – fargekode" });
         function set(v) {
           var t = adapter.get();
           var cols = Object.assign({}, t.colors);

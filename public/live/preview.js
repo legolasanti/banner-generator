@@ -46,9 +46,9 @@
     var cards = [];
 
     // ---- toolbar ------------------------------------------------------------
-    var timeInput = h("input.lv-input.lv-time", { type: "datetime-local", "aria-label": "Vis annonsen slik den ser ut på dette tidspunktet" });
+    var timeInput = h("input.lv-input.lv-time", { type: "datetime-local", "aria-label": "Vis annonsen slik den ser ut på dette tidspunktet", title: "Vis annonsen slik den ser ut på dette tidspunktet" });
     timeInput.value = toLocalInput(new Date());
-    var presets = h("div.lv-presets");
+    var presets = h("div.lv-presets.lv-seg.lv-seg--sm", { role: "group", "aria-label": "Hopp til et tidspunkt" });
     var PRESETS = [
       { id: "now", label: "Nå", title: "Klokka nå" },
       { id: "before", label: "Før avspark", title: BEFORE_KICKOFF_MIN + " min før neste kamp" },
@@ -57,15 +57,15 @@
     ];
     var presetBtns = {};
     PRESETS.forEach(function (p) {
-      var b = h("button.lv-preset", { type: "button", title: p.title }, p.label);
+      var b = h("button.lv-seg__btn.lv-preset", { type: "button", title: p.title, "aria-pressed": "false" }, p.label);
       b.addEventListener("click", function () { applyPreset(p.id); });
       presetBtns[p.id] = b;
       presets.appendChild(b);
     });
 
-    var prevBtn = form.button("", { kind: "icon", icon: "left", ariaLabel: "Forrige kamp", title: "Forrige kamp (←)" });
-    var playBtn = form.button("", { kind: "icon", icon: "pause", ariaLabel: "Pause", title: "Pause / spill (mellomrom)" });
-    var nextBtn = form.button("", { kind: "icon", icon: "right", ariaLabel: "Neste kamp", title: "Neste kamp (→)" });
+    var prevBtn = form.button("", { kind: "icon", size: "sm", icon: "left", ariaLabel: "Forrige kamp", title: "Forrige kamp (←)" });
+    var playBtn = form.button("", { kind: "icon", size: "sm", icon: "pause", ariaLabel: "Pause", title: "Pause / spill (mellomrom)" });
+    var nextBtn = form.button("", { kind: "icon", size: "sm", icon: "right", ariaLabel: "Neste kamp", title: "Neste kamp (→)" });
 
     var layoutSeg = form.seg({
       value: state.ui.layout,
@@ -97,18 +97,31 @@
       onChange: function (v) { app.setUi({ zoom: v }); fit(); },
     });
 
+    /** A labelled group in the toolbar: a small caption over its controls. */
+    var groupUid = 0;
+    function toolGroup(label, hint) {
+      var id = "lv-tool-lab-" + ++groupUid;
+      var ctrls = Array.prototype.slice.call(arguments, 2);
+      return h("div.lv-tool__group", { role: "group", "aria-labelledby": id, title: hint }, h("span.lv-tool__lab", { id: id }, label), h("div.lv-tool__ctrls", null, ctrls));
+    }
+
     var bar = h(
       "div.lv-tool",
       null,
-      h("div.lv-tool__group", null, h("span.lv-tool__lab", null, icon("clock", 14), "Vis som"), timeInput, presets),
-      h("div.lv-tool__group", null, prevBtn, playBtn, nextBtn),
-      h("div.lv-tool__spacer"),
-      h("div.lv-tool__group", null, layoutSeg, focusSeg, zoomSeg, bgSeg)
+      toolGroup("Tidspunkt", "Se annonsen slik den ser ut på et annet tidspunkt", timeInput, presets),
+      h(
+        "div.lv-tool__set",
+        null,
+        toolGroup("Visning", "Alle fire formatene, eller ett stort", layoutSeg, focusSeg),
+        toolGroup("Zoom", null, zoomSeg),
+        toolGroup("Bakgrunn", "Flaten bak annonsene", bgSeg)
+      )
     );
 
-    var strip = h("div.lv-strip", { role: "tablist", "aria-label": "Kampene i rotasjonen" });
+    var strip = h("div.lv-strip");
     var stripLabel = h("span.lv-strip__label");
-    var stripChips = h("div.lv-strip__chips");
+    var stripChips = h("div.lv-strip__chips", { role: "tablist", "aria-label": "Kampene i rotasjonen" });
+    strip.appendChild(h("div.lv-strip__play", { role: "group", "aria-label": "Avspilling" }, prevBtn, playBtn, nextBtn));
     strip.appendChild(stripLabel);
     strip.appendChild(stripChips);
 
@@ -145,18 +158,19 @@
     });
 
     var empty = h(
-      "div.lv-stage-note",
+      "div.lv-strip__empty",
       null,
       icon("info", 15),
-      h("span", null, "Ingen kamper hentet – du ser reserveplakaten. Hent arket under ", h("b", null, "Kamper"), ", eller prøv eksempelkampene.")
+      h("span", null, h("b", null, "Ingen kamper ennå"), " – annonsen viser reserveplakaten. Hent arket under ", h("b", null, "Kamper"), ", eller prøv med eksempelkamper.")
     );
-    var sample = form.button("Prøv eksempelkamper", { kind: "quiet", size: "sm", icon: "sparkles", onClick: function () {
+    var sample = form.button("Prøv eksempelkamper", { kind: "ghost", size: "sm", icon: "sparkles", onClick: function () {
       var table = LD.readTable(LD.parseCsv(LD.templateCsv(new Date(), ";")));
       app.patch({ rows: table.rows, columns: table.columns, warnings: table.warnings, source: { kind: "sample", liveUrls: [] }, fetchedAt: new Date().toISOString() });
     } });
     empty.appendChild(sample);
+    strip.appendChild(empty);
 
-    var canvas = h("div.lv-canvas", null, empty, board);
+    var canvas = h("div.lv-canvas", null, board);
     var pv = h("div.lv-pv", null, bar, strip, canvas);
     host.appendChild(pv);
 
@@ -174,9 +188,15 @@
       simulated = date;
       timeInput.value = toLocalInput(date || new Date());
       cards.forEach(function (c) { if (c.ctrl) c.ctrl.setNow(simulated); });
-      Object.keys(presetBtns).forEach(function (k) { presetBtns[k].classList.remove("is-active"); });
-      if (!date) presetBtns.now.classList.add("is-active");
+      markPreset(date ? null : "now");
       renderStrip(true);
+    }
+
+    function markPreset(id) {
+      Object.keys(presetBtns).forEach(function (k) {
+        presetBtns[k].classList.toggle("is-active", k === id);
+        presetBtns[k].setAttribute("aria-pressed", k === id ? "true" : "false");
+      });
     }
 
     function nextKickoff() {
@@ -208,7 +228,7 @@
         date = emptyMoment();
       }
       setNow(date);
-      if (date) presetBtns[id].classList.add("is-active");
+      if (date) markPreset(id);
       if (k && (id === "before" || id === "during")) controllers().forEach(function (c) { c.goToRow(k.row.id); });
     }
 
@@ -264,9 +284,12 @@
         stripKey = key;
         stripChips.innerHTML = "";
         var slides = st.slides;
-        if (slides.length && slides[0].isFallback) {
-          stripLabel.textContent = "Ingen kamper";
-          stripChips.appendChild(h("span.lv-strip__chip.is-active.is-static", null, icon("image", 13), h("span", null, "Reserveplakaten vises")));
+        var fallback = !!(slides.length && slides[0].isFallback);
+        strip.classList.toggle("is-fallback", fallback);
+        if (fallback) {
+          // With no rows at all, the "Ingen kamper ennå" notice says it.
+          stripLabel.textContent = "";
+          if (state.rows.length) stripChips.appendChild(h("span.lv-strip__msg", null, icon("image", 15), h("span", null, h("b", null, "Ingen kamper på dette tidspunktet"), " – annonsen viser reserveplakaten.")));
         } else if (ctrl.listMode) {
           stripLabel.textContent = scopeWord(st);
           stripChips.appendChild(h("span.lv-strip__chip.is-active.is-static", null, icon("sheet", 13), h("span", null, "Kampliste · " + (st.rows || []).length + " kamper på én flate")));
@@ -396,7 +419,7 @@
 
     paintBg();
     applyLayout();
-    presetBtns.now.classList.add("is-active");
+    markPreset("now");
 
     return {
       setConfig: function (next) {

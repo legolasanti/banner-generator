@@ -1,6 +1,6 @@
 /* =========================================================================
    bulk/ui.js — small pieces the Bulk screens share: the segmented control,
-   keeping Tab inside a modal, a file the browser saves, and the error report
+   line icons, keeping Tab inside a modal, a file the browser saves, and the error report
    for whoever filled in the sheet.
    ========================================================================= */
 (function () {
@@ -26,6 +26,36 @@
       wrap.appendChild(b);
     });
     return wrap;
+  }
+
+  // The few line icons the Bulk screens use, drawn inline (Lucide geometry,
+  // 24×24, stroke 2) so they are there on first paint.
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var ICONS = {
+    link: [["path", "M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"], ["path", "M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"]],
+    upload: [["path", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"], ["path", "m17 8-5-5-5 5M12 3v12"]],
+    download: [["path", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"], ["path", "m7 10 5 5 5-5M12 15V3"]],
+    clipboard: [["path", "M9 4h6v3H9z"], ["path", "M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"]],
+    left: [["path", "m15 18-6-6 6-6"]],
+    right: [["path", "m9 18 6-6-6-6"]],
+    x: [["path", "M18 6 6 18M6 6l12 12"]],
+  };
+
+  /** An inline SVG icon by name, hidden from screen readers. */
+  function icon(name, size) {
+    var s = String(size || 16);
+    var svg = document.createElementNS(SVG_NS, "svg");
+    [["viewBox", "0 0 24 24"], ["width", s], ["height", s], ["fill", "none"], ["stroke", "currentColor"], ["stroke-width", "2"],
+      ["stroke-linecap", "round"], ["stroke-linejoin", "round"], ["aria-hidden", "true"], ["focusable", "false"]].forEach(function (a) {
+      svg.setAttribute(a[0], a[1]);
+    });
+    svg.classList.add("bk-ico");
+    (ICONS[name] || []).forEach(function (n) {
+      var el = document.createElementNS(SVG_NS, n[0]);
+      el.setAttribute("d", n[1]);
+      svg.appendChild(el);
+    });
+    return svg;
   }
 
   var FOCUSABLE =
@@ -115,6 +145,7 @@
 
   BULK.ui = {
     seg: seg,
+    icon: icon,
     trapTab: trapTab,
     saveText: saveText,
     toCsv: toCsv,

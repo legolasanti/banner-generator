@@ -26,7 +26,7 @@
           form.field("Knappetekst", form.text({ value: d.ctaText, placeholder: "Spill nå", maxLength: 40, onChange: function (v) { app.setDesign("ctaText", v); } }), "Tom = ingen knapp. Arket kan overstyre per kamp.")
         ),
         form.field("Listetittel", form.text({ value: d.listTitle, placeholder: "Dagens kamper", maxLength: 60, onChange: function (v) { app.setDesign("listTitle", v); } }), "Overskriften i malen Kampliste."),
-      ])
+      ], { desc: "Tekstene som står sammen med hver kamp." })
     );
 
     // Kick-off line, with a live example of what it will say.
@@ -114,7 +114,7 @@
       form.card("Vinnersjanse", [
         form.field("Tekst", form.text({ value: state.badges.vinnersjanse, maxLength: 120, placeholder: "Tom for sport", onChange: function (v) { app.patch({ badges: Object.assign({}, state.badges, { vinnersjanse: v }) }); } }), "Sport har ingen vinnersjanse-linje. Fyll ut bare for lotterispill."),
         form.toggle({ value: state.badges.showVinnerOnNewsgrid, label: "Vis den også på 190×190", onChange: function (v) { app.patch({ badges: Object.assign({}, state.badges, { showVinnerOnNewsgrid: v }) }); } }),
-      ])
+      ], { desc: "Linjen om vinnersjanse som lotterispill må ha." })
     );
     return root;
   }

@@ -42,14 +42,15 @@
       ui.clear(root);
       root.appendChild(
         h(
-          "div.nx-props__empty",
+          "div.nx-props__empty.empty-state",
           null,
-          ui.icon("mouse-pointer-click", 28),
-          h("h3", null, "Velg en seksjon"),
-          h("p", null, "Klikk på en del av siden for å redigere den. Dobbeltklikk på en tekst for å skrive rett på siden."),
+          h("span.empty-state__icon", { "aria-hidden": "true" }, ui.icon("mouse-pointer-click", 24)),
+          h("h3.empty-state__title", null, "Velg en seksjon"),
+          h("p.empty-state__text", null, "Klikk på en del av siden for å redigere den. Dobbeltklikk på en tekst for å skrive rett på siden."),
           h(
-            "div.nx-stack.nx-stack--sm",
+            "div.nx-props__shortcuts",
             null,
+            h("p.overline", null, "Eller endre hele siden"),
             ui.button("Tema og farger", { icon: "palette", onClick: function () { NP.editor.openPanel("theme"); } }),
             ui.button("Prosjekt og deling", { icon: "settings", onClick: function () { NP.editor.openPanel("project"); } })
           )
@@ -70,14 +71,14 @@
           null,
           h("span.nx-props__icon", null, ui.icon(block.icon, 18)),
           h("div", null, h("h3", null, block.label), h("p.nx-muted", null, block.desc)),
-          ui.button("", { icon: "x", kind: "ghost", small: true, title: "Lukk", onClick: function () { NP.store.select(null); } })
+          ui.button("", { icon: "x", kind: "ghost", small: true, title: "Lukk (Esc)", onClick: function () { NP.store.select(null); } })
         )
       );
       var tabs = ui.segmented(
         [["content", "Innhold"], ["style", "Stil"], ["show", "Synlighet"]],
         tab,
         function (v) { tab = v; draw(); },
-        { small: true, label: "Faner" }
+        { small: true, label: "Egenskaper" }
       );
       root.appendChild(h("div.nx-props__tabs", null, tabs));
       var body = h("div.nx-props__body");

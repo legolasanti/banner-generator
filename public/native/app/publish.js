@@ -128,9 +128,9 @@
         if (mine) {
           var url = base + "/n/" + mine + "/";
           pubStatus.appendChild(h("div.nx-linkbox", null,
-            h("input.nx-input.nx-input--sm", { type: "text", value: url, readonly: true }),
-            ui.button("", { icon: "copy", small: true, title: "Kopier", onClick: function () { ui.copyText(url, "Adressen"); } }),
-            h("a.nx-btn.nx-btn--sm", { href: "/n/" + mine + "/", target: "_blank", rel: "noopener" }, ui.icon("external-link", 15))
+            h("input.nx-input.nx-input--sm", { type: "text", value: url, readonly: true, "aria-label": "Publisert adresse" }),
+            ui.button("", { icon: "copy", small: true, title: "Kopier adressen", onClick: function () { ui.copyText(url, "Adressen"); } }),
+            h("a.nx-btn.nx-btn--sm", { href: "/n/" + mine + "/", target: "_blank", rel: "noopener", title: "Åpne den publiserte siden", "aria-label": "Åpne den publiserte siden" }, ui.icon("external-link", 15))
           ));
           pubStatus.appendChild(h("p.nx-help", null, "Publisert " + ui.when(r.published[mine].at) + ". Endringer vises først når du publiserer på nytt."));
         }

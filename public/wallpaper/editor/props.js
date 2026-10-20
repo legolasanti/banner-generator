@@ -114,44 +114,47 @@
         }, opts || {})));
       };
       var locked = function () { var e = first(); return !e || e.locked; };
+      // A line's box is taller than its stroke (to be easy to grab): its
+      // height is shown, not editable; the thickness is under «Linje».
       content.push(h("div.wp-grid2", null,
-        numF("X", "x", { disabled: locked }), numF("Y", "y", { disabled: locked }),
-        numF("B", "w", { min: 1, disabled: locked }),
-        el.type === "line" ? numF("Tykk.", "h", { min: 4, disabled: function () { return true; } }) :
-          numF("H", "h", { min: 1, disabled: function () { var e = first(); return !e || e.locked || e.type === "text"; } })
+        numF("X", "x", { disabled: locked, aria: "X-posisjon" }), numF("Y", "y", { disabled: locked, aria: "Y-posisjon" }),
+        numF("B", "w", { min: 1, disabled: locked, aria: "Bredde" }),
+        el.type === "line" ? numF("H", "h", { min: 4, disabled: function () { return true; }, aria: "Høyde (fast for linjer)" }) :
+          numF("H", "h", { min: 1, disabled: function () { var e = first(); return !e || e.locked || e.type === "text"; }, aria: "Høyde" })
       ));
       content.push(h("div.wp-grid2", null,
-        numF("↻", "rot", { min: -360, max: 360, suffix: "°", disabled: locked }),
-        h("div.wp-hint-sm", null, el.type === "text" ? "Høyden følger teksten" : "")
+        numF("↻", "rot", { min: -360, max: 360, suffix: "°", disabled: locked, aria: "Rotasjon i grader" }),
+        h("div.wp-hint-sm", null, el.type === "text" ? "Høyden følger teksten" : el.type === "line" ? "Tykkelse: se Linje" : "")
       ));
       var tgt = C.seg({
+        wide: true,
         options: [{ value: "board", label: "Tegneflate" }, { value: "safe", label: "Sikker sone" }],
         get: function () { return alignTarget; },
         set: function (v) { alignTarget = v; },
       });
       content.push(C.row("Juster mot", track(tgt)));
     }
-    content.push(h("div.wp-btnrow", null,
+    var alignTools = h("div.wp-tools", { role: "group", "aria-label": "Juster" },
       iconBtn("align-start-vertical", "Venstre", function () { align("left"); }),
       iconBtn("align-center-vertical", "Midtstill vannrett", function () { align("hcenter"); }),
       iconBtn("align-end-vertical", "Høyre", function () { align("right"); }),
       iconBtn("align-start-horizontal", "Topp", function () { align("top"); }),
       iconBtn("align-center-horizontal", "Midtstill loddrett", function () { align("vcenter"); }),
       iconBtn("align-end-horizontal", "Bunn", function () { align("bottom"); })
-    ));
+    );
+    content.push(single ? C.row(null, alignTools, { indent: true }) : C.row("Juster", alignTools));
     if (list.length >= 3) {
-      content.push(h("div.wp-btnrow", null,
-        h("button.wp-btn.wp-btn--ghost.wp-btn--sm", { type: "button", on: { click: function () { distribute("x"); } } }, util.icon("align-horizontal-distribute-center", 14), "Fordel vannrett"),
-        h("button.wp-btn.wp-btn--ghost.wp-btn--sm", { type: "button", on: { click: function () { distribute("y"); } } }, util.icon("align-vertical-distribute-center", 14), "Fordel loddrett")
-      ));
+      content.push(C.row("Fordel", h("div.wp-tools", { role: "group", "aria-label": "Fordel" },
+        iconBtn("align-horizontal-distribute-center", "Fordel vannrett – like store mellomrom", function () { distribute("x"); }),
+        iconBtn("align-vertical-distribute-center", "Fordel loddrett – like store mellomrom", function () { distribute("y"); })
+      )));
     }
-    content.push(h("div.wp-btnrow", null,
-      h("span.wp-row__lab", null, "Lag"),
+    content.push(C.row("Lag", h("div.wp-tools", { role: "group", "aria-label": "Rekkefølge" },
       iconBtn("bring-to-front", "Fremst (Ctrl+Shift+])", function () { store.checkpoint(); store.reorder(ids(), "front"); }),
       iconBtn("arrow-up", "Et hakk frem (Ctrl+])", function () { store.checkpoint(); store.reorder(ids(), "forward"); }),
       iconBtn("arrow-down", "Et hakk bak (Ctrl+[)", function () { store.checkpoint(); store.reorder(ids(), "backward"); }),
       iconBtn("send-to-back", "Bakerst (Ctrl+Shift+[)", function () { store.checkpoint(); store.reorder(ids(), "back"); })
-    ));
+    )));
     return C.section(single ? "Plassering" : "Plassering og justering", content);
   }
 
@@ -179,15 +182,16 @@
     });
     content.push(C.row(null, track(shadowOn)));
     if (el.shadow) {
-      var sh = function (key, label, min, max) {
+      var sh = function (key, label, min, max, aria) {
         return track(C.num({
-          label: label, min: min, max: max,
+          label: label, min: min, max: max, aria: aria,
           get: function () { var e = first(); return e && e.shadow ? e.shadow[key] : 0; },
           set: function (v) { store.update(ids(), function (e) { var s = Object.assign({}, e.shadow || { x: 0, y: 8, blur: 24, color: "#00000059" }); s[key] = v; return { shadow: s }; }); },
         }));
       };
-      content.push(h("div.wp-grid3", null, sh("x", "X", -200, 200), sh("y", "Y", -200, 200), sh("blur", "Uskarp", 0, 200)));
+      content.push(h("div.wp-grid3", null, sh("x", "X", -200, 200, "Skygge vannrett"), sh("y", "Y", -200, 200, "Skygge loddrett"), sh("blur", "Uskarp", 0, 200, "Skyggens uskarphet")));
       content.push(C.row("Skyggefarge", track(C.color({
+        title: "Skyggefarge",
         get: function () { var e = first(); return e && e.shadow ? e.shadow.color : "#00000059"; },
         set: function (v) { store.update(ids(), function (e) { return { shadow: Object.assign({}, e.shadow, { color: v || "#00000000" }) }; }); },
       }))));
@@ -229,7 +233,7 @@
       }))),
     ]));
     out.push(C.section(spec.name + " · " + spec.width + "×" + spec.height, [
-      C.row("Bakgrunn", track(C.fill({
+      C.row("Bakgrunnsfarge", track(C.fill({
         get: function () { return store.board().bg; },
         set: function (f) { store.setBoardProps({ bg: f || Doc.solid("#ffffff") }); },
         defaultColor: "#ffffff",

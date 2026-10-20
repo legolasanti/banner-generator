@@ -131,16 +131,16 @@
       ui.clear(root);
       var p = project();
       var rv = p.review;
-      root.appendChild(h("div.nx-statusline", null, h("span.nx-status.is-" + p.status, null, D.STATUS_LABELS[p.status]), rv ? h("span.nx-muted", null, "Runde " + rv.round + " sendt " + ui.when(rv.sentAt)) : null));
+      root.appendChild(h("div.nx-statusline", null, h("span.nx-status.badge.is-" + p.status, null, D.STATUS_LABELS[p.status]), rv ? h("span.nx-muted", null, "Runde " + rv.round + " sendt " + ui.when(rv.sentAt)) : null));
       if (rv) {
         var url = absolute("/p/" + rv.token + "/");
         root.appendChild(
           h(
             "div.nx-linkbox",
             null,
-            h("input.nx-input.nx-input--sm", { type: "text", value: url, readonly: true, on: { focus: function (e) { e.target.select(); } } }),
+            h("input.nx-input.nx-input--sm", { type: "text", value: url, readonly: true, "aria-label": "Gjennomgangslenke", on: { focus: function (e) { e.target.select(); } } }),
             ui.button("", { icon: "copy", small: true, title: "Kopier lenken", onClick: function () { ui.copyText(url, "Lenken"); } }),
-            h("a.nx-btn.nx-btn--sm", { href: url, target: "_blank", rel: "noopener", title: "Åpne som kunden ser den" }, ui.icon("external-link", 15))
+            h("a.nx-btn.nx-btn--sm", { href: url, target: "_blank", rel: "noopener", title: "Åpne som kunden ser den", "aria-label": "Åpne som kunden ser den" }, ui.icon("external-link", 15))
           )
         );
         root.appendChild(h("p.nx-help", null, "Kunden ser runde " + rv.round + " slik den var da du sendte den. Nye endringer vises først når du sender en ny runde."));
@@ -168,7 +168,7 @@
       var commentsBox = h("div.nx-stack.nx-stack--sm");
       root.appendChild(h("h3.nx-panel__h", null, "Kommentarer"));
       root.appendChild(commentsBox);
-      var newC = h("textarea.nx-input.nx-textarea", { rows: 2, placeholder: "Kommentar til teamet …" });
+      var newC = h("textarea.nx-input.nx-textarea", { rows: 2, placeholder: "Kommentar til teamet …", "aria-label": "Ny kommentar" });
       var newShare = shareSwitch(false);
       newShare.input.addEventListener("change", function () {
         newC.placeholder = newShare.input.checked ? "Kommentar annonsøren også ser …" : "Kommentar til teamet …";

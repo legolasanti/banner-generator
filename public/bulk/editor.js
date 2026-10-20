@@ -40,8 +40,8 @@
     dom = {};
     dom.title = h("h2");
     dom.counter = h("span.bk-ed__counter");
-    dom.prev = h("button.iconbtn", { type: "button", title: "Forrige rad (Alt+←)", "aria-label": "Forrige rad" }, "‹");
-    dom.next = h("button.iconbtn", { type: "button", title: "Neste rad (Alt+→)", "aria-label": "Neste rad" }, "›");
+    dom.prev = h("button.iconbtn", { type: "button", title: "Forrige rad (Alt+←)", "aria-label": "Forrige rad" }, BULK.ui.icon("left", 18));
+    dom.next = h("button.iconbtn", { type: "button", title: "Neste rad (Alt+→)", "aria-label": "Neste rad" }, BULK.ui.icon("right", 18));
     dom.close = h("button.btn-primary.btn-sm", { type: "button" }, "Ferdig");
     dom.duplicate = h("button.btn-ghost.btn-sm", { type: "button", title: "Lag en kopi av raden rett under" }, "Dupliser");
     dom.remove = h("button.btn-ghost.btn-sm.is-danger", { type: "button", title: "Fjern raden fra listen (regnearket endres ikke)" }, "Fjern");
@@ -83,7 +83,7 @@
     );
     dom.focusBox.addEventListener("keydown", nudgeFocus);
     dom.focusNote = h("span.bk-ed__note");
-    dom.autoFocus = h("button.bk-link", { type: "button" }, "Automatisk");
+    dom.autoFocus = h("button.link.bk-link", { type: "button" }, "Automatisk");
     dom.autoFocus.addEventListener("click", function () { store.updateRow(current, { pos: null }); });
     dom.zoom = h("input", { type: "range", min: 0, max: 30, step: 1, "aria-label": "Zoom" });
     dom.zoomOut = h("output");
@@ -93,7 +93,7 @@
     });
     initDrag();
 
-    dom.imgUrl = h("input.bk-input", { type: "url", placeholder: "Ny bildelenke", spellcheck: "false" });
+    dom.imgUrl = h("input.bk-input.input--sm", { type: "url", placeholder: "Lim inn ny bildelenke", spellcheck: "false", "aria-label": "Ny bildelenke" });
     dom.imgFetch = h("button.btn-ghost.btn-sm", { type: "button" }, "Hent");
     dom.imgFile = h("input", { type: "file", accept: "image/jpeg,image/png,image/webp,image/avif,image/gif", hidden: true });
     dom.imgUpload = h("button.btn-ghost.btn-sm", { type: "button" }, "Last opp …");
@@ -108,7 +108,7 @@
       BULK.source.uploadImage(current, file).catch(function (err) { BULK.source.toast(err.message, "err"); });
     });
     dom.imgStatus = h("p.bk-ed__imgstatus", { "aria-live": "polite" });
-    dom.imgAgain = h("button.bk-link", { type: "button", title: "Hent bildet fra lenken i arket en gang til" }, "Hent bildet på nytt");
+    dom.imgAgain = h("button.link.bk-link", { type: "button", title: "Hent bildet fra lenken i arket en gang til" }, "Hent bildet på nytt");
     dom.imgAgain.addEventListener("click", function () { BULK.source.refetchImage(current); });
 
     // Text and settings
@@ -150,12 +150,13 @@
     var left = h(
       "div.bk-ed__left",
       null,
-      h("h4", null, "Bilde", dom.focusNote, dom.autoFocus),
+      h("h4.overline.bk-ed__section", null, "Bilde", dom.focusNote, dom.autoFocus),
       dom.focusBox,
+      h("p.bk-hint", null, "Dra punktet dit motivet er – det holdes i bildet i alle formatene."),
       h("div.slider", null, h("span.slider__name", null, "Zoom"), dom.zoom, dom.zoomOut),
       h("div.bk-ed__imgline", null, dom.imgStatus, dom.imgAgain),
       h("div.bk-row", null, dom.imgUrl, dom.imgFetch, dom.imgUpload, dom.imgFile),
-      h("h4", null, "Tekst"),
+      h("h4.overline.bk-ed__section", null, "Tekst og fil"),
       field("Overskrift", dom.headline, dom.count),
       productFields(field),
       state.product === "houseads" ? field("Skrift", dom.weight) : null,
@@ -172,8 +173,18 @@
       h(
         "div.wp-modal__card.bk-ed__card",
         null,
-        h("header.wp-modal__head", null, dom.prev, dom.next, dom.title, dom.counter, dom.close),
-        h("div.bk-ed__grid", null, left, h("div.bk-ed__right", null, dom.previews))
+        h("header.wp-modal__head", null, dom.prev, dom.next, dom.title, dom.counter, h("span.bk-ed__keys", null, "Alt + ← / → for å bla · Esc lukker"), dom.close),
+        h(
+          "div.bk-ed__grid",
+          null,
+          left,
+          h(
+            "div.bk-ed__right",
+            null,
+            h("p.bk-hint.bk-ed__righthint", null, "Hvert format får tekststørrelse automatisk etter reglene. Skru av Auto for å sette den selv."),
+            dom.previews
+          )
+        )
       )
     );
     dom.root.addEventListener("mousedown", function (e) {

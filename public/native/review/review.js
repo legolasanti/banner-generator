@@ -65,6 +65,8 @@
 
   // ---- the bar ------------------------------------------------------------------
   var bar = el("div", "npr-bar");
+  bar.setAttribute("role", "region");
+  bar.setAttribute("aria-label", "Gjennomgang");
   var info = el("div", "npr-bar__info");
   info.appendChild(el("strong", null, "Forhåndsvisning for godkjenning"));
   info.appendChild(el("span", null, (boot.advertiser ? boot.advertiser + " · " : "") + "runde " + boot.round));
@@ -84,6 +86,7 @@
   doc.body.classList.add("npr-on");
 
   var hint = el("div", "npr-hint", "Klikk på det du vil kommentere. Esc avbryter.");
+  hint.setAttribute("role", "status");
   doc.body.appendChild(hint);
 
   function setCommenting(on) {
@@ -111,6 +114,12 @@
     popup = null;
   }
 
+  function asDialog(box, label) {
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-label", label);
+    return box;
+  }
+
   function placePopup(node, x, y) {
     doc.body.appendChild(node);
     var w = node.offsetWidth;
@@ -128,6 +137,7 @@
     input.placeholder = "Navnet ditt";
     input.value = storedName();
     input.maxLength = 80;
+    input.setAttribute("aria-label", "Navnet ditt");
     return input;
   }
 
@@ -157,13 +167,14 @@
 
   function openForm(anchor, x, y) {
     closePopup();
-    var box = el("div", "npr-pop");
-    var title = el("strong", null, "Ny kommentar");
+    var box = asDialog(el("div", "npr-pop"), "Ny kommentar");
+    var title = el("strong", "npr-title", "Ny kommentar");
     var name = nameField();
     var text = el("textarea", "npr-input");
     text.rows = 4;
     text.placeholder = anchor.excerpt ? "Om «" + anchor.excerpt.slice(0, 60) + (anchor.excerpt.length > 60 ? "…" : "") + "»" : "Hva vil du endre?";
     text.maxLength = 2000;
+    text.setAttribute("aria-label", "Kommentar");
     var err = el("p", "npr-err");
     var send = el("button", "npr-btn npr-btn--primary", "Send");
     send.type = "button";
@@ -211,6 +222,7 @@
       var pin = el("button", "npr-pin" + (c.resolved ? " is-done" : "") + (c.from === "team" ? " is-team" : ""), String(n));
       pin.type = "button";
       pin.title = c.author + ": " + c.text.slice(0, 80);
+      pin.setAttribute("aria-label", "Kommentar " + n + " fra " + c.author + (c.resolved ? " (løst)" : ""));
       pin.addEventListener("click", function (e) {
         e.stopPropagation();
         showComment(c, e.clientX, e.clientY);
@@ -238,8 +250,8 @@
 
   function showComment(c, x, y) {
     closePopup();
-    var box = el("div", "npr-pop");
-    box.appendChild(el("strong", null, c.author + (c.from === "team" ? " (ABC)" : "")));
+    var box = asDialog(el("div", "npr-pop"), "Kommentar fra " + c.author);
+    box.appendChild(el("strong", "npr-title", c.author + (c.from === "team" ? " (ABC)" : "")));
     box.appendChild(el("p", "npr-text", c.text));
     comments.filter(function (r) { return r.parent === c.id; }).forEach(function (r) {
       var rep = el("div", "npr-reply");
@@ -259,8 +271,8 @@
   // ---- list of all comments ---------------------------------------------------------
   listBtn.addEventListener("click", function () {
     closePopup();
-    var box = el("div", "npr-pop npr-pop--list");
-    box.appendChild(el("strong", null, "Kommentarer i runde " + boot.round));
+    var box = asDialog(el("div", "npr-pop npr-pop--list"), "Kommentarer i runde " + boot.round);
+    box.appendChild(el("strong", "npr-title", "Kommentarer i runde " + boot.round));
     var top = comments.filter(function (c) { return !c.parent; });
     if (!top.length) box.appendChild(el("p", "npr-muted", "Ingen kommentarer ennå. Trykk «Kommenter» og klikk på siden."));
     top.forEach(function (c, i) {
@@ -287,8 +299,8 @@
   approveBtn.addEventListener("click", function () {
     closePopup();
     setCommenting(false);
-    var box = el("div", "npr-pop npr-pop--center");
-    box.appendChild(el("strong", null, "Godkjenn runde " + boot.round));
+    var box = asDialog(el("div", "npr-pop npr-pop--center"), "Godkjenn runde " + boot.round);
+    box.appendChild(el("strong", "npr-title", "Godkjenn runde " + boot.round));
     box.appendChild(el("p", "npr-muted", "Du godkjenner siden slik den ser ut nå, inkludert tekst, bilder og lenker. Godkjenningen lagres med navnet ditt og tidspunktet."));
     var name = nameField();
     var err = el("p", "npr-err");
@@ -329,6 +341,7 @@
 
   function toast(text) {
     var t = el("div", "npr-toast", text);
+    t.setAttribute("role", "status");
     doc.body.appendChild(t);
     setTimeout(function () { t.classList.add("is-out"); }, 3800);
     setTimeout(function () { t.remove(); }, 4300);

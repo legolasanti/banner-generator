@@ -208,7 +208,7 @@
         h("button.wp-btn.wp-btn--ghost.wp-btn--sm", { type: "button", on: { click: function () { zoom = 1; apply(); } } }, "100 %"),
         h("button.wp-btn.wp-btn--ghost.wp-btn--sm", { type: "button", on: { click: function () { zoom = 2; apply(); } } }, "200 %"),
         zoomLab,
-        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", on: { click: close } }, util.icon("x", 18))
+        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", "aria-label": "Lukk", on: { click: close } }, util.icon("x", 18))
       ),
       wrap);
     function close() {
@@ -297,13 +297,16 @@
       return h("label.wp-check", null, box, h("span", null, h("b", null, spec.name), " " + spec.width + "×" + spec.height));
     }));
 
-    var type = h("div.wp-choice", null, [
+    var type = h("div.choice", { role: "group", "aria-label": "Filtype" }, [
       ["image", "Bilde", "JPG/PNG – til vanlige bildeplasseringer"],
-      ["html", "HTML5", "Tekst forblir ekte, skarp tekst. ZIP per fil med clickTag"],
+      ["html", "HTML5", "Teksten forblir ekte og skarp. Én ZIP per fil, med clickTag"],
     ].map(function (t) {
-      var b = h("button.wp-choice__b", { type: "button", on: { click: function () { set({ outputType: t[0] }); } } },
-        h("strong", null, t[1]), h("span", null, t[2]));
-      controls.push({ node: b, sync: function () { b.classList.toggle("is-on", opts.outputType === t[0]); } });
+      var b = h("button.choice__opt", { type: "button", on: { click: function () { set({ outputType: t[0] }); } } },
+        h("strong.choice__title", null, t[1]), h("span.choice__desc", null, t[2]));
+      controls.push({ node: b, sync: function () {
+        b.classList.toggle("is-active", opts.outputType === t[0]);
+        b.setAttribute("aria-pressed", opts.outputType === t[0] ? "true" : "false");
+      } });
       return b;
     }));
 
@@ -316,6 +319,7 @@
       h("h4", null, "Filtype"), type,
       h("div.wp-ex__img", null,
         C.row("Format", track(C.seg({
+          wide: true,
           options: [{ value: "auto", label: "Auto", title: "Minst mulig fil som fortsatt ser bra ut" }, { value: "jpg", label: "JPG" }, { value: "png", label: "PNG" }],
           get: function () { return opts.format; }, set: function (v) { set({ format: v }); },
         }))),
@@ -347,11 +351,11 @@
     // A finding jumps to its element — close the dialog so it can be fixed.
     dom.preflight.addEventListener("click", function (e) { if (e.target.closest("button")) close(); });
     dom.download = h("button.wp-btn.wp-btn--primary.wp-dl", { type: "button", on: { click: download } },
-      h("span.wp-dl__spin"), util.icon("download", 16), h("span.wp-dl__label", null, "Last ned"));
+      h("span.spinner"), util.icon("download", 16), h("span.wp-dl__label", null, "Last ned"));
 
     var card = h("div.wp-modal__card.wp-ex", { role: "dialog", "aria-modal": "true", "aria-label": "Eksporter wallpaper" },
       h("header.wp-modal__head", null, h("h2", null, "Eksporter wallpaper"),
-        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", on: { click: close } }, util.icon("x", 18))),
+        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", "aria-label": "Lukk", on: { click: close } }, util.icon("x", 18))),
       h("div.wp-ex__grid", null,
         settings,
         h("div.wp-ex__right", null,

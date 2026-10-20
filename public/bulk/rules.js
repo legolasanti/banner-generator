@@ -62,7 +62,7 @@
     var rule = draft[spec.label];
     var body = h("div.bk-rule__tiers");
     rule.tiers.forEach(function (t, i) {
-      var del = h("button.bk-rule__del", { type: "button", title: "Fjern linjen", "aria-label": "Fjern linjen" }, "×");
+      var del = h("button.btn.btn--quiet.btn--sm.btn--icon.is-danger.bk-rule__del", { type: "button", title: "Fjern linjen", "aria-label": "Fjern linjen" }, BULK.ui.icon("x", 14));
       del.addEventListener("click", function () {
         rule.tiers.splice(i, 1);
         redraw();
@@ -87,13 +87,13 @@
         )
       );
     });
-    var add = h("button.bk-link", { type: "button", disabled: rule.tiers.length >= MAX_TIERS }, "+ linje");
+    var add = h("button.link.bk-link", { type: "button", disabled: rule.tiers.length >= MAX_TIERS }, "+ Legg til linje");
     add.addEventListener("click", function () {
       var last = rule.tiers[rule.tiers.length - 1];
       rule.tiers.push([last ? last[0] + 10 : 30, last ? Math.max(rule.min, last[1] - 0.1) : 1]);
       redraw();
     });
-    var reset = h("button.bk-link", { type: "button", hidden: isDefault(spec) }, "Standard");
+    var reset = h("button.link.bk-link", { type: "button", hidden: isDefault(spec), title: "Sett dette formatet tilbake til standardverdiene" }, "Tilbake til standard");
     reset.addEventListener("click", function () {
       draft[spec.label] = defaultsFor(spec);
       redraw();
@@ -143,7 +143,7 @@
   function build() {
     dom = {};
     dom.cards = h("div.bk-rules");
-    dom.test = h("input.bk-input", { type: "text", placeholder: "Skriv en overskrift for å se hvilken størrelse den får", maxlength: 200 });
+    dom.test = h("input.bk-input", { type: "text", id: "bk-rules-test", placeholder: "Skriv en overskrift for å se hvilken størrelse den får", maxlength: 200 });
     dom.testOut = h("div.bk-test__out");
     dom.test.addEventListener("input", testRow);
     dom.save = h("button.btn-primary", { type: "button" }, "Lagre regler");
@@ -172,7 +172,7 @@
             "Størrelsen velges ut fra antall tegn i overskriften, per format. Deretter sjekkes det at teksten faktisk får plass – ",
             "gjør den ikke det, settes den ned 5 % om gangen. Standardverdiene er målt med ekte norske overskrifter. Reglene gjelder for alle som bruker verktøyet."
           ),
-          h("div.bk-test", null, dom.test, dom.testOut),
+          h("div.bk-test", null, h("label.field__label", { for: "bk-rules-test" }, "Prøv en overskrift"), dom.test, dom.testOut),
           dom.cards
         ),
         h("footer.wp-modal__foot", null, resetAll, h("span.bk-toolbar__spacer"), cancel, dom.save)

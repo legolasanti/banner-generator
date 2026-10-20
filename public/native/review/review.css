@@ -1,129 +1,250 @@
-/* review.css — the review bar, comment pins and popups on /p/<token>/ pages. */
+/* =========================================================================
+   review.css — the review bar, comment pins and popups on /p/<token>/ pages.
+
+   This file is loaded into the advertiser's own page, so it stands alone:
+   no shared/tokens.css or ui.css, no bare-element rules, nothing outside the
+   npr- classes (and the two body classes review.js sets). The values below
+   mirror the ABC design tokens (named after them) so the overlay looks like
+   the rest of the tool.
+   ========================================================================= */
+
+:is(.npr-bar, .npr-hint, .npr-pop, .npr-pins, .npr-toast) {
+  --npr-surface: #ffffff;          /* --color-surface */
+  --npr-surface-muted: #f4f6f0;    /* --color-surface-muted */
+  --npr-border: #e5e9df;           /* --color-border */
+  --npr-border-strong: #d3d8c9;    /* --color-border-strong */
+  --npr-border-hover: #b9bfad;     /* --color-border-hover */
+  --npr-text: #15180f;             /* --color-text */
+  --npr-text-secondary: #565b4c;   /* --color-text-secondary */
+  --npr-text-tertiary: #6a6f5e;    /* --color-text-tertiary */
+  --npr-text-placeholder: #8e9382; /* --color-text-placeholder */
+  --npr-primary: #1a6b1a;          /* --color-primary */
+  --npr-primary-hover: #145a15;    /* --color-primary-hover */
+  --npr-primary-bright: #22852a;   /* --color-primary-bright */
+  --npr-focus-ring: rgba(26, 107, 26, 0.24); /* --color-focus-ring */
+  --npr-warning-soft: #fff5e0;     /* --color-warning-soft */
+  --npr-warning-border: #f1dcab;   /* --color-warning-border */
+  --npr-warning-text: #7a4f00;     /* --color-warning-text */
+  --npr-danger: #c52b22;           /* --color-danger */
+  --npr-danger-text: #a3261d;      /* --color-danger-text */
+  --npr-info: #1e5fbf;             /* --color-info */
+  --npr-toast-ok: #163d16;         /* .toast--ok in ui.css */
+  --npr-font: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --npr-text-xs: 11.5px;
+  --npr-text-sm: 12.5px;
+  --npr-text-md: 13.5px;
+  --npr-text-base: 14px;
+  --npr-text-lg: 16px;
+  --npr-radius-md: 8px;
+  --npr-radius-lg: 12px;
+  --npr-radius-xl: 16px;
+  --npr-control-h: 36px;
+  --npr-shadow-md: 0 10px 28px rgba(18, 22, 10, 0.1);
+  --npr-shadow-lg: 0 24px 64px rgba(18, 22, 10, 0.22);
+  --npr-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --npr-z: 2147483000;             /* above anything the page itself uses */
+
+  box-sizing: border-box;
+  font-family: var(--npr-font);
+  -webkit-font-smoothing: antialiased;
+}
+:is(.npr-bar, .npr-hint, .npr-pop, .npr-pins, .npr-toast) :is(.npr-btn, .npr-input, .npr-item, .npr-pin) { box-sizing: border-box; }
+
 body.npr-on { padding-bottom: 76px; }
+
+/* ------------------------------- the bar --------------------------------- */
+/* Dark and floating, so it reads as a tool on top of any page design. */
 .npr-bar {
   position: fixed;
   left: 50%;
-  bottom: 14px;
+  bottom: 16px;
   transform: translateX(-50%);
-  z-index: 2147483000;
+  z-index: var(--npr-z);
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   max-width: calc(100vw - 24px);
-  padding: 10px 10px 10px 18px;
-  background: #15180f;
+  padding: 8px 8px 8px 20px;
+  background: var(--npr-text);
   color: #fff;
-  border-radius: 14px;
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.35);
-  font: 500 14px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  border-radius: var(--npr-radius-xl);
+  box-shadow: var(--npr-shadow-lg);
+  font-size: var(--npr-text-base);
+  font-weight: 500;
+  line-height: 1.3;
 }
-.npr-bar__info { display: flex; flex-direction: column; min-width: 0; }
-.npr-bar__info span { opacity: 0.7; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.npr-bar__info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.npr-bar__info span { color: rgba(255, 255, 255, 0.72); font-size: var(--npr-text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .npr-bar__acts { display: flex; gap: 6px; flex: none; }
+
+/* ------------------------------- buttons --------------------------------- */
 .npr-btn {
-  border: 0;
-  border-radius: 9px;
-  padding: 10px 14px;
-  font: 700 14px/1 inherit;
-  font-family: inherit;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--npr-control-h);
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--npr-radius-md);
   background: rgba(255, 255, 255, 0.12);
   color: inherit;
+  font: 700 var(--npr-text-md) / 1 var(--npr-font);
   white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 180ms var(--npr-ease), border-color 180ms var(--npr-ease), color 180ms var(--npr-ease);
 }
 .npr-btn:hover { background: rgba(255, 255, 255, 0.2); }
-.npr-btn--primary { background: #22852a; color: #fff; }
-.npr-btn--primary:hover { background: #1a6b1a; }
+.npr-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45); }
+.npr-btn--primary { background: var(--npr-primary-bright); color: #fff; }
+.npr-btn--primary:hover { background: var(--npr-primary); }
 .npr-btn--ghost { background: transparent; }
-.npr-btn.is-on { background: #fff4c2; color: #3d3300; }
-.npr-btn.is-done, .npr-btn:disabled { opacity: 0.85; cursor: default; background: #22852a; }
-.npr-pop .npr-btn { background: #f1f3f6; color: #15180f; }
-.npr-pop .npr-btn--primary { background: #22852a; color: #fff; }
-.npr-pop .npr-btn--ghost { background: transparent; }
+/* "Avbryt" while commenting: the warning tone, so the mode is obvious. */
+.npr-btn.is-on, .npr-btn.is-on:hover { background: var(--npr-warning-soft); color: var(--npr-warning-text); }
+.npr-btn.is-done, .npr-btn:disabled { cursor: default; background: var(--npr-primary-bright); color: #fff; opacity: 0.9; }
+
+/* In the white popups: secondary (bordered) and quiet, like ui.css. */
+.npr-pop .npr-btn { background: var(--npr-surface); border-color: var(--npr-border-strong); color: var(--npr-text); }
+.npr-pop .npr-btn:hover { border-color: var(--npr-border-hover); background: var(--npr-surface-muted); }
+.npr-pop .npr-btn--primary { background: var(--npr-primary); border-color: var(--npr-primary); color: #fff; }
+.npr-pop .npr-btn--primary:hover { background: var(--npr-primary-hover); border-color: var(--npr-primary-hover); }
+.npr-pop .npr-btn--ghost { background: transparent; border-color: transparent; color: var(--npr-text-secondary); }
+.npr-pop .npr-btn--ghost:hover { background: var(--npr-surface-muted); border-color: transparent; color: var(--npr-text); }
+.npr-pop .npr-btn:disabled { opacity: 0.5; }
+.npr-pop .npr-btn:focus-visible { box-shadow: 0 0 0 3px var(--npr-focus-ring); }
+.npr-pop > .npr-btn { align-self: flex-end; }
+
+/* ------------------------------ comment mode ----------------------------- */
 .npr-hint {
   display: none;
   position: fixed;
-  top: 70px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2147483000;
-  background: #fff4c2;
-  color: #3d3300;
+  z-index: var(--npr-z);
   padding: 10px 16px;
+  border: 1px solid var(--npr-warning-border);
   border-radius: 999px;
-  font: 700 14px/1 -apple-system, sans-serif;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: var(--npr-warning-soft);
+  color: var(--npr-warning-text);
+  font-size: var(--npr-text-base);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: var(--npr-shadow-md);
 }
 body.npr-commenting .npr-hint { display: block; }
 body.npr-commenting, body.npr-commenting * { cursor: crosshair !important; }
+/* The section under the pointer: the primary colour, translucent. */
 body.npr-commenting .np-sec:hover { outline: 3px solid rgba(34, 133, 42, 0.6); outline-offset: -3px; }
+
+/* -------------------------------- popups --------------------------------- */
 .npr-pop {
   position: fixed;
-  z-index: 2147483001;
-  width: min(340px, calc(100vw - 20px));
-  background: #fff;
-  color: #15180f;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: calc(var(--npr-z) + 1);
+  width: min(360px, calc(100vw - 20px));
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font: 400 14.5px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  gap: 12px;
+  padding: 20px;
+  background: var(--npr-surface);
+  color: var(--npr-text);
+  border: 1px solid var(--npr-border);
+  border-radius: var(--npr-radius-xl);
+  box-shadow: var(--npr-shadow-lg);
+  font-size: var(--npr-text-base);
+  font-weight: 500;
+  line-height: 1.45;
 }
 .npr-pop--center, .npr-pop--list { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); }
-.npr-pop--list { max-height: 70vh; overflow: auto; }
+.npr-pop--list { width: min(420px, calc(100vw - 20px)); max-height: 70vh; overflow: auto; }
+.npr-title { font-size: var(--npr-text-lg); font-weight: 800; letter-spacing: -0.015em; line-height: 1.2; }
 .npr-input {
+  display: block;
   width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #d5d9e0;
-  border-radius: 9px;
-  padding: 10px 12px;
-  font: inherit;
+  min-height: var(--npr-control-h);
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--npr-border-strong);
+  border-radius: var(--npr-radius-md);
+  background: var(--npr-surface);
+  color: var(--npr-text);
+  font: 500 var(--npr-text-base) / 1.45 var(--npr-font);
   resize: vertical;
+  transition: border-color 180ms var(--npr-ease), box-shadow 180ms var(--npr-ease);
 }
-.npr-input:focus { outline: 2px solid #22852a; border-color: transparent; }
-.npr-row { display: flex; justify-content: flex-end; gap: 6px; }
-.npr-err { color: #c52b22; margin: 0; font-size: 13.5px; min-height: 0; }
+.npr-input::placeholder { color: var(--npr-text-placeholder); opacity: 1; }
+.npr-input:hover { border-color: var(--npr-border-hover); }
+.npr-input:focus { outline: none; border-color: var(--npr-primary); box-shadow: 0 0 0 3px var(--npr-focus-ring); }
+.npr-row { display: flex; justify-content: flex-end; gap: 8px; }
+.npr-err { margin: 0; color: var(--npr-danger-text); font-size: var(--npr-text-md); }
 .npr-err:empty { display: none; }
 .npr-text { margin: 0; white-space: pre-wrap; }
-.npr-muted { margin: 0; color: #5d6470; font-size: 13.5px; }
-.npr-reply { border-left: 3px solid #e3e6ea; padding-left: 10px; }
-.npr-item { text-align: left; border: 1px solid #e3e6ea; background: #fff; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; font: inherit; }
+.npr-muted { margin: 0; color: var(--npr-text-tertiary); font-size: var(--npr-text-md); }
+.npr-reply { padding-left: 12px; border-left: 3px solid var(--npr-border); }
+.npr-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--npr-border);
+  border-radius: var(--npr-radius-lg);
+  background: var(--npr-surface);
+  color: var(--npr-text);
+  font: 500 var(--npr-text-md) / 1.45 var(--npr-font);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms var(--npr-ease);
+}
+.npr-item:hover { border-color: var(--npr-border-hover); }
+.npr-item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--npr-focus-ring); }
 .npr-item.is-done { opacity: 0.55; }
-.npr-pins { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2147482999; }
+
+/* --------------------------------- pins ---------------------------------- */
+.npr-pins { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: calc(var(--npr-z) - 1); }
 .npr-pin {
   position: absolute;
   width: 30px;
   height: 30px;
   margin: -30px 0 0 -4px;
-  border-radius: 50% 50% 50% 4px;
+  padding: 0;
   border: 2px solid #fff;
-  background: #c52b22;
+  border-radius: 50% 50% 50% 4px;
+  background: var(--npr-danger);
   color: #fff;
-  font: 800 13px/1 -apple-system, sans-serif;
+  font: 800 var(--npr-text-md) / 1 var(--npr-font);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
 }
-.npr-pin.is-team { background: #1e5fbf; }
-.npr-pin.is-done { background: #8a919c; }
+.npr-pin:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--npr-focus-ring), 0 4px 12px rgba(0, 0, 0, 0.35); }
+.npr-pin.is-team { background: var(--npr-info); }
+.npr-pin.is-done { background: var(--npr-text-tertiary); }
+
+/* -------------------------------- toast ---------------------------------- */
 .npr-toast {
   position: fixed;
   left: 50%;
-  bottom: 90px;
+  bottom: 92px;
   transform: translateX(-50%);
-  z-index: 2147483002;
-  background: #163d16;
+  z-index: calc(var(--npr-z) + 2);
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--npr-toast-ok);
   color: #fff;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font: 600 14px/1.3 -apple-system, sans-serif;
-  transition: opacity 0.4s;
+  font-size: var(--npr-text-md);
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: var(--npr-shadow-md);
+  transition: opacity 400ms var(--npr-ease);
 }
 .npr-toast.is-out { opacity: 0; }
+
 @media (max-width: 599px) {
-  .npr-bar { left: 8px; right: 8px; transform: none; bottom: 8px; padding: 10px; gap: 8px; }
+  .npr-bar { left: 8px; right: 8px; transform: none; bottom: 8px; padding: 8px; gap: 8px; }
   .npr-bar__info { display: none; }
   .npr-bar__acts { width: 100%; }
-  .npr-bar__acts .npr-btn { flex: 1; padding: 12px 8px; }
+  .npr-bar__acts .npr-btn { flex: 1; height: 44px; padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.npr-btn, .npr-input, .npr-item, .npr-toast) { transition: none; }
 }

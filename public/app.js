@@ -181,6 +181,7 @@
   // -------- element refs ----------------------------------------------------
   const el = {
     tabs: $$(".tab"),
+    viewHome: $("#view-home"),
     viewNew: $("#view-new"),
     viewHistory: $("#view-history"),
     viewWallpaper: $("#view-wallpaper"),
@@ -244,6 +245,9 @@
     form: $("#bannerForm"),
     downloadSet: $("#downloadSet"),
     generateBtn: $("#generateBtn"),
+    productTitle: $("#productTitle"),
+    generateHint: $("#generateHint"),
+    productDesc: $("#productDesc"),
     result: $("#result"),
     downloadLink: $("#downloadLink"),
     resultFiles: $("#resultFiles"),
@@ -401,7 +405,8 @@
       const name = document.createElement("span");
       name.className = "pcard__name";
       name.textContent = spec.name;
-      if (spec.hint) {
+      // Houseads' hints are the size itself, already shown on the right.
+      if (spec.hint && spec.hint !== spec.width + "×" + spec.height) {
         const hint = document.createElement("span");
         hint.className = "field__hint";
         hint.textContent = " " + spec.hint;
@@ -584,10 +589,20 @@
     houseads: "størrelsen følger lengden (Auto)",
   };
 
+  // The line under the product name at the top of the form: what this
+  // product is for, so nobody has to guess which tab they need.
+  const PRODUCT_INTRO = {
+    norsktipping: "Spillbannere i 4 formater. Vinnersjanse, 18+-merke og «Annonse» legges på automatisk.",
+    readpeak: "Native-annonser for alle annonsører, i ReadPeak 308×380 og Nyhetsgrid 190×190.",
+    houseads: "ABC Nyheters egne annonser for abc shopping, i 6 formater.",
+  };
+
   /** Switch the whole builder over to another product. */
   function applyProduct(product) {
     state.product = F.PRODUCTS[product] ? product : F.DEFAULT_PRODUCT;
     const cfg = productCfg();
+    el.productTitle.textContent = cfg.label;
+    el.productDesc.textContent = PRODUCT_INTRO[state.product] || "";
 
     applyFieldVisibility();
 
@@ -762,6 +777,7 @@
     setZoom(0);
     setPosition(50, 50);
     el.generateBtn.disabled = false;
+    el.generateHint.hidden = true;
     resetForm();
   }
 
@@ -838,6 +854,7 @@
     el.dropzoneFile.hidden = true;
     el.cropField.hidden = true;
     el.generateBtn.disabled = true;
+    el.generateHint.hidden = false;
     setZoom(0);
     setPosition(50, 50);
     resetForm();
@@ -1179,6 +1196,8 @@
   function setLoading(on) {
     el.generateBtn.classList.toggle("is-loading", on);
     el.generateBtn.disabled = on || !state.imageDataUrl;
+    // Say why the button is grey instead of leaving people to guess.
+    el.generateHint.hidden = on || !!state.imageDataUrl;
     el.generateBtn.querySelector(".btn-generate__label").textContent = on
       ? "Genererer …"
       : "Generer bannere · " + setLabels(currentSet()).count;
@@ -1508,19 +1527,25 @@
   // is the history log.
   // The open tab lives in the URL (#/houseads), so a reload or a shared link
   // lands on the same tab.
-  const TAB_IDS = () => ["norsktipping", "live", "readpeak", "houseads", "bulk", "wallpaper", "history"];
+  // Same order as the tabs in the top bar (arrow keys follow it).
+  const TAB_IDS = () => ["home", "norsktipping", "readpeak", "houseads", "live", "bulk", "wallpaper", "history"];
+  /** The tab the address asks for; "#/" or no hash is the overview. */
   function tabFromHash() {
-    const m = /^#\/([\w-]+)/.exec(location.hash || "");
+    const hash = location.hash || "";
+    if (hash === "" || hash === "#" || hash === "#/") return "home";
+    const m = /^#\/([\w-]+)/.exec(hash);
     return m && TAB_IDS().includes(m[1]) ? m[1] : null;
   }
 
   function switchTab(tab, focusTab) {
-    if (location.hash !== "#/" + tab) history.replaceState(null, "", "#/" + tab);
+    const hash = tab === "home" ? "#/" : "#/" + tab;
+    if (location.hash !== hash) history.replaceState(null, "", hash);
+    const isHome = tab === "home";
     const isHistory = tab === "history";
     const isWallpaper = tab === "wallpaper";
     const isBulk = tab === "bulk";
     const isLive = tab === "live";
-    const isBuilder = !isHistory && !isWallpaper && !isBulk && !isLive;
+    const isBuilder = !isHome && !isHistory && !isWallpaper && !isBulk && !isLive;
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -1528,6 +1553,8 @@
       b.tabIndex = active ? 0 : -1; // roving tabindex
       if (active && focusTab) b.focus();
     });
+    el.viewHome.classList.toggle("is-hidden", !isHome);
+    el.viewHome.tabIndex = isHome ? 0 : -1;
     el.viewNew.classList.toggle("is-hidden", !isBuilder);
     el.viewHistory.classList.toggle("is-hidden", !isHistory);
     el.viewWallpaper.classList.toggle("is-hidden", !isWallpaper);
@@ -1535,6 +1562,7 @@
     el.viewLive.classList.toggle("is-hidden", !isLive);
     el.viewNew.tabIndex = isBuilder ? 0 : -1;
     el.viewHistory.tabIndex = isHistory ? 0 : -1;
+    if (isHome) return;
     if (isHistory) {
       loadHistory();
       return;
@@ -1904,8 +1932,7 @@
     // Builds the previews, the size sliders and the packages for the product
     // whose tab is open, then renders everything.
     applyProduct(state.product);
-    const startTab = tabFromHash();
-    if (startTab && startTab !== state.product) switchTab(startTab);
+    switchTab(tabFromHash() || "home");
     loadHistory();
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);

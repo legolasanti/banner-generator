@@ -70,7 +70,7 @@
     var root = h("div.lv-stack");
 
     // ---- source -----------------------------------------------------------
-    var fetchBtn = form.button("Hent", { kind: "primary", icon: "download" });
+    var fetchBtn = form.button("Hent kampene", { kind: "primary", icon: "download" });
     var urlInput = form.text({
       type: "url",
       value: state.sheetUrl,
@@ -83,7 +83,8 @@
     var sheetPane = h(
       "div.lv-stack.lv-stack--tight",
       null,
-      form.field("Lenke til Google-regnearket", h("div.lv-inputgroup", null, urlInput, fetchBtn)),
+      form.field("Lenke til Google-regnearket", urlInput),
+      h("div.lv-actions", null, fetchBtn),
       form.note("info", ["Del arket med ", h("b", null, "Del → Alle med lenken (Leser)"), ". Det trenger annonsen også for å hente nye kamper selv."])
     );
 
@@ -144,11 +145,11 @@
     root.appendChild(form.card("Hvor kommer kampene fra?", [modeSeg, sheetPane, pastePane, sourceStatus], { desc: "Annonsen viser dagens kamper fra arket, i norsk tid." }));
 
     // ---- template -----------------------------------------------------------
-    var csvBtn = form.button("Last ned CSV-mal", { kind: "ghost", icon: "download", onClick: function () {
+    var csvBtn = form.button("Last ned CSV-mal", { kind: "ghost", size: "sm", icon: "download", onClick: function () {
       downloadText("nt-live-kampoppsett.csv", "﻿" + LD.templateCsv(new Date(), ";"), "text/csv;charset=utf-8");
       app.toast("CSV-malen er lastet ned – åpne den i Excel, eller Fil → Importer i Google Sheets", "ok");
     } });
-    var copyBtn = form.button("Kopier til Google Sheets", { kind: "ghost", icon: "copy", onClick: function () {
+    var copyBtn = form.button("Kopier til Google Sheets", { kind: "ghost", size: "sm", icon: "copy", onClick: function () {
       var tsv = LD.templateRows(new Date()).map(function (r) { return r.join("\t"); }).join("\n");
       copyText(tsv).then(
         function () {
@@ -158,7 +159,7 @@
         function () { app.toast("Kunne ikke kopiere – bruk CSV-malen i stedet", "err"); }
       );
     } });
-    var sampleBtn = form.button("Prøv med eksempelkamper", { kind: "quiet", icon: "sparkles", onClick: loadSample });
+    var sampleBtn = form.button("Prøv med eksempelkamper", { kind: "ghost", size: "sm", icon: "sparkles", onClick: loadSample });
 
     var colTable = h(
       "table.lv-cols",
@@ -181,11 +182,11 @@
     var colDetails = h("details.lv-disclose", null, h("summary", null, icon("down", 14), "Alle 13 kolonnene arket kan ha"), h("div.lv-cols__wrap", null, colTable), h("p.lv-fine", null, "Rekkefølgen er valgfri, og overskriftene kan også være på engelsk. Rader over overskriftsraden (en tittel, f.eks.) hoppes over."));
 
     var templateCard = form.card("Mal for regnearket", [
-      h("div.lv-actions.lv-actions--wrap", null, copyBtn, csvBtn),
+      h("div.lv-actions.lv-actions--stack", null, copyBtn, csvBtn),
       h("p.lv-fine", null, "«Kopier» legger malen på utklippstavlen og åpner et nytt Google-regneark – lim inn i A1, del arket og lim lenken inn over."),
       colDetails,
       h("div.lv-divider"),
-      h("div.lv-sample", null, sampleBtn, h("span.lv-fine", null, "Seks kamper over fire dager, så du kan prøve malene med en gang.")),
+      h("div.lv-sample", null, h("span.lv-fine", null, "Ingen ark ennå? Seks kamper over fire dager, så du kan prøve malene med en gang."), sampleBtn),
     ], { desc: "Riktige overskrifter og eksempelrader – start herfra." });
     root.appendChild(templateCard);
 

@@ -70,7 +70,18 @@
     dom.toolbar = h(
       "div.bk-toolbar",
       null,
-      h("div.bk-toolbar__row", null, dom.sourceLine, h("div.bk-toolbar__spacer"), dom.rulesBtn),
+      h(
+        "div.bk-toolbar__row.bk-toolbar__row--head",
+        null,
+        h(
+          "div.bk-toolbar__intro",
+          null,
+          dom.sourceLine,
+          h("p.bk-hint", null, "Sjekk radene, rett det som er merket Feil eller Sjekk, og generer nederst. Klikk en banner for å justere den.")
+        ),
+        h("div.bk-toolbar__spacer"),
+        dom.rulesBtn
+      ),
       h(
         "div.bk-toolbar__row.bk-toolbar__row--controls",
         null,
@@ -78,17 +89,12 @@
         h("span.bk-sep"),
         h("div.bk-ctl", null, h("span.bk-ctl__label", null, "Formater"), dom.formatChips),
         h("span.bk-sep"),
-        dom.weightCtl,
-        h("label.bk-check", { title: "Holder motivet i bildet når det beskjæres. Av = midt i bildet." }, smart, h("span", null, "Smart beskjæring")),
-        h("div.bk-toolbar__spacer"),
+        // Weight and crop wrap together on a narrow screen.
         h(
-          "div.bk-ctl",
+          "div.bk-ctlgroup",
           null,
-          h("span.bk-ctl__label", null, "Visning"),
-          ui.seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
-            state.density = v;
-            applyDensity();
-          }, "Størrelse på forhåndsvisning")
+          dom.weightCtl,
+          h("label.bk-check", { title: "Holder motivet i bildet når det beskjæres. Av = midt i bildet." }, smart, h("span", null, "Smart beskjæring"))
         )
       ),
       dom.common,
@@ -239,6 +245,15 @@
       applyView(true);
     });
     dom.listTools = h("div.bk-listtools");
+    var density = h(
+      "div.bk-ctl",
+      null,
+      h("span.bk-ctl__label", null, "Visning"),
+      ui.seg([["s", "S"], ["m", "M"], ["l", "L"]], state.density, function (v) {
+        state.density = v;
+        applyDensity();
+      }, "Størrelse på forhåndsvisning")
+    );
     // While rows are ticked, the selection bar takes this row's place rather
     // than appearing above it: the list must not jump down under the pointer
     // between ticking one row and the next.
@@ -251,7 +266,8 @@
       dom.listTools,
       h("div.bk-toolbar__spacer"),
       dom.search,
-      dom.sort
+      dom.sort,
+      density
     );
     return dom.listRow;
   }
@@ -260,7 +276,7 @@
   function buildSelectionBar() {
     dom.selCount = h("b.bk-selbar__n");
     var link = function (label, fn, title) {
-      var b = h("button.bk-link", { type: "button", title: title || null }, label);
+      var b = h("button.link.bk-link", { type: "button", title: title || null }, label);
       b.addEventListener("click", fn);
       return b;
     };
@@ -367,14 +383,14 @@
       .map(function (c) { return c.header; });
     if (mapped.length) dom.sourceLine.appendChild(h("span.bk-srcline__muted", { title: "Kolonner som brukes" }, "· " + mapped.join(", ")));
     if (src.url) {
-      var again = h("button.bk-link", { type: "button" }, "Hent på nytt");
+      var again = h("button.link.bk-link", { type: "button" }, "Hent på nytt");
       again.addEventListener("click", function () {
         if (!confirm("Hente arket på nytt? Rader med samme radnummer og overskrift beholder det du har justert her; resten erstattes av det som står i arket.")) return;
         BULK.source.reload().catch(function (err) { BULK.source.toast(err.message, "err"); });
       });
       dom.sourceLine.appendChild(again);
     }
-    var change = h("button.bk-link", { type: "button" }, "Bytt ark");
+    var change = h("button.link.bk-link", { type: "button" }, "Bytt ark");
     change.addEventListener("click", function () {
       if (!confirm("Lukke dette arket og starte på nytt?")) return;
       store.clear();
@@ -393,9 +409,10 @@
       ["pending", "Venter", c.pending],
     ].forEach(function (f) {
       if (f[0] !== "all" && !f[2] && state.filter !== f[0]) return;
+      var on = state.filter === f[0];
       var b = h(
-        "button.bk-filter.bk-filter--" + f[0],
-        { type: "button", "aria-pressed": state.filter === f[0] ? "true" : "false" },
+        "button.chip.bk-filter.bk-filter--" + f[0] + (on ? ".is-active" : ""),
+        { type: "button", "aria-pressed": on ? "true" : "false" },
         f[1],
         h("span.bk-filter__n", null, String(f[2] || 0))
       );
@@ -417,12 +434,12 @@
     // down: one click tries every failed photo again.
     var failed = state.rows.filter(function (r) { return r.image && r.image.status === "error"; }).length;
     if (failed) {
-      var retry = h("button.bk-link.bk-retry", { type: "button" }, "Hent " + failed + (failed === 1 ? " bilde" : " bilder") + " på nytt");
+      var retry = h("button.link.bk-link.bk-retry", { type: "button" }, "Hent " + failed + (failed === 1 ? " bilde" : " bilder") + " på nytt");
       retry.addEventListener("click", function () { BULK.source.retryFailed(); });
       dom.listTools.appendChild(retry);
     }
     if (ui.problemLines(state.rows).length > 1) {
-      var report = h("button.bk-link", { type: "button", title: "Rader med feil eller merknader, med radnummer og årsak – til den som fylte ut arket" }, "Feilrapport (CSV)");
+      var report = h("button.link.bk-link", { type: "button", title: "Rader med feil eller merknader, med radnummer og årsak – til den som fylte ut arket" }, "Feilrapport (CSV)");
       report.addEventListener("click", function () {
         ui.downloadProblemReport(state.rows, BULK.run.zipName());
       });
@@ -465,7 +482,8 @@
       });
     }
     dom.empty.hidden = !!rows.length || !state.rows.length;
-    dom.empty.textContent = state.search ? "Ingen rader passer søket «" + state.search.trim() + "»." : "Ingen rader i dette utvalget.";
+    dom.emptyTitle.textContent = state.search ? "Ingen rader passer søket «" + state.search.trim() + "»" : "Ingen rader i dette utvalget";
+    dom.emptyText.textContent = state.search ? "Søk på ord i overskriften, filnavnet eller et radnummer." : "Velg «Alle» over for å se alle radene.";
     renderSelection();
   }
 
@@ -487,7 +505,7 @@
       card.classList.toggle("is-selected", row.selected);
       renderSelection();
     });
-    var include = h("button.bk-toggle", { type: "button" });
+    var include = h("button.btn.btn--quiet.btn--sm.bk-toggle", { type: "button" });
     include.addEventListener("click", function () {
       store.updateRow(row, { include: !row.include });
     });
@@ -756,8 +774,10 @@
     dom.scroll = host;
     dom.warnings = h("ul.bk-warnings", { hidden: true });
     dom.list = h("div.bk-list");
-    dom.empty = h("p.bk-empty", { hidden: true }, "Ingen rader i dette utvalget.");
-    dom.live = h("p.bk-sr", { "aria-live": "polite", role: "status" });
+    dom.emptyTitle = h("p.empty-state__title", null, "Ingen rader i dette utvalget");
+    dom.emptyText = h("p.empty-state__text");
+    dom.empty = h("div.empty-state.bk-empty", { hidden: true, role: "status" }, dom.emptyTitle, dom.emptyText);
+    dom.live = h("p.sr-only", { "aria-live": "polite", role: "status" });
     var addRow = h("button.btn-ghost.btn-sm.bk-addrow", { type: "button", title: "En banner som ikke står i arket" }, "+ Ny rad");
     addRow.addEventListener("click", function () {
       var row = store.addBlankRow();

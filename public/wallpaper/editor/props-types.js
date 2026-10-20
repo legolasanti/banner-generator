@@ -65,20 +65,24 @@
     var weights = Fonts.find(e0.style.font).w.map(function (w) {
       return { value: w, label: w + " · " + (WEIGHT_NAMES[w] || "") };
     });
-    out.push(h("div.wp-grid2", null,
-      track(C.select({ options: weights, get: styleGet("weight"), set: function (v) { setStyle({ weight: Number(v) }); } })),
-      track(C.num({ label: "Str.", min: 4, max: 800, step: 1, suffix: "px", get: styleGet("size"), set: function (v) { setStyle({ size: v }); } }))
+    var weightSel = C.select({ options: weights, get: styleGet("weight"), set: function (v) { setStyle({ weight: Number(v) }); } });
+    weightSel.el.setAttribute("aria-label", "Skriftvekt");
+    out.push(h("div.wp-grid2.wp-grid2--lead", null,
+      track(weightSel),
+      track(C.num({ label: "Str.", min: 4, max: 800, step: 1, suffix: "px", aria: "Skriftstørrelse", get: styleGet("size"), set: function (v) { setStyle({ size: v }); } }))
     ));
     out.push(h("div.wp-grid2", null,
-      track(C.num({ label: "Linje", min: 0.6, max: 3, step: 0.05, digits: 2, get: styleGet("lineHeight"), set: function (v) { setStyle({ lineHeight: v }); } })),
+      track(C.num({ label: "Linje", min: 0.6, max: 3, step: 0.05, digits: 2, aria: "Linjeavstand", get: styleGet("lineHeight"), set: function (v) { setStyle({ lineHeight: v }); } })),
       track(C.num({
-        label: "Sperring", min: -30, max: 150, step: 0.5, digits: 1, suffix: "%",
+        label: "Sperring", min: -30, max: 150, step: 0.5, digits: 1, suffix: "%", aria: "Bokstavavstand",
         get: function () { var e = first(); return e ? Math.round(e.style.letterSpacing * 1000) / 10 : 0; },
         set: function (v) { setStyle({ letterSpacing: v / 100 }); },
       }))
     ));
-    out.push(h("div.wp-btnrow", null,
+    // Alignment and the four style toggles: two equal tracks side by side.
+    out.push(h("div.wp-grid2", null,
       track(C.seg({
+        wide: true, aria: "Tekstjustering",
         options: [
           { value: "left", icon: "text-align-start", title: "Venstre" },
           { value: "center", icon: "text-align-center", title: "Midtstilt" },
@@ -87,13 +91,16 @@
         ],
         get: styleGet("align"), set: function (v) { setStyle({ align: v }); },
       })),
-      track(C.toggle({ icon: "italic", title: "Kursiv", get: styleGet("italic"), set: function (v) { setStyle({ italic: v }); } })),
-      track(C.toggle({ icon: "underline", title: "Understrek", get: styleGet("underline"), set: function (v) { setStyle({ underline: v }); } })),
-      track(C.toggle({ icon: "strikethrough", title: "Gjennomstrek", get: styleGet("strike"), set: function (v) { setStyle({ strike: v }); } })),
-      track(C.toggle({ icon: "case-upper", title: "Store bokstaver", get: styleGet("uppercase"), set: function (v) { setStyle({ uppercase: v }); } }))
+      h("div.wp-seg.wp-seg--wide", { role: "group", "aria-label": "Tekststil" },
+        track(C.toggle({ icon: "italic", title: "Kursiv", get: styleGet("italic"), set: function (v) { setStyle({ italic: v }); } })),
+        track(C.toggle({ icon: "underline", title: "Understrek", get: styleGet("underline"), set: function (v) { setStyle({ underline: v }); } })),
+        track(C.toggle({ icon: "strikethrough", title: "Gjennomstrek", get: styleGet("strike"), set: function (v) { setStyle({ strike: v }); } })),
+        track(C.toggle({ icon: "case-upper", title: "Store bokstaver", get: styleGet("uppercase"), set: function (v) { setStyle({ uppercase: v }); } }))
+      )
     ));
     if (opts && opts.valign) {
       out.push(C.row("Loddrett", track(C.seg({
+        wide: true,
         options: [
           { value: "top", icon: "align-vertical-justify-start", title: "Topp" },
           { value: "middle", icon: "align-vertical-justify-center", title: "Midten" },
@@ -112,8 +119,8 @@
       defaultColor: "#111111",
     })), { stack: true }));
     out.push(h("div.wp-grid2", null,
-      track(C.num({ label: "Kontur", min: 0, max: 30, step: 0.5, digits: 1, suffix: "px", get: styleGet("strokeWidth"), set: function (v) { setStyle({ strokeWidth: v }); } })),
-      track(C.color({ get: styleGet("strokeColor"), set: function (v) { setStyle({ strokeColor: v || "#ffffff" }); } }))
+      track(C.num({ label: "Kontur", min: 0, max: 30, step: 0.5, digits: 1, suffix: "px", aria: "Konturbredde", get: styleGet("strokeWidth"), set: function (v) { setStyle({ strokeWidth: v }); } })),
+      track(C.color({ title: "Konturfarge", get: styleGet("strokeColor"), set: function (v) { setStyle({ strokeColor: v || "#ffffff" }); } }))
     ));
     return out;
   }
@@ -124,10 +131,11 @@
     var s = nested("border", "style");
     return [
       h("div.wp-grid2", null,
-        track(C.num({ label: "Kant", min: 0, max: 60, step: 0.5, digits: 1, suffix: "px", get: b.get, set: b.set })),
-        track(C.color({ get: c.get, set: function (v) { c.set(v || "#111111"); } }))
+        track(C.num({ label: "Kant", min: 0, max: 60, step: 0.5, digits: 1, suffix: "px", aria: "Kantbredde", get: b.get, set: b.set })),
+        track(C.color({ title: "Kantfarge", get: c.get, set: function (v) { c.set(v || "#111111"); } }))
       ),
       track(C.seg({
+        aria: "Kantstil",
         options: [{ value: "solid", label: "Hel" }, { value: "dashed", label: "Stiplet" }, { value: "dotted", label: "Prikket" }],
         get: s.get, set: s.set, wide: true,
       })),
@@ -137,7 +145,7 @@
   // ---- per type ------------------------------------------------------------------------
   function textSections(el, track) {
     var content = [
-      track(C.textarea({ get: getter("text"), set: function (v) { set({ text: v }); }, placeholder: "Skriv tekst …" })),
+      track(C.textarea({ aria: "Tekst", get: getter("text"), set: function (v) { set({ text: v }); }, placeholder: "Skriv tekst …" })),
     ].concat(textStyleControls(track));
     var boxOn = !!(el.fill || el.border.width || el.padX || el.padY);
     var box = [
@@ -152,9 +160,9 @@
         },
       })), { stack: true }),
       h("div.wp-grid3", null,
-        track(C.num({ label: "Luft ↔", min: 0, max: 400, get: getter("padX"), set: function (v) { set({ padX: v }); } })),
-        track(C.num({ label: "Luft ↕", min: 0, max: 400, get: getter("padY"), set: function (v) { set({ padY: v }); } })),
-        track(C.num({ label: "Hjørne", min: 0, max: 999, get: getter("radius"), set: function (v) { set({ radius: v }); } }))
+        track(C.num({ label: "Luft ↔", min: 0, max: 400, aria: "Luft vannrett", get: getter("padX"), set: function (v) { set({ padX: v }); } })),
+        track(C.num({ label: "Luft ↕", min: 0, max: 400, aria: "Luft loddrett", get: getter("padY"), set: function (v) { set({ padY: v }); } })),
+        track(C.num({ label: "Hjørne", min: 0, max: 999, aria: "Hjørneradius", get: getter("radius"), set: function (v) { set({ radius: v }); } }))
       ),
     ].concat(borderControls(track));
     return [
@@ -184,9 +192,9 @@
   }
 
   function shapeSections(el, track) {
-    var kinds = h("div.wp-kinds", null, Doc.SHAPE_KINDS.map(function (k) {
+    var kinds = h("div.wp-kinds", { role: "group", "aria-label": "Formtype" }, Doc.SHAPE_KINDS.map(function (k) {
       return h("button.wp-kind" + (el.kind === k ? ".is-on" : ""), {
-        type: "button", title: KIND_NAMES[k],
+        type: "button", title: KIND_NAMES[k], "aria-label": KIND_NAMES[k], "aria-pressed": el.kind === k ? "true" : "false",
         on: { click: function () { store.checkpoint(); set({ kind: k }); } },
       }, kindPreview(k));
     }));
@@ -209,22 +217,22 @@
     }
     if (el.kind === "star" || el.kind === "burst") {
       look.push(h("div.wp-grid2", null,
-        track(C.num({ label: "Tagger", min: el.kind === "burst" ? 8 : 3, max: 40, get: getter("points"), set: function (v) { set({ points: Math.round(v) }); } })),
+        track(C.num({ label: "Tagger", min: el.kind === "burst" ? 8 : 3, max: 40, aria: "Antall tagger", get: getter("points"), set: function (v) { set({ points: Math.round(v) }); } })),
         track(C.num({
-          label: "Innside", min: 10, max: 95, suffix: "%",
+          label: "Innside", min: 10, max: 95, suffix: "%", aria: "Innerste punkt i prosent",
           get: function () { var e = first(); return e ? Math.round(e.inner * 100) : 50; },
           set: function (v) { set({ inner: v / 100 }); },
         }))
       ));
     }
     var label = [
-      track(C.textarea({ rows: 2, get: getter("text"), set: function (v) { set({ text: v }); }, placeholder: "Tekst i formen (tom = ingen)" })),
+      track(C.textarea({ rows: 2, aria: "Tekst i formen", get: getter("text"), set: function (v) { set({ text: v }); }, placeholder: "Skriv tekst i formen (tom = ingen tekst)" })),
     ];
     if (el.text) {
       label = label.concat(textStyleControls(track, { valign: true }));
       label.push(h("div.wp-grid2", null,
-        track(C.num({ label: "Luft ↔", min: 0, max: 400, get: getter("padX"), set: function (v) { set({ padX: v }); } })),
-        track(C.num({ label: "Luft ↕", min: 0, max: 400, get: getter("padY"), set: function (v) { set({ padY: v }); } }))
+        track(C.num({ label: "Luft ↔", min: 0, max: 400, aria: "Luft vannrett", get: getter("padX"), set: function (v) { set({ padX: v }); } })),
+        track(C.num({ label: "Luft ↕", min: 0, max: 400, aria: "Luft loddrett", get: getter("padY"), set: function (v) { set({ padY: v }); } }))
       ));
     }
     return [C.section("Form · " + KIND_NAMES[el.kind], look), C.section("Tekst i formen", label)];
@@ -240,15 +248,15 @@
     ];
     return [C.section("Linje", [
       h("div.wp-grid2", null,
-        track(C.num({ label: "Tykk.", min: 0.5, max: 80, step: 0.5, digits: 1, suffix: "px", get: s("width").get, set: function (v) {
+        track(C.num({ label: "Tykk.", min: 0.5, max: 80, step: 0.5, digits: 1, suffix: "px", aria: "Linjetykkelse", get: s("width").get, set: function (v) {
           store.update(ids(), function (e) { return { stroke: Object.assign({}, e.stroke, { width: v }), h: Math.max(e.h, v * 4, 12) }; });
         } })),
-        track(C.color({ get: s("color").get, set: function (v) { s("color").set(v || "#111111"); } }))
+        track(C.color({ title: "Linjefarge", get: s("color").get, set: function (v) { s("color").set(v || "#111111"); } }))
       ),
-      track(C.seg({ options: [{ value: "solid", label: "Hel" }, { value: "dashed", label: "Stiplet" }, { value: "dotted", label: "Prikket" }], get: s("style").get, set: s("style").set, wide: true })),
-      C.row("Ende", track(C.seg({ options: [{ value: "round", label: "Rund" }, { value: "butt", label: "Rett" }, { value: "square", label: "Firkant" }], get: s("cap").get, set: s("cap").set }))),
-      C.row("Start", track(C.seg({ options: ends, get: getter("start"), set: function (v) { set({ start: v }); } }))),
-      C.row("Slutt", track(C.seg({ options: ends, get: getter("end"), set: function (v) { set({ end: v }); } }))),
+      track(C.seg({ aria: "Linjestil", options: [{ value: "solid", label: "Hel" }, { value: "dashed", label: "Stiplet" }, { value: "dotted", label: "Prikket" }], get: s("style").get, set: s("style").set, wide: true })),
+      C.row("Ende", track(C.seg({ wide: true, options: [{ value: "round", label: "Rund" }, { value: "butt", label: "Rett" }, { value: "square", label: "Firkant" }], get: s("cap").get, set: s("cap").set }))),
+      C.row("Start", track(C.seg({ wide: true, options: ends, get: getter("start"), set: function (v) { set({ start: v }); } }))),
+      C.row("Slutt", track(C.seg({ wide: true, options: ends, get: getter("end"), set: function (v) { set({ end: v }); } }))),
     ])];
   }
 
@@ -267,7 +275,7 @@
     // Shown when another picture lies on top of this one — the usual reason
     // an edit to an image seems to do nothing.
     var coverNote = h("p.wp-note.is-warn", { hidden: true }, h("span"),
-      h("button.wp-linkbtn", { type: "button", on: { click: function () { store.checkpoint(); store.reorder(ids(), "front"); } } }, "Flytt fremst"));
+      h("button.link", { type: "button", on: { click: function () { store.checkpoint(); store.reorder(ids(), "front"); } } }, "Flytt fremst"));
     function syncInfo() {
       var e = first();
       if (!e) return;
@@ -296,8 +304,8 @@
       }).catch(function (err) { WPE.toast(err.message, "err"); });
     });
     var actions = h("div.wp-btnrow.wp-btnrow--wrap", null,
-      h("button.wp-btn.wp-btn--ghost.wp-btn--sm", { type: "button", on: { click: function () { replaceInput.click(); } } }, util.icon("refresh-cw", 14), "Bytt bilde"),
-      h("button.wp-btn.wp-btn--ghost.wp-btn--sm", {
+      h("button.wp-btn.wp-btn--ghost", { type: "button", on: { click: function () { replaceInput.click(); } } }, util.icon("refresh-cw", 14), "Bytt bilde"),
+      h("button.wp-btn.wp-btn--ghost", {
         type: "button", title: "Fyll hele tegneflaten og legg bakerst",
         on: { click: function () {
           store.checkpoint();
@@ -305,7 +313,7 @@
           store.reorder(ids(), "back");
         } },
       }, util.icon("maximize", 14), "Fyll flaten"),
-      h("button.wp-btn.wp-btn--ghost.wp-btn--sm", {
+      h("button.wp-btn.wp-btn--ghost", {
         type: "button", title: "Tilbake til bildets egne proporsjoner",
         on: { click: function () {
           var e = first();
@@ -322,13 +330,14 @@
       coverNote,
       actions,
       C.row("Utsnitt", track(C.seg({
+        wide: true,
         options: [{ value: "cover", label: "Fyll" }, { value: "contain", label: "Tilpass" }, { value: "fill", label: "Strekk" }],
         get: getter("fit"), set: function (v) { set({ fit: v }); },
       }))),
       track(C.slider({ label: "Zoom", min: 100, max: 500, reset: 100, get: function () { var e = first(); return e ? Math.round(e.zoom * 100) : 100; }, set: function (v) { set({ zoom: v / 100 }); }, format: function (v) { return v + "%"; } })),
       track(C.slider({ label: "Fokus ↔", min: 0, max: 100, reset: 50, get: getter("posX"), set: function (v) { set({ posX: v }); }, format: function (v) { return v + "%"; } })),
       track(C.slider({ label: "Fokus ↕", min: 0, max: 100, reset: 50, get: getter("posY"), set: function (v) { set({ posY: v }); }, format: function (v) { return v + "%"; } })),
-      h("div.wp-btnrow", null,
+      h("div.wp-grid3", null,
         track(C.toggle({ icon: "arrow-left-right", label: "Speil", title: "Speilvend vannrett", get: getter("flipX"), set: function (v) { set({ flipX: v }); } })),
         track(C.toggle({ icon: "arrow-up-down", label: "Snu", title: "Speilvend loddrett", get: getter("flipY"), set: function (v) { set({ flipY: v }); } })),
         track(C.toggle({ icon: "circle", label: "Sirkel", title: "Beskjær til sirkel", get: function () { var e = first(); return e && e.mask === "circle"; }, set: function (v) { set({ mask: v ? "circle" : "none" }); } }))
@@ -344,7 +353,7 @@
         format: function (v) { return v + (unit || "%"); },
       }));
     };
-    var presets = h("div.wp-chips", null, FILTER_PRESETS.map(function (p) {
+    var presets = h("div.wp-chips", { role: "group", "aria-label": "Ferdige filtre" }, FILTER_PRESETS.map(function (p) {
       return h("button.wp-chip", { type: "button", on: { click: function () { store.checkpoint(); set({ filters: p.f }); } } }, p.name);
     }));
     var filters = [
@@ -363,11 +372,11 @@
   function iconSections(el, track) {
     return [C.section("Ikon · " + el.icon, [
       h("div.wp-grid2", null,
-        track(C.color({ get: getter("color"), set: function (v) { set({ color: v || "#111111" }); } })),
-        track(C.num({ label: "Strek", min: 0.25, max: 6, step: 0.25, digits: 2, get: getter("strokeWidth"), set: function (v) { set({ strokeWidth: v }); } }))
+        track(C.color({ title: "Ikonfarge", get: getter("color"), set: function (v) { set({ color: v || "#111111" }); } })),
+        track(C.num({ label: "Strek", min: 0.25, max: 6, step: 0.25, digits: 2, aria: "Strektykkelse", get: getter("strokeWidth"), set: function (v) { set({ strokeWidth: v }); } }))
       ),
-      C.row("Fyll", track(C.color({ allowNone: true, get: getter("fill"), set: function (v) { set({ fill: v }); } }))),
-      h("button.wp-btn.wp-btn--ghost.wp-btn--sm", {
+      C.row("Fyll", track(C.color({ title: "Fyllfarge", allowNone: true, get: getter("fill"), set: function (v) { set({ fill: v }); } }))),
+      h("button.wp-btn.wp-btn--ghost", {
         type: "button", on: { click: function () { WPE.panels.open("icons", { replace: el.id }); } },
       }, util.icon("refresh-cw", 14), "Bytt ikon"),
     ])];

@@ -76,7 +76,7 @@
   function swatchRow(colors, onPick) {
     return h("div.wp-swatches", null, colors.map(function (c) {
       return h("button.wp-swatch", {
-        type: "button", title: c, style: { background: c },
+        type: "button", title: c, "aria-label": "Farge " + c, style: { background: c },
         on: { click: function () { onPick(c); } },
       });
     }));
@@ -85,9 +85,9 @@
   /** The colour picker popover body. `set` gets called live while picking. */
   function colorPanel(get, set, allowNone) {
     var cur = splitColor(get());
-    var native = h("input.wp-cp-native", { type: "color", value: cur.hex });
-    var hexIn = h("input.wp-cp-hex", { type: "text", value: cur.hex.toUpperCase(), maxlength: 7, spellcheck: false });
-    var alpha = h("input.wp-cp-alpha", { type: "range", min: 0, max: 100, value: Math.round(cur.a * 100) });
+    var native = h("input.wp-cp-native", { type: "color", value: cur.hex, "aria-label": "Velg farge" });
+    var hexIn = h("input.wp-cp-hex", { type: "text", value: cur.hex.toUpperCase(), maxlength: 7, spellcheck: false, "aria-label": "Fargekode (hex)" });
+    var alpha = h("input.wp-cp-alpha", { type: "range", min: 0, max: 100, value: Math.round(cur.a * 100), "aria-label": "Synlighet" });
     var alphaOut = h("span.wp-cp-alphaout", null, Math.round(cur.a * 100) + "%");
 
     function apply(hex, a) {
@@ -109,7 +109,7 @@
     var eye = null;
     if (window.EyeDropper) {
       eye = h("button.wp-btn.wp-btn--icon", {
-        type: "button", title: "Hent farge fra skjermen",
+        type: "button", title: "Hent farge fra skjermen", "aria-label": "Hent farge fra skjermen",
         on: {
           click: function () {
             new window.EyeDropper().open().then(function (r) { apply(r.sRGBHex.slice(0, 7), 1); }).catch(function () {});
@@ -129,9 +129,11 @@
     );
   }
 
+  // Transparency checker behind the chip, in the system's neutrals.
+  var CHECKER = "repeating-conic-gradient(var(--color-border-strong) 0 25%, var(--color-surface) 0 50%) 0 0/8px 8px";
   function swatchStyle(c) {
-    if (!c) return { background: "repeating-conic-gradient(#d4d7cf 0 25%, #fff 0 50%) 0 0/8px 8px" };
-    return { background: "linear-gradient(" + c + "," + c + "), repeating-conic-gradient(#d4d7cf 0 25%, #fff 0 50%) 0 0/8px 8px" };
+    if (!c) return { background: CHECKER };
+    return { background: "linear-gradient(" + c + "," + c + "), " + CHECKER };
   }
 
   // ---- controls ---------------------------------------------------------------------
@@ -143,6 +145,7 @@
       var c = o.get();
       Object.assign(chip.style, { background: "" }, swatchStyle(c));
       text.textContent = c ? c.slice(0, 7).toUpperCase() + (c.length > 7 ? " " + Math.round(splitColor(c).a * 100) + "%" : "") : "Ingen";
+      btn.setAttribute("aria-label", (o.title || "Farge") + ": " + text.textContent);
     }
     btn.addEventListener("click", function () {
       cp();
@@ -153,7 +156,7 @@
   }
 
   function num(o) {
-    var input = h("input.wp-num__in", { type: "number", step: o.step || 1, min: o.min, max: o.max });
+    var input = h("input.wp-num__in", { type: "number", step: o.step || 1, min: o.min, max: o.max, "aria-label": o.aria || null });
     var lab = h("span.wp-num__lab", { title: "Dra for å endre" }, o.label || "");
     var node = h("label.wp-num", null, lab, input, o.suffix ? h("span.wp-num__suf", null, o.suffix) : null);
     function clampV(v) {
@@ -205,7 +208,7 @@
   }
 
   function slider(o) {
-    var range = h("input.wp-range", { type: "range", min: o.min, max: o.max, step: o.step || 1 });
+    var range = h("input.wp-range", { type: "range", min: o.min, max: o.max, step: o.step || 1, "aria-label": o.label || null });
     var out = h("span.wp-slider__out");
     var node = h("div.wp-slider", null, o.label ? h("span.wp-slider__lab", null, o.label) : null, range, out);
     range.addEventListener("pointerdown", cp);
@@ -230,10 +233,13 @@
   }
 
   function seg(o) {
-    var node = h("div.wp-seg" + (o.wide ? ".wp-seg--wide" : ""), { role: "group" });
+    var node = h("div.wp-seg" + (o.wide ? ".wp-seg--wide" : ""), { role: "group", "aria-label": o.aria || null });
     var btns = o.options.map(function (opt) {
+      // Icons and symbols (➤ ●) say nothing to a screen reader: name them.
+      var visible = opt.icon && !opt.showLabel ? "" : String(opt.label || "");
       var b = h("button.wp-seg__b", {
         type: "button", title: opt.title || opt.label || "",
+        "aria-label": opt.title && !/[0-9A-Za-zÆØÅæøå]/.test(visible) ? opt.title : null,
         on: { click: function () { cp(); o.set(opt.value); sync(); } },
       }, opt.icon ? util.icon(opt.icon, 16) : null, opt.icon && !opt.showLabel ? null : opt.label);
       node.appendChild(b);
@@ -241,7 +247,10 @@
     });
     function sync() {
       var v = o.get();
-      btns.forEach(function (b, i) { b.classList.toggle("is-on", o.options[i].value === v); });
+      btns.forEach(function (b, i) {
+        b.classList.toggle("is-on", o.options[i].value === v);
+        b.setAttribute("aria-pressed", o.options[i].value === v ? "true" : "false");
+      });
     }
     sync();
     return { node: node, sync: sync };
@@ -249,7 +258,7 @@
 
   function toggle(o) {
     var b = h("button.wp-tog", {
-      type: "button", title: o.title || "",
+      type: "button", title: o.title || "", "aria-label": !o.label && o.title ? o.title : null,
       on: { click: function () { cp(); o.set(!o.get()); sync(); } },
     }, o.icon ? util.icon(o.icon, 16) : null, o.label || null);
     function sync() {
@@ -279,7 +288,7 @@
   }
 
   function textarea(o) {
-    var t = h("textarea.wp-textarea", { rows: o.rows || 3, placeholder: o.placeholder || "", maxlength: 2000 });
+    var t = h("textarea.wp-textarea", { rows: o.rows || 3, placeholder: o.placeholder || "", maxlength: 2000, "aria-label": o.aria || o.placeholder || null });
     t.addEventListener("focus", cp);
     t.addEventListener("input", function () { o.set(t.value); });
     function sync() {
@@ -348,6 +357,7 @@
 
     function buildGradient() {
       var kind = seg({
+        wide: true,
         options: [{ value: "linear", label: "Lineær" }, { value: "radial", label: "Radiell" }],
         get: function () { var g = o.get(); return g && g.kind; },
         set: function (v) { patchGrad({ kind: v }); build(); },
@@ -362,6 +372,7 @@
       var g = o.get();
       g.stops.forEach(function (s, i) {
         var col = color({
+          title: "Farge for stopp " + (i + 1),
           get: function () { var gg = o.get(); return gg && gg.stops[i] ? gg.stops[i].color : "#000000"; },
           set: function (v) {
             var gg = o.get();
@@ -372,7 +383,7 @@
           },
         });
         var pos = num({
-          label: "", min: 0, max: 100, suffix: "%",
+          label: "", min: 0, max: 100, suffix: "%", aria: "Posisjon for stopp " + (i + 1),
           get: function () { var gg = o.get(); return gg && gg.stops[i] ? gg.stops[i].pos : 0; },
           set: function (v) {
             var gg = o.get();
@@ -383,19 +394,19 @@
           },
         });
         var del = g.stops.length > 2 ? h("button.wp-btn.wp-btn--icon", {
-          type: "button", title: "Fjern fargestopp",
+          type: "button", title: "Fjern fargestopp", "aria-label": "Fjern fargestopp",
           on: { click: function () { cp(); var gg = o.get(); patchGrad({ stops: gg.stops.filter(function (_, j) { return j !== i; }) }); build(); } },
         }, util.icon("x", 14)) : null;
         parts.push(col, pos);
         stopsBox.appendChild(h("div.wp-stop", null, col.node, pos.node, del));
       });
-      var add = g.stops.length < 6 ? h("button.wp-btn.wp-btn--ghost.wp-btn--sm", {
+      var add = g.stops.length < 6 ? h("button.wp-btn.wp-btn--ghost", {
         type: "button",
         on: { click: function () { cp(); var gg = o.get(); var last = gg.stops[gg.stops.length - 1]; patchGrad({ stops: gg.stops.concat({ color: last.color, pos: 100 }) }); build(); } },
       }, "+ Fargestopp") : null;
-      var presets = h("div.wp-gradpresets", null, GRADIENTS.map(function (pg) {
+      var presets = h("div.wp-gradpresets", null, GRADIENTS.map(function (pg, gi) {
         return h("button.wp-gradpreset", {
-          type: "button", title: "Bruk gradient", style: { background: window.WallpaperRender.fillCss(pg) },
+          type: "button", title: "Bruk gradient", "aria-label": "Gradient " + (gi + 1), style: { background: window.WallpaperRender.fillCss(pg) },
           on: { click: function () { cp(); o.set(pg); build(); } },
         });
       }));
@@ -439,7 +450,7 @@
 
   // ---- font picker -------------------------------------------------------------------
   function fontList(current, onPick) {
-    var search = h("input.wp-fp-search", { type: "search", placeholder: "Søk blant " + Fonts.FAMILIES.length + " skrifter …" });
+    var search = h("input.wp-fp-search", { type: "search", placeholder: "Søk blant " + Fonts.FAMILIES.length + " skrifter …", "aria-label": "Søk etter skrift" });
     var cat = "all";
     var chips = h("div.wp-fp-cats");
     var list = h("div.wp-fp-list");
@@ -488,8 +499,15 @@
     }
     [{ id: "all", label: "Alle" }].concat(Fonts.CATEGORIES).forEach(function (c) {
       var b = h("button.wp-chip" + (c.id === cat ? ".is-on" : ""), {
-        type: "button",
-        on: { click: function () { cat = c.id; chips.querySelectorAll(".wp-chip").forEach(function (x) { x.classList.toggle("is-on", x === b); }); render(); } },
+        type: "button", "aria-pressed": c.id === cat ? "true" : "false",
+        on: { click: function () {
+          cat = c.id;
+          chips.querySelectorAll(".wp-chip").forEach(function (x) {
+            x.classList.toggle("is-on", x === b);
+            x.setAttribute("aria-pressed", x === b ? "true" : "false");
+          });
+          render();
+        } },
       }, c.label);
       chips.appendChild(b);
     });
@@ -520,10 +538,25 @@
   }
 
   // ---- layout helpers ----------------------------------------------------------------
+  var rowSeq = 0;
+
+  /**
+   * Label + control. The label names the first field or option group in the
+   * control for screen readers. `indent` lines a label-less row up with the
+   * controls of the rows around it.
+   */
   function row(label, content, opts) {
-    return h("div.wp-row" + (opts && opts.stack ? ".wp-row--stack" : ""), null,
-      label ? h("span.wp-row__lab", null, label) : null,
-      h("div.wp-row__ctl", null, content));
+    var o = opts || {};
+    var lab = null;
+    if (label) {
+      lab = h("span.wp-row__lab", { id: "wp-row-" + ++rowSeq }, label);
+      var target = content && content.nodeType === 1
+        ? (content.matches("input, select, textarea, [role=group]") ? content : content.querySelector("input, select, textarea, [role=group]"))
+        : null;
+      if (target && !target.hasAttribute("aria-label")) target.setAttribute("aria-labelledby", lab.id);
+    }
+    return h("div.wp-row" + (o.stack ? ".wp-row--stack" : "") + (o.indent ? ".wp-row--indent" : ""), null,
+      lab, h("div.wp-row__ctl", null, content));
   }
 
   function section(title, content, opts) {

@@ -636,6 +636,12 @@ Leave the Terminal window open while you work. Closing it stops the app.
 
 ### What you get in this version
 
+- **One design system for the whole tool:** every screen (Annonser, NT Live,
+  Bulk, Wallpaper, Native Premium, the review link and the login) now uses the
+  same colours, type sizes, spacing, buttons and fields. A new **Oversikt**
+  start page (the house icon, or the logo) explains every tool and what it
+  makes; the tabs are grouped and each has a tooltip. The reference page is
+  at **/design-system.html**. See [Design system](#design-system).
 - **Bulk for every product:** ReadPeak and Norsk Tipping from a sheet, not just
   Houseads — plus row selection with bulk actions, search and sort, an error
   report to send back, and runs that survive a reload.
@@ -849,6 +855,34 @@ $env:PORT=8080; npm start  # Windows PowerShell
 
 ---
 
+## Design system
+
+The tool's own UI is built from two files, loaded first on every page:
+
+- `public/shared/tokens.css` — every colour (`--color-*`), type size
+  (`--text-*`), space (`--space-*`, 4 px grid), radius, control height
+  (26/30/36/44), shadow, layer and timing. Old names (`--ink`, `--green` …)
+  remain as aliases.
+- `public/shared/ui.css` — the one component library: buttons (primary,
+  secondary, quiet, danger, AI; sm/md/lg/icon), fields, selects, segmented
+  controls, checkboxes and switches, badges and chips, cards, modals, menus,
+  toasts, page header, empty state and notices. Each area's older class names
+  (`lv-btn`, `wp-btn`, `nx-btn`, `bk-badge` …) are listed next to the canonical
+  ones, so the JavaScript did not have to change.
+
+The area stylesheets (`style.css`, `bulk/bulk.css`, `live/live-ui.css`,
+`wallpaper/wallpaper.css`, `native/app/native.css`) only lay out their own
+screens and read the tokens. `native/review/review.css` is injected into the
+advertiser's page, so it mirrors the token values in its own scope instead of
+loading the shared files. The creatives (`assets/banner.css`, `assets/live.css`,
+`native/runtime/np.css`) are not part of the system — they follow the ad specs.
+
+Open **/design-system.html** for the living reference with every token and
+component, and the rules: one green action per screen, colour only for meaning
+(green done, amber warning, red error/delete, blue info, violet AI), every page
+and panel says what it is for, icon buttons always have a tooltip, contrast at
+least 4.5:1.
+
 ## HTML5 for Campaign Manager 360
 
 Under **Nedlastingstype**, pick **HTML5 · Campaign Manager 360** and fill in the
@@ -1012,8 +1046,10 @@ banner-generator/
 │   ├── banner.html        One generic template; the format arrives in the data
 │   └── _render.js         Shared init (signals "ready to screenshot")
 ├── public/
-│   ├── index.html         App UI
-│   ├── style.css          App styling (chrome only)
+│   ├── index.html         App UI (Oversikt start page + the tool tabs)
+│   ├── design-system.html Living reference for the design system
+│   ├── shared/            tokens.css + ui.css — the design system (see above)
+│   ├── style.css          Top bar + Annonser screens (layout only)
 │   ├── app.js             Frontend logic
 │   ├── bulk/              The Bulk tab (state, fitting, grid, editor, rules, run)
 │   ├── native/            Native Premium: schema.js (the blocks, style and page

@@ -1,0 +1,810 @@
+/* =========================================================================
+   shared/ui.css — the ABC design component library. Reads shared/tokens.css.
+
+   One definition per component. Each area grew its own copy of buttons,
+   inputs, segmented controls and so on (btn-*, lv-*, wp-*, nx-*, npr-*, bk-*);
+   those class names are still what the JavaScript renders, so every rule
+   below lists the canonical class (.btn, .input …) together with the area
+   names it stands for. The area stylesheets keep only layout.
+
+   Contents
+     1. Base           6. Chips, badges, pills
+     2. Buttons        7. Cards and panels
+     3. Fields         8. Overlays (modal, drawer, popover, toast)
+     4. Choice         9. Page header, empty state, notices
+     5. Segmented     10. Utilities
+   ========================================================================= */
+
+/* ================================ 1. Base ================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* [hidden] must beat any component display rule. */
+[hidden] { display: none !important; }
+
+html, body { margin: 0; }
+
+/* No font-size or line-height on body: banner previews sit in the app's DOM
+   and must inherit exactly what the export renderer gives them (browser
+   defaults). Components set their own sizes. */
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); }
+button, input, select, textarea { font-family: inherit; }
+::selection { background: var(--color-primary-soft); }
+
+/* One focus ring for every control, keyboard only. */
+:where(button, a, summary, [tabindex], [role="button"]):focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-md);
+}
+
+/* Quiet, thin scrollbars on every scrolling panel. */
+* { scrollbar-width: thin; scrollbar-color: #cfd4c5 transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d3d8c9; border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #bfc5b3; background-clip: padding-box; border: 3px solid transparent; }
+
+code, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  padding: 1px 4px;
+  color: var(--color-text-secondary);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ui-pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* =============================== 2. Buttons ============================== */
+/* Variants: primary (the one thing to do), secondary (bordered), quiet
+   (no border, for toolbars), danger, ai. Sizes: sm 30, md 36, lg 44. */
+.btn,
+.btn-primary, .btn-ghost, .btn-download,
+.lv-btn, .wp-btn, .nx-btn, .npr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-h-md);
+  padding: 0 var(--control-px-md);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+:is(.btn, .btn-primary, .btn-ghost, .btn-download, .lv-btn, .wp-btn, .nx-btn, .npr-btn) svg { flex: none; }
+:is(.btn, .btn-primary, .btn-ghost, .btn-download, .lv-btn, .wp-btn, .nx-btn, .npr-btn):hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-subtle);
+}
+:is(.btn, .btn-primary, .btn-ghost, .btn-download, .lv-btn, .wp-btn, .nx-btn, .npr-btn):active:not(:disabled) { transform: translateY(1px); }
+:is(.btn, .btn-primary, .btn-ghost, .btn-download, .lv-btn, .wp-btn, .nx-btn, .npr-btn):disabled,
+:is(.btn, .lv-btn, .wp-btn, .nx-btn, .npr-btn)[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+:is(.btn, .btn-primary, .btn-ghost, .btn-download, .lv-btn, .wp-btn, .nx-btn, .npr-btn):focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Primary */
+.btn--primary,
+.btn-primary, .btn-download,
+.lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-bold);
+  box-shadow: var(--shadow-primary);
+}
+:is(.btn--primary, .btn-primary, .btn-download, .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary):hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: var(--color-text-inverse);
+}
+
+/* Secondary — bordered, white. The default look of .btn and .nx-btn. */
+.btn--secondary,
+.btn-ghost, .lv-btn--ghost, .wp-btn--ghost, .npr-btn--ghost {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+:is(.btn--secondary, .btn-ghost, .lv-btn--ghost, .wp-btn--ghost, .npr-btn--ghost):hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+/* Quiet — for toolbars and secondary actions next to a primary. */
+.btn--quiet,
+.lv-btn--quiet, .nx-btn--ghost, .wp-btn--icon {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-secondary);
+  box-shadow: none;
+}
+:is(.btn--quiet, .lv-btn--quiet, .nx-btn--ghost, .wp-btn--icon):hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  border-color: transparent;
+  color: var(--color-text);
+}
+
+/* Danger */
+.btn--danger, .nx-btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-bold);
+}
+:is(.btn--danger, .nx-btn--danger):hover:not(:disabled) {
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+  color: var(--color-text-inverse);
+}
+/* A secondary button that deletes: neutral until hovered. */
+:is(.btn-ghost, .btn--secondary, .wp-btn--icon, .lv-btn--quiet, .nx-btn--ghost).is-danger:hover:not(:disabled) {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+/* AI — violet, used only for AI actions. */
+.btn--ai, .nx-btn--ai {
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-bold);
+}
+:is(.btn--ai, .nx-btn--ai):hover:not(:disabled) {
+  background: var(--color-ai-hover);
+  border-color: var(--color-ai-hover);
+  color: var(--color-text-inverse);
+}
+
+/* Sizes */
+.btn--sm, .btn-sm, .lv-btn--sm, .wp-btn--sm, .nx-btn--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--control-px-sm);
+  font-size: var(--text-sm);
+  gap: var(--space-1-5);
+}
+.btn--lg, .lv-btn--lg {
+  height: var(--control-h-lg);
+  padding: 0 var(--control-px-lg);
+  font-size: var(--text-base);
+  border-radius: var(--radius-md);
+}
+.btn--block, .btn-block, .wp-btn--block { width: 100%; }
+
+/* Icon-only buttons are square at every size. */
+.btn--icon, .lv-btn--icon, .wp-btn--icon,
+.nx-btn:has(> svg:only-child), .nx-btn:has(> .wpi:only-child) {
+  width: var(--control-h-md);
+  padding: 0;
+}
+:is(.btn--sm, .nx-btn--sm):is(.btn--icon, :has(> svg:only-child), :has(> .wpi:only-child)) {
+  width: var(--control-h-sm);
+  padding: 0;
+}
+.lv-btn--icon {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+.lv-btn--icon:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+/* The square icon button in the top bar (settings). */
+.iconbtn {
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+.iconbtn:hover { color: var(--color-primary); border-color: var(--color-border-strong); background: var(--color-surface-subtle); }
+
+/* Loading state: any button with .is-loading and a spinner child. */
+.spinner,
+.fetch-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.85;
+  display: none;
+  animation: spin 0.7s linear infinite;
+  flex: none;
+}
+.is-loading > .spinner,
+.is-loading > .fetch-spinner { display: inline-block; }
+.is-loading { cursor: progress; }
+
+/* Text link inside UI copy. */
+.link {
+  color: var(--color-primary-strong);
+  font-weight: var(--weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--color-primary-border);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+.link:hover { color: var(--color-primary); text-decoration-color: currentColor; }
+
+/* ================================ 3. Fields ============================== */
+/* Every text-entry control shares one look. The bare-element selector keeps
+   the Annonser builder's unclassed inputs styled; :where() keeps it at zero
+   specificity so any class below wins. */
+:where(input:not([type="color"], [type="range"], [type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"]), textarea, select),
+.input, .select, .textarea, .bk-input, .bk-select, .lv-input, .nx-input, .wp-select, .wp-textarea, .npr-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-h-md);
+  padding: 0 var(--space-3);
+  font: var(--weight-regular) var(--text-base) / var(--leading-snug) var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+  -webkit-appearance: none;
+  appearance: none;
+}
+:where(textarea),
+.textarea, .lv-textarea, .nx-textarea, .wp-textarea, textarea.npr-input {
+  height: auto;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+:where(input, textarea)::placeholder,
+:is(.input, .bk-input, .lv-input, .nx-input, .wp-textarea, .npr-input)::placeholder { color: var(--color-text-placeholder); opacity: 1; }
+:where(input:not([type="color"], [type="range"], [type="checkbox"], [type="radio"], [type="file"]), textarea, select):hover,
+:is(.input, .bk-input, .bk-select, .lv-input, .nx-input, .wp-select, .wp-textarea, .npr-input):hover { border-color: var(--color-border-hover); }
+:where(input:not([type="color"], [type="range"], [type="checkbox"], [type="radio"], [type="file"]), textarea, select):focus,
+:is(.input, .bk-input, .bk-select, .lv-input, .nx-input, .wp-select, .wp-textarea, .npr-input):focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+:where(input, textarea, select):disabled,
+:is(.input, .lv-input, .nx-input):disabled { background: var(--color-surface-muted); color: var(--color-text-tertiary); cursor: not-allowed; }
+:is(.input, .lv-input, .nx-input).is-bad,
+:is(.input, .lv-input, .nx-input)[aria-invalid="true"] { border-color: var(--color-danger); }
+:is(.input, .lv-input, .nx-input).is-bad:focus { box-shadow: 0 0 0 3px rgba(197, 43, 34, 0.18); }
+
+/* Small fields for dense rows. */
+.input--sm, .nx-input--sm, .lv-select--sm, .nx-select--sm {
+  height: var(--control-h-sm);
+  font-size: var(--text-md);
+  padding-left: var(--space-2);
+}
+.lv-select--sm, .nx-select--sm { width: auto; }
+
+/* Selects get one chevron, drawn as a background so no wrapper is needed. */
+:where(select),
+.select, .bk-select, .lv-select, .nx-select, .wp-select {
+  padding-right: 32px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23565b4c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+}
+/* The old wrapper drew its own chevron; the background one replaces it. */
+.select-wrap::after, .wp-selectwrap::after { content: none !important; }
+.select-wrap, .wp-selectwrap { position: relative; width: 100%; }
+
+/* Label + hint + help line, shared by every form. */
+.field { display: flex; flex-direction: column; gap: var(--space-1-5); margin-bottom: var(--space-4); }
+.field__label,
+.lv-field__label, .nx-field__label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+.field__hint,
+.lv-field__hint, .bk-hint, .npr-hint {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-snug);
+  color: var(--color-text-tertiary);
+}
+.field__help { margin: 0; font-size: var(--text-xs); line-height: var(--leading-snug); color: var(--color-text-tertiary); }
+.counter { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* Range sliders. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-xs), 0 0 0 1px rgba(18, 22, 10, 0.08);
+  transition: transform var(--duration-fast) var(--ease);
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-xs);
+}
+input[type="range"]:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+/* ================================ 4. Choice ============================== */
+/* Native checkboxes and radios in the brand colour. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); cursor: pointer; }
+
+.checkbox, .bk-check, .wp-check, .nx-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+:is(.checkbox, .bk-check, .wp-check, .nx-check) input { width: 16px; height: 16px; margin: 0; flex: none; }
+
+/* Switches (two markups: lv- with a thumb element, nx- with ::after). */
+.lv-switch__track, .nx-switch__track {
+  flex: none;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  transition: background-color var(--duration) var(--ease);
+}
+.lv-switch__thumb, .nx-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(18, 22, 10, 0.25);
+  transition: transform var(--duration) var(--ease);
+}
+.lv-switch__input:checked + .lv-switch__track,
+.nx-switch input:checked + .nx-switch__track { background: var(--color-primary); }
+.lv-switch__input:checked + .lv-switch__track .lv-switch__thumb,
+.nx-switch input:checked + .nx-switch__track::after { transform: translateX(16px); }
+.lv-switch__input:focus-visible + .lv-switch__track,
+.nx-switch input:focus-visible + .nx-switch__track { box-shadow: var(--shadow-focus); outline: none; }
+
+/* Two-up choice cards for a decision that changes the whole result. */
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.choice .choice__opt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  height: auto;
+  text-align: left;
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  box-shadow: none;
+  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+.choice .choice__opt:hover { border-color: var(--color-border-hover); background: var(--color-surface-subtle); }
+.choice .choice__opt.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+.choice__title { font-size: var(--text-md); font-weight: var(--weight-bold); color: var(--color-text); }
+.choice .choice__opt.is-active .choice__title { color: var(--color-primary-strong); }
+.choice__desc { font-size: var(--text-xs); font-weight: var(--weight-regular); line-height: var(--leading-snug); color: var(--color-text-tertiary); }
+.choice .choice__opt.is-active .choice__desc { color: var(--color-text-secondary); }
+
+/* ============================== 5. Segmented ============================= */
+/* A track with options; the chosen one is a raised white chip. Used for
+   short mutually-exclusive choices (PNG/JPEG, Knapp/Tekst, filters). */
+.segmented, .lv-seg, .nx-seg, .wp-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-0-5);
+  padding: 3px;
+  min-width: 0;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+:is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):hover { color: var(--color-text); }
+:is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):is(.is-active, .is-on, [aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--color-surface);
+  color: var(--color-primary-strong);
+  box-shadow: 0 1px 2px rgba(18, 22, 10, 0.1), 0 0 0 1px rgba(18, 22, 10, 0.04);
+}
+:is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+/* Small */
+.segmented--sm .seg, .lv-seg--sm .lv-seg__btn, .nx-seg--sm .nx-seg__btn, .bk-seg .seg {
+  height: var(--control-h-xs);
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+/* Full width: options share the row equally. */
+.segmented--block, .segmented--wide, .lv-seg--block, .wp-seg--wide { display: flex; width: 100%; }
+:is(.segmented--block, .segmented--wide) .seg, .lv-seg--block .lv-seg__btn, .wp-seg--wide .wp-seg__b { flex: 1 1 0; min-width: 0; }
+
+/* ========================= 6. Chips, badges, pills ======================= */
+/* .badge: small status label. Tones: neutral, success, warning, danger,
+   info, ai. Every area's status chip maps onto these tones. */
+.badge, .lv-chip, .lv-pill, .bk-badge, .bk-pill, .hcard__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 22px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.badge--success, .lv-chip--ok, .lv-chip--live, .lv-pill--today, .bk-badge--ok, .hcard__tag {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+}
+.badge--warning, .lv-chip--warn, .bk-badge--warn {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+.badge--danger, .bk-badge--error, .bk-pill.is-bad {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+.badge--live, .lv-pill--live { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+.badge--info, .bk-pill.is-manual {
+  background: var(--color-info-soft);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
+}
+.badge--ai { background: var(--color-ai-soft); border-color: var(--color-ai-border); color: var(--color-ai); }
+.badge--muted, .lv-chip--muted, .lv-pill--future, .bk-badge--pending { color: var(--color-text-tertiary); }
+.lv-pill--past { background: transparent; border: 1px dashed var(--color-border-strong); color: var(--color-text-tertiary); }
+.bk-pill { height: 18px; padding: 0 var(--space-1-5); font-weight: var(--weight-medium); }
+
+/* Toggleable filter chips. */
+.chip, .wp-chip, .bk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+:is(.chip, .wp-chip, .bk-chip):hover { border-color: var(--color-border-hover); color: var(--color-text); }
+:is(.chip, .wp-chip, .bk-chip):is(.is-on, .is-active, :has(input:checked)) {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary-strong);
+}
+
+/* Small numeric count next to a tab label. */
+.count, .tab__count, .lv-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font: var(--weight-bold) 10.5px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Step number in front of a form group title. */
+.step {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font: var(--weight-heavy) 11px / 1 var(--font-sans);
+}
+
+/* ========================== 7. Cards and panels ========================== */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  min-height: 0;
+}
+.card, .lv-card, .bk-card, .nx-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+.card--interactive { transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease), border-color var(--duration) var(--ease); cursor: pointer; }
+.card--interactive:hover { box-shadow: var(--shadow-md); border-color: var(--color-border-strong); transform: translateY(-2px); }
+
+/* Card title row: title, one-line description, optional actions. */
+.card__head, .lv-card__head { display: flex; align-items: flex-start; gap: var(--space-3); }
+.card__title, .lv-card__title { margin: 0; font-size: var(--text-base); font-weight: var(--weight-heavy); letter-spacing: -0.01em; color: var(--color-text); line-height: var(--leading-snug); }
+.card__desc, .lv-card__desc { margin: 2px 0 0; font-size: var(--text-sm); line-height: var(--leading-snug); color: var(--color-text-tertiary); }
+
+/* Section heading inside a panel: small caps overline. */
+.overline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ================================ 8. Overlays ============================ */
+/* Modal: backdrop + centred panel with head / body / foot. */
+.modal-backdrop, .nx-modal-bg, .lv-modal, .wp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--color-overlay);
+  backdrop-filter: blur(2px);
+  animation: ui-fade-in var(--duration) var(--ease) both;
+}
+.modal, .nx-modal, .lv-modal__panel, .wp-modal__card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  max-height: calc(100vh - 2 * var(--space-6));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: ui-pop var(--duration-slow) var(--ease) both;
+}
+.modal__head, .nx-modal__head, .lv-modal__head, .wp-modal__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  flex: none;
+}
+:is(.modal__head, .nx-modal__head, .lv-modal__head, .wp-modal__head) h2 { font-size: var(--text-lg); font-weight: var(--weight-heavy); flex: 1; min-width: 0; }
+.modal__body, .nx-modal__body { padding: var(--space-5); overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.modal__foot, .nx-modal__foot, .lv-modal__foot, .wp-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  flex: none;
+}
+
+/* Popover menus. */
+.menu, .nx-menu, .wp-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-1);
+  z-index: var(--z-popover);
+}
+
+/* Toasts: bottom centre, dark, one line. */
+.toasts {
+  position: fixed;
+  bottom: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(560px, calc(100vw - 32px));
+  background: var(--color-text);
+  color: #fff;
+  padding: 10px var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-snug);
+  box-shadow: var(--shadow-md);
+  animation: toastIn var(--duration-slow) var(--ease) both;
+}
+.toast.is-out { animation: toastOut var(--duration-slow) var(--ease) forwards; }
+.toast--ok { background: #163d16; }
+.toast--err { background: #5e1714; }
+.toast__dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #7ed07e; }
+.toast--err .toast__dot { background: #ff8a80; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(12px) scale(0.96); } }
+
+/* ================= 9. Page header, empty state, notices ================== */
+/* The title block at the top of an overview page (Historikk, Bulk start,
+   Native lists). Title + one sentence saying what the page is for. */
+.page { max-width: var(--page-max); margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-12); }
+.page--narrow { max-width: var(--page-narrow); }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-6); }
+.page-head__text { min-width: 0; max-width: 680px; }
+.page-head__eyebrow { margin: 0 0 var(--space-2); }
+.page-head__title { font-size: var(--text-3xl); font-weight: var(--weight-heavy); letter-spacing: -0.025em; line-height: 1.1; color: var(--color-text); }
+.page-head__desc { margin: var(--space-2) 0 0; font-size: var(--text-base); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.page-head__actions { display: flex; align-items: center; gap: var(--space-2); flex: none; }
+
+/* Empty state: icon, title, one sentence, one action. Centred in its area. */
+.empty-state, .empty, .nx-empty, .lv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--color-text-secondary);
+}
+.empty-state__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-2);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+.empty-state__title { margin: 0; font-size: var(--text-lg); font-weight: var(--weight-heavy); color: var(--color-text); }
+.empty-state__text { margin: 0; max-width: 420px; font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-text-tertiary); }
+.empty-state__actions { margin-top: var(--space-3); display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
+
+/* Inline notice: a tinted box with an icon and one or two sentences. */
+.notice {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--color-text-secondary);
+}
+.notice > svg, .notice > .wpi { flex: none; margin-top: 1px; }
+.notice--info { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+.notice--success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+.notice--warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+.notice--danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+
+/* ================================ 10. Utilities ========================== */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--color-text-tertiary); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.stack { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+.stack > .notice, .stack > .choice, .stack > .row { align-self: stretch; }
+.row { display: flex; align-items: center; gap: var(--space-2); }
+.spacer { flex: 1 1 auto; }

@@ -73,7 +73,10 @@
       "Skjerm " + width + " px bred · synlig bakgrunn på hver side: " + Math.round(side) + " px" +
       (width < Spec.get("background").width ? " · ytterkantene av bakgrunnen vises ikke" : "") +
       " · vist i " + Math.round(scale * 100) + " %";
-    dom.buttons.forEach(function (b) { b.classList.toggle("is-on", Number(b.dataset.w) === width); });
+    dom.buttons.forEach(function (b) {
+      b.classList.toggle("is-on", Number(b.dataset.w) === width);
+      b.setAttribute("aria-pressed", Number(b.dataset.w) === width ? "true" : "false");
+    });
   }
 
   function build() {
@@ -84,8 +87,8 @@
     dom.stage = h("div.wp-prev__stage");
     var card = h("div.wp-modal__card.wp-prev", { role: "dialog", "aria-modal": "true", "aria-label": "Forhåndsvisning på nettsiden" },
       h("header.wp-modal__head", null, h("h2", null, "Forhåndsvis på nettsiden"),
-        h("div.wp-seg", null, dom.buttons),
-        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", on: { click: close } }, util.icon("x", 18))),
+        h("div.wp-seg", { role: "group", "aria-label": "Skjermbredde" }, dom.buttons),
+        h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk", "aria-label": "Lukk", on: { click: close } }, util.icon("x", 18))),
       dom.stage,
       h("footer.wp-modal__foot", null, dom.info, h("span.wp-prev__hint", null, "Hold musen over annonsen for å se hover-effekter (HTML5)."))
     );

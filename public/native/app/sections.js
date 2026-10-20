@@ -66,6 +66,14 @@
     );
   }
 
+  /** A part of every page that cannot be moved or removed. */
+  function fixedRow(label, why) {
+    return h("li.nx-seclist__fixed", { title: why },
+      h("span.nx-seclist__icon", null, ui.icon("lock", 14)),
+      h("span.nx-seclist__type", null, label),
+      h("span.nx-seclist__lock", null, "Fast"));
+  }
+
   function panel() {
     var root = h("div.nx-seclist");
     var bar = h("div.nx-groupbar-slot");
@@ -80,7 +88,7 @@
       ui.clear(bar);
       if (group) bar.appendChild(groupBar(ids));
       ui.clear(list);
-      list.appendChild(h("li.nx-seclist__fixed", { title: "Merkingen er fast og kan ikke fjernes" }, ui.icon("lock", 14), h("span", null, "Annonsørmerking")));
+      list.appendChild(fixedRow("Annonsørmerking", "Merkingen øverst er lik på alle sider. Teksten endres under Innstillinger."));
       page.sections.forEach(function (s, i) {
         var hidden = hiddenOn(s);
         var item = h(
@@ -127,7 +135,7 @@
         });
         list.appendChild(item);
       });
-      list.appendChild(h("li.nx-seclist__fixed", null, ui.icon("lock", 14), h("span", null, "Bunntekst og deling")));
+      list.appendChild(fixedRow("Bunntekst og deling", "Bunnteksten og delingsknappene er like på alle sider. Teksten endres under Innstillinger."));
     }
 
     root.appendChild(bar);
@@ -136,7 +144,7 @@
       h(
         "div.nx-seclist__foot",
         null,
-        ui.button("Legg til seksjon", { icon: "plus", kind: "primary", onClick: function () {
+        ui.button("Legg til seksjon", { icon: "plus", cls: "nx-addbtn", onClick: function () {
           var page = NP.store.page();
           var sel = NP.store.get().selected;
           var idx = sel ? page.sections.findIndex(function (s) { return s.id === sel; }) + 1 : page.sections.length;

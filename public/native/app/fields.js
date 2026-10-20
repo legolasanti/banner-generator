@@ -31,17 +31,26 @@
     return node;
   }
 
-  function label(f, extra) {
+  var labelSeq = 0;
+
+  function label(f, extra, id) {
     return h(
       "div.nx-field__head",
       null,
-      h("span.nx-field__label", null, f.label, f.required ? h("span.nx-req", { title: "Påkrevd" }, " *") : null),
+      h("span.nx-field__label", { id: id || null }, f.label, f.required ? h("span.nx-req", { title: "Påkrevd" }, " *") : null),
       extra || null
     );
   }
 
+  // The label is a span (the head also holds a counter and the AI button), so
+  // the controls point at it with aria-labelledby instead of <label for>.
   function wrap(f, control, headExtra, help) {
-    return h("div.nx-field", { dataset: { key: f.key } }, label(f, headExtra), control, help || f.help ? h("p.nx-help", null, help || f.help) : null);
+    var id = "nx-fl-" + ++labelSeq;
+    var inputs = control.matches && control.matches("input, select, textarea, [contenteditable]") ? [control] : control.querySelectorAll ? control.querySelectorAll("input, select, textarea, [contenteditable]") : [];
+    Array.prototype.forEach.call(inputs, function (el) {
+      if (!el.hasAttribute("aria-label") && !el.hasAttribute("aria-labelledby")) el.setAttribute("aria-labelledby", id);
+    });
+    return h("div.nx-field", { dataset: { key: f.key } }, label(f, headExtra, id), control, help || f.help ? h("p.nx-help", null, help || f.help) : null);
   }
 
   function aiButton(f, getValue, apply, ctx) {
@@ -337,8 +346,8 @@
   }
 
   function colorControl(f, value, onChange, ctx) {
-    var input = h("input.nx-color", { type: "color", value: value || "#ffffff" });
-    var hex = h("input.nx-input.nx-hex", { type: "text", value: value || "", placeholder: "fra tema", spellcheck: "false", maxlength: 7 });
+    var input = h("input.nx-color", { type: "color", value: value || "#ffffff", "aria-label": f.label + " – velg farge" });
+    var hex = h("input.nx-input.nx-hex", { type: "text", value: value || "", placeholder: "fra tema", spellcheck: "false", maxlength: 7, "aria-label": f.label + " – fargekode" });
     input.addEventListener("input", function () {
       hex.value = input.value;
       onChange(input.value, { from: "panel" });
@@ -357,6 +366,7 @@
         swatches.appendChild(h("button.nx-swatch", {
           type: "button",
           title: c[1] + " " + col,
+          "aria-label": "Bruk " + c[1].toLowerCase() + " " + col,
           style: { background: col },
           on: { click: function () { input.value = col; hex.value = col; onChange(col); } },
         }));

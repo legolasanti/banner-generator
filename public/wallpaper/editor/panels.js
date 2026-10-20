@@ -48,7 +48,7 @@
     var holder = h("div.wp-tile__art", { style: { width: el.w * scale + "px", height: el.h * scale + "px" } });
     var inner = h("div.wp-ab", { style: { width: el.w + "px", height: el.h + "px", transform: "scale(" + scale + ")", transformOrigin: "0 0", background: "transparent", overflow: "visible" } }, node);
     holder.appendChild(inner);
-    return h("button.wp-tile" + (o.cls ? "." + o.cls : ""), { type: "button", title: o.title || "", on: { click: onClick } }, holder, o.label ? h("span.wp-tile__lab", null, o.label) : null);
+    return h("button.wp-tile" + (o.cls ? "." + o.cls : ""), { type: "button", title: o.title || "", "aria-label": o.title || null, on: { click: onClick } }, holder, o.label ? h("span.wp-tile__lab", null, o.label) : null);
   }
 
   // ---- text ----------------------------------------------------------------------------
@@ -80,10 +80,9 @@
     var combos = h("div.wp-tiles.wp-tiles--1", null, TEXT_COMBOS.map(function (o) {
       var el = Doc.createElement("text", Object.assign({ x: 0, y: 0 }, o));
       el.h = Math.round(o.style.size * (o.style.lineHeight || 1.15) + (o.padY || 0) * 2);
-      return presetTile(el, function () { addElement("text", o); }, { maxW: 250, maxH: 56, cls: "wp-tile--wide" });
+      return presetTile(el, function () { addElement("text", o); }, { maxW: 228, maxH: 56, cls: "wp-tile--wide" });
     }));
     return [
-      h("p.wp-drawer__hint", null, "Klikk for å legge til. Dobbeltklikk tekst på lerretet for å skrive."),
       h("div.wp-textadds", null, btns),
       h("h4.wp-drawer__sub", null, "Tekstkombinasjoner"),
       combos,
@@ -186,7 +185,6 @@
     return [
       h("h4.wp-drawer__sub", null, "Former"),
       shapes,
-      h("p.wp-drawer__hint", null, "Alle former kan ha tekst – dobbeltklikk formen for å skrive i den."),
       h("h4.wp-drawer__sub", null, "Knapper"),
       buttons,
       h("h4.wp-drawer__sub", null, "Merker og klistremerker"),
@@ -209,7 +207,7 @@
     var set = util.icons();
     if (!set) return [h("p.wp-drawer__hint", null, "Laster ikoner …")];
     var names = Object.keys(set.icons);
-    var search = h("input.wp-search", { type: "search", placeholder: "Søk i " + names.length + " ikoner (engelsk: ship, gift …)" });
+    var search = h("input.wp-search", { type: "search", placeholder: "Søk blant " + names.length.toLocaleString("nb-NO") + " ikoner …", "aria-label": "Søk etter ikon (engelske ord)" });
     var grid = h("div.wp-icongrid");
     var more = h("button.wp-btn.wp-btn--ghost.wp-btn--sm.wp-btn--block", { type: "button" }, "Vis flere");
     var limit = 120;
@@ -246,7 +244,7 @@
       var list = matches(search.value.trim().toLowerCase());
       util.clear(grid);
       list.slice(0, limit).forEach(function (n) {
-        grid.appendChild(h("button.wp-iconbtn", { type: "button", title: n, on: { click: function () { pick(n); } } }, util.icon(n, 24)));
+        grid.appendChild(h("button.wp-iconbtn", { type: "button", title: n, "aria-label": n, on: { click: function () { pick(n); } } }, util.icon(n, 24)));
       });
       if (!list.length) grid.appendChild(h("p.wp-empty-sm", null, "Ingen ikoner funnet. Prøv et engelsk ord."));
       more.hidden = list.length <= limit;
@@ -273,8 +271,8 @@
       util.icon("image-plus", 26), h("strong", null, "Last opp bilder"),
       h("span", null, "eller dra dem rett inn på lerretet"), h("small", null, "JPG · PNG · WEBP · AVIF · GIF — maks 25 MB"));
 
-    var url = h("input.wp-text", { type: "url", placeholder: "Lim inn bildelenke …" });
-    var fetchBtn = h("button.wp-btn.wp-btn--primary.wp-btn--sm", { type: "button" }, "Hent");
+    var url = h("input.wp-text", { type: "url", placeholder: "Lim inn bildelenke …", "aria-label": "Bildelenke (https://…)" });
+    var fetchBtn = h("button.wp-btn.wp-btn--ghost", { type: "button" }, "Hent");
     function fetchUrl() {
       var v = url.value.trim();
       if (!v) return;
@@ -312,7 +310,7 @@
       }
       items.forEach(function (a) {
         gallery.appendChild(h("button.wp-gallery__item", {
-          type: "button", title: a.name + " · " + a.width + "×" + a.height,
+          type: "button", title: a.name + " · " + a.width + "×" + a.height, "aria-label": "Legg inn " + a.name,
           on: { click: function () { WPE.assets.placeAsset(a); } },
         }, h("img", { src: a.url, alt: "", loading: "lazy" })));
       });
@@ -334,13 +332,13 @@
     var unsub = store.subscribe(function (what) { if (what === "doc" || what === "board") fill.sync(); });
     backgroundPanel.cleanup = unsub;
     var sw = h("div.wp-swatches.wp-swatches--lg", null, WPE.controls.PALETTE.map(function (c) {
-      return h("button.wp-swatch", { type: "button", title: c, style: { background: c }, on: { click: function () { store.checkpoint(); store.setBoardProps({ bg: Doc.solid(c) }); } } });
+      return h("button.wp-swatch", { type: "button", title: c, "aria-label": "Bakgrunnsfarge " + c, style: { background: c }, on: { click: function () { store.checkpoint(); store.setBoardProps({ bg: Doc.solid(c) }); } } });
     }));
-    var gr = h("div.wp-gradpresets.wp-gradpresets--lg", null, WPE.controls.GRADIENTS.map(function (g) {
-      return h("button.wp-gradpreset", { type: "button", style: { background: Render.fillCss(g) }, on: { click: function () { store.checkpoint(); store.setBoardProps({ bg: g }); } } });
+    var gr = h("div.wp-gradpresets.wp-gradpresets--lg", null, WPE.controls.GRADIENTS.map(function (g, i) {
+      return h("button.wp-gradpreset", { type: "button", title: "Bruk gradient", "aria-label": "Gradient " + (i + 1), style: { background: Render.fillCss(g) }, on: { click: function () { store.checkpoint(); store.setBoardProps({ bg: g }); } } });
     }));
     return [
-      h("p.wp-drawer__hint", null, "Bakgrunnsfarge for " + spec.name.toLowerCase() + " (" + spec.width + "×" + spec.height + "). Vil du ha et bilde i bakgrunnen: Bilder → «Fyll flaten»."),
+      h("p.wp-drawer__hint", null, "Gjelder " + spec.name.toLowerCase() + " (" + spec.width + "×" + spec.height + "). Vil du ha et bilde i bakgrunnen: legg det inn under Bilder og velg «Fyll flaten»."),
       h("h4.wp-drawer__sub", null, "Farger"), sw,
       h("h4.wp-drawer__sub", null, "Gradienter"), gr,
       h("h4.wp-drawer__sub", null, "Egendefinert"), fill.node,
@@ -401,8 +399,8 @@
           h("span.wp-layer__grip", null, util.icon("grip-vertical", 14)),
           h("span.wp-layer__type", null, util.icon(TYPE_ICON[el.type] || "square", 15)),
           name,
-          h("button.wp-layer__btn" + (el.hidden ? ".is-on" : ""), { type: "button", title: el.hidden ? "Vis" : "Skjul", on: { click: function () { store.checkpoint(); store.update(el.id, { hidden: !el.hidden }); } } }, util.icon(el.hidden ? "eye-off" : "eye", 15)),
-          h("button.wp-layer__btn" + (el.locked ? ".is-on" : ""), { type: "button", title: el.locked ? "Lås opp" : "Lås", on: { click: function () { store.checkpoint(); store.update(el.id, { locked: !el.locked }); } } }, util.icon(el.locked ? "lock" : "lock-open", 15))
+          h("button.wp-layer__btn" + (el.hidden ? ".is-on" : ""), { type: "button", title: el.hidden ? "Vis" : "Skjul", "aria-label": (el.hidden ? "Vis " : "Skjul ") + Doc.displayName(el), on: { click: function () { store.checkpoint(); store.update(el.id, { hidden: !el.hidden }); } } }, util.icon(el.hidden ? "eye-off" : "eye", 15)),
+          h("button.wp-layer__btn" + (el.locked ? ".is-on" : ""), { type: "button", title: el.locked ? "Lås opp" : "Lås", "aria-label": (el.locked ? "Lås opp " : "Lås ") + Doc.displayName(el), on: { click: function () { store.checkpoint(); store.update(el.id, { locked: !el.locked }); } } }, util.icon(el.locked ? "lock" : "lock-open", 15))
         );
         list.appendChild(row);
       });
@@ -410,13 +408,12 @@
     render();
     var unsub = store.subscribe(function (what) { if (what === "doc" || what === "sel" || what === "board") render(); });
     layersPanel.cleanup = unsub;
-    return [h("p.wp-drawer__hint", null, "Øverst i lista ligger øverst i designet. Dra for å endre rekkefølge. Låste elementer velges her."), list];
+    return [list];
   }
 
   // ---- templates ----------------------------------------------------------------------------------
   function templatesPanel() {
     return [
-      h("p.wp-drawer__hint", null, "En mal fyller både bakgrunn og toppbanner. Du kan angre med Ctrl/⌘+Z."),
       h("div.wp-templates", null, WPE.templates.map(function (t) {
         var doc = Doc.normalizeDoc(t.make());
         WPE.fontload.ensureDoc(doc);
@@ -457,13 +454,20 @@
 
   // ---- rail ---------------------------------------------------------------------------------------
   var PANELS = [
-    { id: "templates", label: "Maler", icon: "layout-template", build: templatesPanel },
-    { id: "text", label: "Tekst", icon: "type", build: textPanel },
-    { id: "elements", label: "Elementer", icon: "shapes", build: elementsPanel },
-    { id: "icons", label: "Ikoner", icon: "star", build: iconsPanel },
-    { id: "images", label: "Bilder", icon: "image", build: imagesPanel },
-    { id: "background", label: "Bakgrunn", icon: "paint-bucket", build: backgroundPanel },
-    { id: "layers", label: "Lag", icon: "layers", build: layersPanel },
+    { id: "templates", label: "Maler", icon: "layout-template", build: templatesPanel,
+      desc: "Ferdige design som fyller både bakgrunn og toppbanner. Kan angres med Ctrl/⌘+Z." },
+    { id: "text", label: "Tekst", icon: "type", build: textPanel,
+      desc: "Klikk for å legge til. Dobbeltklikk tekst på lerretet for å skrive." },
+    { id: "elements", label: "Elementer", icon: "shapes", build: elementsPanel,
+      desc: "Former, knapper, merker og linjer. Dobbeltklikk en form for å skrive i den." },
+    { id: "icons", label: "Ikoner", icon: "star", build: iconsPanel,
+      desc: "Søk med engelske ord (ship, gift …). Ikonene kan farges og skaleres fritt." },
+    { id: "images", label: "Bilder", icon: "image", build: imagesPanel,
+      desc: "Last opp egne bilder, hent fra en lenke eller dra dem rett inn på lerretet." },
+    { id: "background", label: "Bakgrunn", icon: "paint-bucket", build: backgroundPanel,
+      desc: "Farge eller gradient bak alt annet på tegneflaten." },
+    { id: "layers", label: "Lag", icon: "layers", build: layersPanel,
+      desc: "Øverst i lista ligger øverst i designet. Dra for å endre rekkefølge – låste elementer velges her." },
   ];
 
   function open(id, opts) {
@@ -472,16 +476,19 @@
     if (!p || (current === id && !opts)) {
       current = null;
       dom.drawer.hidden = true;
-      dom.rail.querySelectorAll(".wp-rail__b").forEach(function (b) { b.classList.remove("is-on"); });
+      dom.rail.querySelectorAll(".wp-rail__b").forEach(function (b) { b.classList.remove("is-on"); b.setAttribute("aria-pressed", "false"); });
       requestAnimationFrame(function () { window.dispatchEvent(new Event("resize")); });
       return;
     }
     panelOpts = opts || {};
     current = id;
-    dom.rail.querySelectorAll(".wp-rail__b").forEach(function (b) { b.classList.toggle("is-on", b.dataset.panel === id); });
+    dom.rail.querySelectorAll(".wp-rail__b").forEach(function (b) {
+      b.classList.toggle("is-on", b.dataset.panel === id);
+      b.setAttribute("aria-pressed", b.dataset.panel === id ? "true" : "false");
+    });
     util.clear(dom.drawerBody);
     dom.drawerTitle.textContent = p.label;
-    util.append(dom.drawerBody, p.build());
+    util.append(dom.drawerBody, [h("p.wp-drawer__desc", null, p.desc), p.build()]);
     var wasHidden = dom.drawer.hidden;
     dom.drawer.hidden = false;
     dom.drawerBody.scrollTop = 0;
@@ -494,10 +501,10 @@
     dom.drawerTitle = h("h3");
     dom.drawerBody = h("div.wp-drawer__body");
     drawer.appendChild(h("header.wp-drawer__head", null, dom.drawerTitle,
-      h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk panelet", on: { click: function () { open(null); } } }, util.icon("chevron-left", 16))));
+      h("button.wp-btn.wp-btn--icon", { type: "button", title: "Lukk panelet", "aria-label": "Lukk panelet", on: { click: function () { open(null); } } }, util.icon("chevron-left", 16))));
     drawer.appendChild(dom.drawerBody);
     PANELS.forEach(function (p) {
-      rail.appendChild(h("button.wp-rail__b", { type: "button", dataset: { panel: p.id }, title: p.label, on: { click: function () { open(p.id); } } },
+      rail.appendChild(h("button.wp-rail__b", { type: "button", dataset: { panel: p.id }, title: p.desc, "aria-pressed": "false", on: { click: function () { open(p.id); } } },
         util.icon(p.icon, 20), h("span", null, p.label)));
     });
     // Re-open the current drawer when the artboard changes: several panels

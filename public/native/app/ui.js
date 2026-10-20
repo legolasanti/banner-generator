@@ -208,8 +208,44 @@
     return h("span.nx-spin", { "aria-hidden": "true" });
   }
 
+  /** Empty (or failed) state: icon tile, title, one sentence, one action. */
   function empty(iconName, title, text, action) {
-    return h("div.nx-empty", null, icon(iconName, 34), h("h3", null, title), text ? h("p", null, text) : null, action || null);
+    return h(
+      "div.nx-empty.empty-state" + (iconName === "circle-alert" ? ".is-error" : ""),
+      null,
+      h("span.empty-state__icon", { "aria-hidden": "true" }, icon(iconName, 24)),
+      h("h3.empty-state__title", null, title),
+      text ? h("p.empty-state__text", null, text) : null,
+      action ? h("div.empty-state__actions", null, action) : null
+    );
+  }
+
+  /**
+   * What a template or saved page is made of: "N seksjoner" and a quiet strip
+   * of the section icons, in page order, each with its name as a tooltip.
+   */
+  function sectionStrip(sections) {
+    var B = window.NativeSchema.BLOCKS;
+    var list = sections || [];
+    return h(
+      "span.nx-secstrip",
+      null,
+      h("span.nx-secstrip__n", null, list.length + (list.length === 1 ? " seksjon" : " seksjoner")),
+      h("span.nx-secstrip__icons", { "aria-hidden": "true" }, list.map(function (sec, i) {
+        var b = B[sec.type];
+        return h("span.nx-secstrip__icon", { title: (i + 1) + ". " + (b ? b.label : sec.type) }, icon(b ? b.icon : "square", 14));
+      }))
+    );
+  }
+
+  /** The title block of a list page: title, what the page is for, primary action. */
+  function pageHead(title, desc, action) {
+    return h(
+      "header.page-head",
+      null,
+      h("div.page-head__text", null, h("h1.page-head__title", null, title), desc ? h("p.page-head__desc", null, desc) : null),
+      action ? h("div.page-head__actions", null, action) : null
+    );
   }
 
   function copyText(text, what) {
@@ -249,6 +285,8 @@
     money: money,
     spinner: spinner,
     empty: empty,
+    pageHead: pageHead,
+    sectionStrip: sectionStrip,
     copyText: copyText,
   };
 })();

@@ -48,7 +48,7 @@
       form.card("Pakken", [
         form.field("Filnavn", form.text({ value: state.filename, placeholder: slug(state.name) || "oddsen-cl-uke43", maxLength: 80, onChange: function (v) { app.patch({ filename: v }, true); paintName(); } }), null, { aside: namePreview }),
         form.field("Klikk-lenke (clickTag)", form.text({ type: "url", value: state.clickUrl, placeholder: "https://www.norsk-tipping.no/…", onChange: function (v) { app.patch({ clickUrl: v.trim() }); } }), "Landingssiden Campaign Manager 360 sporer og kan overstyre."),
-      ])
+      ], { desc: "Navnet på filene og siden annonsen åpner." })
     );
 
     var exitNote = h("div");
@@ -90,7 +90,7 @@
       form.card("Live-oppdatering", [
         form.toggle({ value: d.liveRefresh, label: "Hent arket på nytt ved hver visning", onChange: function (v) { app.setDesign("liveRefresh", v); paintLive(); } }),
         liveNote,
-      ])
+      ], { desc: "Om annonsen henter nye kamper selv etter at den er lastet opp." })
     );
 
     root.appendChild(
@@ -99,8 +99,7 @@
           form.field("Dager med bilder", form.number({ min: 0, max: 30, value: d.bundleDays, unit: "dager", onChange: function (v) { app.setDesign("bundleDays", v); } })),
           form.field("Maks per bilde", form.number({ min: 15, max: 300, step: 5, value: d.mediaKb, unit: "KB", onChange: function (v) { app.setDesign("mediaKb", v); } }))
         ),
-        h("p.lv-fine", null, "Bildene til kampene de nærmeste dagene pakkes inn og krympes. Bilder lenger fram og all video hentes fra lenken i arket når annonsen vises."),
-      ])
+      ], { desc: "Bildene til kampene de nærmeste dagene pakkes inn og krympes. Bilder lenger fram og all video hentes fra lenken i arket når annonsen vises." })
     );
 
     var specs = F.getProduct("norsktipping").specs;

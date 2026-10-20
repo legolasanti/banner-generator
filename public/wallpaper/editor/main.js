@@ -48,6 +48,7 @@
       var spec = Spec.get(key);
       var b = h("button.wp-boards__b", {
         type: "button", role: "tab",
+        title: spec.name + " " + spec.width + "×" + spec.height + " – vis og rediger bare denne flaten",
         on: {
           click: function () {
             if (store.state.view.combined) store.setView({ combined: false });
@@ -63,23 +64,23 @@
   }
 
   function toolBtn(icon, title, onClick, cls) {
-    return h("button.wp-tool" + (cls ? "." + cls : ""), { type: "button", title: title, "aria-label": title, on: { click: onClick } }, util.icon(icon, 18));
+    return h("button.wp-btn.wp-btn--icon" + (cls ? "." + cls : ""), { type: "button", title: title, "aria-label": title, on: { click: onClick } }, util.icon(icon, 18));
   }
 
   // What each guide toggle does, said once when it is switched on.
   var TOGGLE_HELP = {
     snap:
-      "Magnet ON: while you drag or resize, elements snap to the artboard edges and centre, the safe area, " +
-      "the page edges and other elements, and pink guide lines show what lined up. Hold Alt to move freely for a moment.",
+      "Magnet på: når du drar eller endrer størrelse, fester elementene seg til kantene og midten av flaten, " +
+      "den sikre sonen og andre elementer. Rosa linjer viser hva som står på linje. Hold Alt for å flytte fritt.",
     safe: "Sikker sone vises: alt viktig må ligge innenfor den røde rammen. Rammen eksporteres aldri.",
-    site: "Nettside vises: det skraverte feltet dekkes av nettsidens innhold og synes ikke.",
+    site: "Nettside vises: det skraverte feltet dekkes av nettsidens innhold og synes ikke for leserne.",
   };
   var TOGGLE_OFF = {
-    snap: "Magnet OFF: elements move freely, nothing snaps.",
+    snap: "Magnet av: elementene flyttes fritt, ingenting festes.",
   };
 
   function viewToggle(key, icon, label, title) {
-    var b = h("button.wp-vtog", { type: "button", title: title, on: { click: function () {
+    var b = h("button.wp-vtog", { type: "button", title: title, "aria-label": label, on: { click: function () {
       var p = {};
       p[key] = !store.state.view[key];
       store.setView(p);
@@ -121,28 +122,33 @@
     dom.undo = toolBtn("undo-2", "Angre (Ctrl/⌘+Z)", function () { store.undo(); });
     dom.redo = toolBtn("redo-2", "Gjør om (Ctrl/⌘+Shift+Z)", function () { store.redo(); });
     dom.zoomLab = h("button.wp-zoomlab", { type: "button", title: "Tilpass til vinduet (Ctrl/⌘+0)", on: { click: function () { WPE.canvas.fit(); } } }, "100 %");
-    dom.status = h("span.wp-status", { title: "Designet lagres automatisk i denne nettleseren" });
+    dom.status = h("span.wp-status", { title: "Designet lagres automatisk i denne nettleseren", "aria-live": "polite" });
     dom.toggles = [
-      viewToggle("safe", "shield", "Sikker sone", "Vis/skjul den røde sikre sonen (eksporteres aldri)"),
-      viewToggle("site", "layout-panel-top", "Nettside", "Vis hvor nettsiden dekker bakgrunnen"),
-      viewToggle("snap", "magnet", "Magnet", "Fest til kanter og hjelpelinjer (hold Alt for å slå av midlertidig)"),
+      viewToggle("safe", "shield", "Sikker sone",
+        "Sikker sone: viser den røde rammen som logo, tekst og knapper må ligge innenfor for å synes på alle skjermer. Rammen eksporteres aldri."),
+      viewToggle("site", "layout-panel-top", "Nettside",
+        "Nettside: skraverer feltet midt på bakgrunnen som nettsidens innhold dekker. Det som ligger der, synes ikke for leserne."),
+      viewToggle("snap", "magnet", "Magnet",
+        "Magnet: elementer fester seg til kanter, midtlinjer og andre elementer når du drar dem. Hold Alt for å flytte fritt."),
     ];
-    var projectBtn = h("button.wp-btn.wp-btn--ghost", { type: "button" }, util.icon("folder-open", 16), "Prosjekt");
+    var projectBtn = h("button.wp-btn.wp-btn--ghost", { type: "button", title: "Nytt design, åpne eller lagre prosjektfil", "aria-haspopup": "true" }, util.icon("folder-open", 16), "Prosjekt");
     projectBtn.addEventListener("click", function () { projectMenu(projectBtn); });
     return h("div.wp-top", null,
       boardTabs(),
-      h("div.wp-top__group", null, dom.undo, dom.redo),
-      h("div.wp-top__group", null, dom.toggles),
-      h("div.wp-top__group", null,
+      h("div.wp-top__group", { role: "group", "aria-label": "Angre" }, dom.undo, dom.redo),
+      h("div.wp-top__group.wp-top__group--toggles", { role: "group", "aria-label": "Hjelpelinjer" }, dom.toggles),
+      h("div.wp-top__group", { role: "group", "aria-label": "Zoom" },
         toolBtn("zoom-out", "Zoom ut (Ctrl/⌘ −)", function () { WPE.canvas.zoomBy(1 / 1.2); }),
         dom.zoomLab,
         toolBtn("zoom-in", "Zoom inn (Ctrl/⌘ +)", function () { WPE.canvas.zoomBy(1.2); })
       ),
       h("div.wp-top__spacer"),
-      dom.status,
-      projectBtn,
-      h("button.wp-btn.wp-btn--ghost", { type: "button", title: "Se designet slik det ligger på nettsiden", on: { click: function () { WPE.preview.open(); } } }, util.icon("monitor", 16), "Forhåndsvis"),
-      h("button.wp-btn.wp-btn--primary", { type: "button", on: { click: function () { WPE.exporter.open(); } } }, util.icon("download", 16), "Eksporter")
+      h("div.wp-top__actions", null,
+        dom.status,
+        projectBtn,
+        h("button.wp-btn.wp-btn--ghost", { type: "button", title: "Se designet slik det ligger på nettsiden, i ulike skjermbredder", on: { click: function () { WPE.preview.open(); } } }, util.icon("monitor", 16), "Forhåndsvis"),
+        h("button.wp-btn.wp-btn--primary", { type: "button", title: "Last ned bakgrunn og toppbanner som bilde eller HTML5", on: { click: function () { WPE.exporter.open(); } } }, util.icon("download", 16), "Eksporter")
+      )
     );
   }
 
@@ -159,8 +165,12 @@
     }
     dom.undo.disabled = !store.canUndo();
     dom.redo.disabled = !store.canRedo();
-    dom.toggles.forEach(function (b) { b.classList.toggle("is-on", !!v[b.dataset.key]); });
+    dom.toggles.forEach(function (b) {
+      b.classList.toggle("is-on", !!v[b.dataset.key]);
+      b.setAttribute("aria-pressed", v[b.dataset.key] ? "true" : "false");
+    });
     dom.zoomLab.textContent = Math.round(v.zoom * 100) + " %";
+    dom.zoomLab.setAttribute("aria-label", "Zoom " + Math.round(v.zoom * 100) + " % – tilpass til vinduet");
   }
 
   // ---- build ---------------------------------------------------------------------------

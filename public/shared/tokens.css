@@ -1,0 +1,186 @@
+/* =========================================================================
+   shared/tokens.css — the ABC design design system: every colour, size,
+   space, radius, shadow and timing the tool's own UI uses.
+
+   Loaded first on every page (Annonser, Native Premium, review). Component
+   styles live in shared/ui.css; each area's stylesheet only lays out its own
+   screens and reads these tokens — no raw hex, px font sizes or one-off
+   radii there.
+
+   NOT used by the creatives themselves (assets/banner.css, assets/live.css,
+   native/runtime/np.css): those are the ads and follow the advertiser's
+   specs, not the tool's.
+
+   Direction: a calm editorial workbench. Warm-neutral canvas, white working
+   surfaces, one confident green (Norsk Tipping) for "do this", violet only
+   for AI, and colour otherwise reserved for status.
+   ========================================================================= */
+
+:root {
+  /* ------------------------------ Neutrals ------------------------------ */
+  --color-canvas: #f1f4ed;          /* app background behind panels */
+  --color-surface: #ffffff;         /* panels, cards, inputs */
+  --color-surface-subtle: #fafbf7;  /* footers, wells inside a surface */
+  --color-surface-muted: #f4f6f0;   /* segmented tracks, hover fills */
+  --color-surface-sunken: #e9ece4;  /* editor canvases, image wells */
+  --color-border: #e5e9df;          /* dividers, card outlines */
+  --color-border-strong: #d3d8c9;   /* inputs, secondary buttons */
+  --color-border-hover: #b9bfad;
+
+  --color-text: #15180f;            /* headings, values */
+  --color-text-secondary: #565b4c;  /* body copy, labels (7:1) */
+  --color-text-tertiary: #6a6f5e;   /* hints, meta (≥4.6:1 on canvas) */
+  --color-text-placeholder: #8e9382;
+  --color-text-disabled: #9a9f8e;
+  --color-text-inverse: #ffffff;
+
+  /* -------------------------------- Brand ------------------------------- */
+  --color-primary: #1a6b1a;
+  --color-primary-hover: #145a15;
+  --color-primary-strong: #0f4a10;  /* text on primary-soft */
+  --color-primary-bright: #22852a;
+  --color-primary-soft: #e9f3e6;
+  --color-primary-border: #cfe4c9;
+  --color-focus-ring: rgba(26, 107, 26, 0.24);
+
+  /* ------------------------------ Semantic ------------------------------ */
+  --color-success: var(--color-primary);
+  --color-success-soft: var(--color-primary-soft);
+  --color-success-border: var(--color-primary-border);
+  --color-success-text: var(--color-primary-strong);
+
+  --color-warning: #c27c00;
+  --color-warning-soft: #fff5e0;
+  --color-warning-border: #f1dcab;
+  --color-warning-text: #7a4f00;
+
+  --color-danger: #c52b22;
+  --color-danger-hover: #a3231c;
+  --color-danger-soft: #fbecea;
+  --color-danger-border: #f0c2bf;
+  --color-danger-text: #a3261d;
+
+  --color-info: #1e5fbf;
+  --color-info-soft: #eaf1fd;
+  --color-info-border: #c9dbfa;
+  --color-info-text: #1d4f99;
+
+  --color-ai: #6a3fd6;
+  --color-ai-hover: #5730b8;
+  --color-ai-soft: #f1ebff;
+  --color-ai-border: #dccdfb;
+
+  --color-overlay: rgba(20, 24, 12, 0.45);
+
+  /* ----------------------------- Typography ----------------------------- */
+  --font-sans: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* One scale for the whole tool. Body text is 14, controls 13. */
+  --text-2xs: 10.5px;  /* tiny meta inside dense rows, mono sizes */
+  --text-xs: 11.5px;   /* hints, captions, overlines */
+  --text-sm: 12.5px;   /* labels, secondary text, small controls */
+  --text-md: 13.5px;   /* controls, body in panels */
+  --text-base: 14px;   /* inputs, body */
+  --text-lg: 16px;     /* card and modal titles */
+  --text-xl: 18px;     /* panel titles */
+  --text-2xl: 24px;    /* section titles on overview pages */
+  --text-3xl: 30px;    /* page titles */
+
+  --weight-regular: 500;
+  --weight-medium: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+
+  --tracking-tight: -0.015em;
+  --tracking-overline: 0.08em;
+
+  /* ------------------------------- Spacing ------------------------------ */
+  /* 4 px grid. Use these for padding, gaps and margins. */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* -------------------------------- Radius ------------------------------ */
+  --radius-xs: 4px;    /* tags inside text, code */
+  --radius-sm: 6px;    /* small chips, inner segments */
+  --radius-md: 8px;    /* buttons, inputs */
+  --radius-lg: 12px;   /* cards, segmented tracks */
+  --radius-xl: 16px;   /* panels, modals */
+  --radius-full: 999px;
+
+  /* ------------------------------- Controls ----------------------------- */
+  --control-h-xs: 26px;
+  --control-h-sm: 30px;
+  --control-h-md: 36px;
+  --control-h-lg: 44px;
+  --control-px-sm: 10px;
+  --control-px-md: 14px;
+  --control-px-lg: 20px;
+
+  /* ------------------------------- Elevation ---------------------------- */
+  --shadow-xs: 0 1px 2px rgba(18, 22, 10, 0.06);
+  --shadow-sm: 0 2px 8px rgba(18, 22, 10, 0.06), 0 1px 2px rgba(18, 22, 10, 0.04);
+  --shadow-md: 0 10px 28px rgba(18, 22, 10, 0.1);
+  --shadow-lg: 0 24px 64px rgba(18, 22, 10, 0.22);
+  --shadow-primary: 0 4px 12px rgba(26, 107, 26, 0.22);
+  --shadow-focus: 0 0 0 3px var(--color-focus-ring);
+
+  /* -------------------------------- Layers ------------------------------ */
+  --z-sticky: 10;
+  --z-topbar: 20;
+  --z-overlay: 40;
+  --z-drawer: 50;
+  --z-popover: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+
+  /* -------------------------------- Motion ------------------------------ */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration: 180ms;
+  --duration-slow: 300ms;
+
+  /* -------------------------------- Layout ------------------------------ */
+  --topbar-h: 60px;
+  --page-max: 1200px;
+  --page-narrow: 820px;
+
+  /* ------------------------- Legacy names (aliases) --------------------- */
+  /* The areas were written against these. They stay so nothing breaks, but
+     new code should use the names above. */
+  --bg: var(--color-canvas);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-subtle);
+  --surface-3: var(--color-surface-muted);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --ink: var(--color-text);
+  --ink-2: var(--color-text-secondary);
+  --ink-3: var(--color-text-tertiary);
+  --green: var(--color-primary);
+  --green-bright: var(--color-primary-bright);
+  --green-deep: var(--color-primary-strong);
+  --green-soft: var(--color-primary-soft);
+  --green-ring: var(--color-focus-ring);
+  --danger: var(--color-danger);
+  --danger-soft: var(--color-danger-soft);
+  --r-sm: var(--radius-md);
+  --r: var(--radius-lg);
+  --r-lg: var(--radius-xl);
+  --font: var(--font-sans);
+  --mono: var(--font-mono);
+}

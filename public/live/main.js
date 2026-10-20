@@ -236,11 +236,12 @@
   function buildHeader() {
     dom.saved = h("span.lv-saved", { title: "Alt lagres automatisk i denne nettleseren" }, icon("check", 13), "Lagret");
     dom.stats = h("div.lv-head__stats");
-    dom.tplName = h("span");
+    dom.tplName = h("b");
     var name = h("input.lv-head__name", {
       type: "text",
       value: state.name,
       placeholder: "Navngi kampanjen…",
+      title: "Klikk for å gi kampanjen et navn",
       maxlength: 120,
       spellcheck: "false",
       "aria-label": "Kampanjenavn (vises i Historikk)",
@@ -254,20 +255,19 @@
         "div.lv-head__id",
         null,
         h("span.lv-head__mark", { "aria-hidden": "true" }, icon("radio", 18)),
-        h("div.lv-head__titles", null, name, h("span.lv-head__sub", null, "NT Live · dynamisk HTML5 · mal: ", dom.tplName))
+        h("div.lv-head__titles", null, name, h("span.lv-head__sub", null, "NT Live · dynamisk HTML5 · Mal: ", dom.tplName))
       ),
-      dom.stats,
-      h("div.lv-head__actions", null, dom.saved, dom.headExport)
+      h("div.lv-head__actions", null, dom.stats, h("span.lv-head__sep", { "aria-hidden": "true" }), dom.saved, dom.headExport)
     );
   }
 
   // ---- side panel tabs --------------------------------------------------------
   var TABS = [
-    { id: "kamper", label: "Kamper", icon: "sheet", build: function () { return NTLIVE.panels.sheet(app); } },
-    { id: "design", label: "Design", icon: "palette", build: function () { return NTLIVE.panels.design(app); } },
-    { id: "tekster", label: "Tekster", icon: "type", build: function () { return NTLIVE.panels.texts(app); } },
-    { id: "rotasjon", label: "Rotasjon", icon: "repeat", build: function () { return NTLIVE.panels.rotation(app); } },
-    { id: "eksport", label: "Eksport", icon: "upload", build: function () { return NTLIVE.exporter.panel(app); } },
+    { id: "kamper", label: "Kamper", icon: "sheet", intro: "Hent kampene annonsen skal vise – fra et delt Google-regneark eller innlimte celler.", build: function () { return NTLIVE.panels.sheet(app); } },
+    { id: "design", label: "Design", icon: "palette", intro: "Velg mal, farge og bevegelse. Forhåndsvisningen til høyre oppdateres med en gang.", build: function () { return NTLIVE.panels.design(app); } },
+    { id: "tekster", label: "Tekster", icon: "type", intro: "Tekstene rundt kampene, avsparkslinjen og plakaten som vises uten kamper.", build: function () { return NTLIVE.panels.texts(app); } },
+    { id: "rotasjon", label: "Rotasjon", icon: "repeat", intro: "Hvor lenge hver kamp vises, og hvilke kamper annonsen tar med.", build: function () { return NTLIVE.panels.rotation(app); } },
+    { id: "eksport", label: "Eksport", icon: "upload", intro: "Filnavn, klikk-lenke og formater – og så én ZIP per format.", build: function () { return NTLIVE.exporter.panel(app); } },
   ];
 
   function buildSide() {
@@ -294,6 +294,7 @@
       buttons[t.id] = b;
       tablist.appendChild(b);
       var body = h("div.lv-panel", { role: "tabpanel", id: "lv-panel-" + t.id, "aria-labelledby": "lv-tab-" + t.id, hidden: true });
+      body.appendChild(h("p.lv-panel__intro", null, t.intro));
       body.appendChild(t.build());
       bodies[t.id] = body;
       panels.appendChild(body);

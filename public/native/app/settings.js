@@ -18,15 +18,26 @@
     return h("label.nx-field", null, h("span.nx-field__label", null, label), input, help ? h("p.nx-help", null, help) : null);
   }
 
+  /** One settings group: title and what it is for on the left, fields on the right. */
+  function group(id, title, desc) {
+    var fields = Array.prototype.slice.call(arguments, 3);
+    return h("section.nx-setsec", { "aria-labelledby": id },
+      h("div.nx-setsec__intro", null, h("h2.nx-setsec__title", { id: id }, title), desc ? h("p.nx-setsec__desc", null, desc) : null),
+      h("div.nx-setsec__fields", null, fields));
+  }
+
   function view(host) {
-    var root = h("div.nx-page.nx-page--narrow");
+    var root = h("div.page.nx-page");
+    var body = h("div");
+    root.appendChild(ui.pageHead("Innstillinger", "Det alle Native Premium-sider deler: merking, publisering, måling og AI-modeller.", null));
+    root.appendChild(body);
     host.appendChild(root);
-    root.appendChild(h("div.nx-loading", null, ui.spinner(), " Henter innstillingene …"));
+    body.appendChild(h("div.nx-loading", null, ui.spinner(), " Henter innstillingene …"));
 
     Promise.all([NP.api.settings(), NP.api.aiStatus()]).then(function (res) {
       var s = JSON.parse(JSON.stringify(res[0].settings));
       var status = res[1];
-      ui.clear(root);
+      ui.clear(body);
 
       function input(key, opts) {
         var o = opts || {};
@@ -69,13 +80,9 @@
       }
 
       var form = h(
-        "div.nx-stack",
+        "div.nx-settings",
         null,
-        h("div.nx-page__head", null, h("div", null, h("h1", null, "Innstillinger"), h("p.nx-muted", null, "Gjelder alle Native Premium-sider."))),
-
-        h("section.nx-card-sec", null,
-          h("h2", null, "Merking"),
-          h("p.nx-muted", null, "Merkingen er fast på alle sider og kan ikke endres i prosjektene. {annonsør} byttes ut med annonsørens navn."),
+        group("nx-set-merking", "Merking", "Fast på alle sider og kan ikke endres i prosjektene. {annonsør} byttes ut med annonsørens navn.",
           field("Merketekst øverst", input("disclosureLabel"), "Må inneholde {annonsør}. Standard: «Annonsørinnhold fra {annonsør}»."),
           h("div.nx-grid2", null, field("Utgiver", input("publisherName")), field("Utgivers nettside", input("publisherUrl", { type: "url" }))),
           logo("publisherLogo", "Utgivers logo (øverst til venstre)"),
@@ -84,21 +91,18 @@
           logo("studioLogo", "Studio-logo (nederst)")
         ),
 
-        h("section.nx-card-sec", null,
-          h("h2", null, "Publisering"),
+        group("nx-set-pub", "Publisering", "Adressen sider som ABC design publiserer selv, får.",
           field("Offentlig adresse til ABC design", input("publicBaseUrl", { type: "url", placeholder: "https://design.abcnyheter.no" }), "Brukes for sider ABC design publiserer selv (/n/…/) og i delingsbilder. Tom = adressen du bruker nå.")
         ),
 
-        h("section.nx-card-sec", null,
-          h("h2", null, "Måling"),
-          h("p.nx-muted", null, "Skriptene legges inn på alle eksporterte og publiserte sider, aldri i editoren eller på gjennomgangslenker. Sidene sender også egne hendelser til window.dataLayer: np_view, np_scroll, np_time, np_cta_click, np_video, np_factbox_open, np_share."),
+        group("nx-set-maling", "Måling", "Skript som legges inn på alle eksporterte og publiserte sider – aldri i editoren eller på gjennomgangslenker.",
+          h("p.nx-help", null, "Sidene sender også egne hendelser til window.dataLayer: np_view, np_scroll, np_time, np_cta_click, np_video, np_factbox_open, np_share."),
           field("I <head> (f.eks. Kilkaya, Mixpanel, GTM)", input("headHtml", { multiline: true, code: true, rows: 6 })),
           field("Rett etter <body> (f.eks. GTM noscript)", input("bodyHtml", { multiline: true, code: true, rows: 3 })),
           h("div.nx-grid2", null, field("Standard utm_source", input("utmSource")), field("Standard utm_medium", input("utmMedium")))
         ),
 
-        h("section.nx-card-sec", null,
-          h("h2", null, "AI (OpenRouter)"),
+        group("nx-set-ai", "AI (OpenRouter)", "Hvilke modeller AI-veiviseren og AI-assistenten bruker, og hva som skjer med dataene.",
           h("div.nx-note" + (status.configured ? ".nx-note--ok" : ".nx-note--warn"), null,
             ui.icon(status.configured ? "badge-check" : "circle-alert", 16),
             status.configured ? " API-nøkkelen er satt opp." : " OPENROUTER_API_KEY mangler i .env – AI-funksjonene er av."),
@@ -131,7 +135,7 @@
             return h("label.nx-switch", null, zdr, h("span.nx-switch__track"), h("span", null, "Bare leverandører som ikke lagrer data (zero data retention)"));
           })(),
           models,
-          ui.button("Hent modelliste fra OpenRouter", { small: true, kind: "ghost", icon: "refresh-cw", onClick: function () {
+          ui.button("Hent modelliste fra OpenRouter", { small: true, icon: "refresh-cw", cls: "nx-self-start", onClick: function () {
             NP.api.aiModels().then(function (r) {
               ui.clear(models);
               r.models.forEach(function (m) {
@@ -143,17 +147,17 @@
           } })
         ),
 
-        h("div.nx-row.nx-sticky-actions", null, ui.button("Lagre innstillingene", { kind: "primary", icon: "save", onClick: function () {
+        h("div.nx-settings__foot", null, h("p.nx-help", null, "Endringene brukes først når du har lagret."), ui.button("Lagre innstillingene", { kind: "primary", icon: "save", onClick: function () {
           NP.api.saveSettings(s).then(function (r) {
             NP.settings = r.settings;
             ui.toast("Innstillingene er lagret", "ok");
           }, function (err) { ui.toast(err.message, "err"); });
         } }))
       );
-      root.appendChild(form);
+      body.appendChild(form);
     }, function (err) {
-      ui.clear(root);
-      root.appendChild(ui.empty("circle-alert", "Kunne ikke hente innstillingene", err.message));
+      ui.clear(body);
+      body.appendChild(ui.empty("circle-alert", "Kunne ikke hente innstillingene", err.message));
     });
   }
 

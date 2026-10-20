@@ -53,49 +53,69 @@
   }
 
   function view(host) {
-    var root = h("div.nx-page");
-    var box = h("div.nx-stack");
-    root.appendChild(h("div.nx-page__head", null, h("div", null, h("h1", null, "Bibliotek"), h("p.nx-muted", null, "Maler og lagrede seksjoner. Lagre en seksjon fra verktøylinjen på siden (bokmerke-ikonet)."))));
+    var root = h("div.page.nx-page");
+    var box = h("div.nx-libsecs");
+    root.appendChild(ui.pageHead("Bibliotek", "Ferdige maler og seksjoner teamet har lagret. Start nye saker fra dem under «Ny Native Premium».", null));
     root.appendChild(box);
     host.appendChild(root);
 
-    function types(sections) {
-      return h("span.nx-tpl__types", null, sections.map(function (s) { return ui.icon(S.BLOCKS[s.type] ? S.BLOCKS[s.type].icon : "square", 14); }));
+    function heading(title, n, desc) {
+      return h("div.nx-libsec__head", null,
+        h("h2.nx-libsec__title", null, title, h("span.nx-libsec__n", null, String(n))),
+        h("p.nx-libsec__desc", null, desc));
+    }
+
+    // Long descriptions are clamped to keep the cards in step; the full
+    // text is in the tooltip.
+    function card(opts) {
+      return h(
+        "article.nx-libitem",
+        null,
+        h("div.nx-libitem__main", null,
+          opts.tag || null,
+          h("h3.nx-libitem__name", null, opts.name),
+          opts.meta ? h("p.nx-libitem__meta", null, opts.meta) : null,
+          opts.desc ? h("p.nx-libitem__desc", { title: opts.desc }, opts.desc) : null,
+          opts.use ? h("p.nx-libitem__use", { title: opts.use }, h("strong", null, "Passer for: "), opts.use) : null),
+        h("div.nx-libitem__foot", null, ui.sectionStrip(opts.sections), opts.action || null)
+      );
     }
 
     function load() {
       ui.clear(box);
+      box.appendChild(h("div.nx-loading", null, ui.spinner(), " Henter biblioteket …"));
       NP.api.library().then(function (r) {
-        box.appendChild(h("h2.nx-page__h2", null, "Innebygde maler"));
+        ui.clear(box);
+        var items = r.items || [];
         var g1 = h("div.nx-libgrid");
         r.templates.forEach(function (t) {
-          g1.appendChild(h("div.nx-libitem", null, h("strong", null, t.name), h("span.nx-muted", null, t.description), h("span.nx-muted", null, "Passer for: " + t.use), types(t.sections)));
+          g1.appendChild(card({ name: t.name, desc: t.description, use: t.use, sections: t.sections }));
         });
-        box.appendChild(g1);
-        box.appendChild(h("h2.nx-page__h2", null, "Lagret av teamet"));
-        var items = r.items || [];
+        box.appendChild(h("section.nx-libsec", null, heading("Innebygde maler", r.templates.length, "Hele sider med ferdig design og eksempeltekst."), g1));
+
+        var saved = h("section.nx-libsec", null, heading("Lagret av teamet", items.length, "Seksjoner og sider dere har lagret selv."));
+        box.appendChild(saved);
         if (!items.length) {
-          box.appendChild(h("p.nx-muted", null, "Ingenting lagret ennå."));
+          saved.appendChild(ui.empty("bookmark", "Ingenting lagret ennå", "Åpne et prosjekt, velg en seksjon på siden og trykk bokmerke-ikonet i verktøylinjen over den."));
           return;
         }
         var g2 = h("div.nx-libgrid");
         items.forEach(function (it) {
-          g2.appendChild(
-            h(
-              "div.nx-libitem",
-              null,
-              h("span.nx-tag", null, it.kind === "page" ? "Side" : "Seksjon"),
-              h("strong", null, it.name),
-              h("span.nx-muted", null, it.category + (it.by ? " · " + it.by : "") + " · " + ui.when(it.createdAt)),
-              it.description ? h("span.nx-muted", null, it.description) : null,
-              types(it.sections),
-              ui.button("Slett", { small: true, kind: "ghost", icon: "trash", onClick: function () {
-                ui.confirm("Slette «" + it.name + "»?", "", "Slett", true).then(function (ok) { if (ok) NP.api.deleteLibrary(it.id).then(load); });
-              } })
-            )
-          );
+          g2.appendChild(card({
+            tag: h("span.nx-tag", null, it.kind === "page" ? "Side" : "Seksjon"),
+            name: it.name,
+            meta: it.category + (it.by ? " · " + it.by : "") + " · " + ui.when(it.createdAt),
+            desc: it.description,
+            sections: it.sections,
+            action: ui.button("", { small: true, kind: "ghost", icon: "trash", title: "Slett «" + it.name + "»", cls: "is-danger", onClick: function () {
+              ui.confirm("Slette «" + it.name + "»?", "", "Slett", true).then(function (ok) { if (ok) NP.api.deleteLibrary(it.id).then(load); });
+            } }),
+          }));
         });
-        box.appendChild(g2);
+        saved.appendChild(g2);
+      }, function (err) {
+        ui.clear(box);
+        box.appendChild(ui.empty("circle-alert", "Kunne ikke hente biblioteket", err.message, ui.button("Prøv igjen", { icon: "refresh-cw", onClick: load })));
       });
     }
     load();

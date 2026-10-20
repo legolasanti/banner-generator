@@ -14,7 +14,6 @@
   var h = ui.h;
   var D = window.NativeDoc;
   var T = window.NativeTemplates;
-  var S = window.NativeSchema;
 
   function newDialog() {
     var name = h("input.nx-input", { type: "text", placeholder: "F.eks. Ford Puma – høstkampanje", maxlength: 120, autofocus: true });
@@ -60,7 +59,7 @@
           } } },
           h("strong", null, it.name),
           h("span.nx-muted", null, it.description || it.category),
-          h("span.nx-tpl__types", null, it.sections.map(function (sec) { return ui.icon(S.BLOCKS[sec.type] ? S.BLOCKS[sec.type].icon : "square", 14); }))
+          ui.sectionStrip(it.sections)
         );
         row.appendChild(b);
       });
@@ -130,17 +129,16 @@
   }
 
   function view(host) {
-    var root = h("div.nx-page");
-    var search = h("input.nx-input.nx-search", { type: "search", placeholder: "Søk i prosjekter …", "aria-label": "Søk" });
+    var root = h("div.page.nx-page");
+    var search = h("input.nx-input.nx-search", { type: "search", placeholder: "Søk i prosjekter …", "aria-label": "Søk i prosjekter" });
     var filter = "all";
     var grid = h("div.nx-cards");
     var all = [];
 
     root.appendChild(
-      h(
-        "div.nx-page__head",
-        null,
-        h("div", null, h("h1", null, "Native Premium"), h("p.nx-muted", null, "Annonsørinnhold for ABC Nyheter – med AI, uten Vev.")),
+      ui.pageHead(
+        "Prosjekter",
+        "Alle Native Premium-saker for ABC Nyheter. Lag en ny med AI, fra en mal eller fra en tom side.",
         ui.button("Ny Native Premium", { kind: "primary", icon: "plus", onClick: newDialog })
       )
     );
@@ -149,7 +147,7 @@
         "div.nx-page__tools",
         null,
         search,
-        ui.segmented([["all", "Alle"], ["draft", "Utkast"], ["review", "Til gjennomgang"], ["approved", "Godkjent"], ["published", "Publisert"]], filter, function (v) { filter = v; draw(); }, { small: true })
+        ui.segmented([["all", "Alle"], ["draft", "Utkast"], ["review", "Til gjennomgang"], ["approved", "Godkjent"], ["published", "Publisert"]], filter, function (v) { filter = v; draw(); }, { small: true, label: "Vis status" })
       )
     );
     root.appendChild(grid);
@@ -158,7 +156,7 @@
 
     function card(p) {
       var thumb = p.thumb ? h("img", { src: NP.api.assetUrl(p.thumb, 480), alt: "", loading: "lazy", on: { error: function (e) { e.target.src = NP.api.assetUrl(p.thumb, 0); } } }) : h("div.nx-card__ph", null, ui.icon("panel-top", 30));
-      var menuBtn = ui.button("", { icon: "ellipsis-vertical", kind: "ghost", small: true, title: "Mer", onClick: function (e) {
+      var menuBtn = ui.button("", { icon: "ellipsis-vertical", kind: "ghost", small: true, title: "Flere valg for «" + p.name + "»", onClick: function (e) {
         e.stopPropagation();
         ui.popover(e.currentTarget, h("div.nx-menu", null,
           h("button", { type: "button", on: { click: function () { ui.closePopover(); location.hash = "#/p/" + p.id; } } }, ui.icon("pencil", 15), " Åpne"),
@@ -179,16 +177,22 @@
           } } }, ui.icon("trash", 15), " Slett")
         ), { align: "right" });
       } });
+      // The title link covers the whole card (::after); the menu sits outside
+      // the link so opening it does not also open the project.
       return h(
-        "a.nx-card",
-        { href: "#/p/" + p.id },
-        h("span.nx-card__img", null, thumb, h("span.nx-status.is-" + p.status, null, D.STATUS_LABELS[p.status])),
+        "article.nx-card",
+        null,
+        h("span.nx-card__img", null, thumb, h("span.nx-status.badge.is-" + p.status, null, D.STATUS_LABELS[p.status])),
         h("span.nx-card__body", null,
           h("span.nx-card__adv", null, p.advertiser || "Ukjent annonsør"),
-          h("strong.nx-card__name", null, p.name),
-          h("span.nx-muted", null, "Endret " + ui.when(p.updatedAt) + (p.owner ? " · " + p.owner : "") + " · " + p.sections + " seksjoner" + (p.pages > 1 ? ", " + p.pages + " varianter" : ""))
-        ),
-        h("span.nx-card__menu", null, menuBtn)
+          h("a.nx-card__name", { href: "#/p/" + p.id }, p.name),
+          h("span.nx-card__foot", null,
+            // Two steady lines: when, then what (a third would not fit the card).
+            h("span.nx-card__meta", null,
+              h("span", null, "Endret " + ui.when(p.updatedAt)),
+              h("span", null, (p.owner ? p.owner + " · " : "") + p.sections + (p.sections === 1 ? " seksjon" : " seksjoner") + (p.pages > 1 ? ", " + p.pages + " varianter" : ""))),
+            h("span.nx-card__menu", null, menuBtn))
+        )
       );
     }
 
@@ -204,7 +208,7 @@
         return;
       }
       if (!list.length) {
-        grid.appendChild(h("p.nx-muted", null, "Ingen treff."));
+        grid.appendChild(ui.empty("search", "Ingen treff", "Ingen prosjekter passer søket eller filteret. Prøv et annet ord eller «Alle»."));
         return;
       }
       list.forEach(function (p) { grid.appendChild(card(p)); });

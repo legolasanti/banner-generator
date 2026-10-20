@@ -363,10 +363,24 @@
     btn.classList.toggle("is-loading", on);
   }
 
+  /** One way in: icon, title, one line on how, the control, its button. */
+  function sourceCard(iconName, title, desc, body, action, main) {
+    return h(
+      "section.card.bk-source" + (main ? ".bk-source--main" : ""),
+      null,
+      h("header.bk-source__head", null, h("span.bk-source__icon", null, BULK.ui.icon(iconName, 18)), h("h3.bk-source__title", null, title)),
+      h("p.bk-hint.bk-source__desc", null, desc),
+      h("div.bk-source__body", null, body),
+      h("div.bk-source__foot", null, action)
+    );
+  }
+
   /** Build the start screen into `host`. */
   function buildStart(host) {
-    startDom.kicker = h("span.bk-kicker");
-    startDom.template = h("a.btn-ghost.btn-sm", { download: "" });
+    var ui = BULK.ui;
+    startDom.kicker = h("p.overline.page-head__eyebrow");
+    startDom.templateLabel = h("span");
+    startDom.template = h("a.btn.btn--secondary", { download: "" }, ui.icon("download"), startDom.templateLabel);
     startDom.guide = h("details.bk-guide");
     var linkInput = h("input.bk-input", {
       type: "url",
@@ -399,21 +413,26 @@
     var drop = h(
       "div.bk-drop",
       { tabindex: "0", role: "button", "aria-label": "Last opp regneark" },
+      ui.icon("upload", 20),
       h("b", null, "Slipp en fil her"),
       h("span", null, "eller klikk for å velge"),
       h("small", null, ".xlsx · .csv · .tsv")
     );
+    var fileBtn = h("button.btn.btn--secondary.bk-btn-load", { type: "button" }, h("span.fetch-spinner", { "aria-hidden": "true" }), h("span", null, "Velg fil …"));
     var runFile = function (file) {
       if (!file) return;
       drop.classList.add("is-loading");
+      busy(fileBtn, true);
       fromFile(file)
         .catch(function (err) { toast(err.message, "err"); })
         .then(function () {
           drop.classList.remove("is-loading");
+          busy(fileBtn, false);
           fileInput.value = "";
         });
     };
     drop.addEventListener("click", function () { fileInput.click(); });
+    fileBtn.addEventListener("click", function () { fileInput.click(); });
     drop.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -439,10 +458,10 @@
 
     var paste = h("textarea.bk-input.bk-paste", {
       rows: 4,
-      placeholder: "Merk cellene i Google Sheets (med overskriftsraden), kopier (⌘C / Ctrl+C) og lim inn her",
+      placeholder: "Lim inn her (⌘V / Ctrl+V)",
       "aria-label": "Lim inn celler",
     });
-    var pasteBtn = h("button.btn-ghost.bk-btn-load", { type: "button" }, h("span.fetch-spinner", { "aria-hidden": "true" }), h("span", null, "Bruk cellene"));
+    var pasteBtn = h("button.btn.btn--secondary.bk-btn-load", { type: "button" }, h("span.fetch-spinner", { "aria-hidden": "true" }), h("span", null, "Bruk cellene"));
     pasteBtn.addEventListener("click", function () {
       if (!paste.value.trim()) {
         toast("Lim inn cellene først", "err");
@@ -455,7 +474,7 @@
         .then(function () { busy(pasteBtn, false); });
     });
 
-    var demoBtn = h("button.btn-ghost.btn-sm", { type: "button" }, "Prøv med eksempeldata");
+    var demoBtn = h("button.btn.btn--secondary.bk-btn-load", { type: "button" }, h("span.fetch-spinner", { "aria-hidden": "true" }), h("span", null, "Prøv med eksempeldata"));
     demoBtn.addEventListener("click", function () {
       busy(demoBtn, true);
       fromDemo()
@@ -465,38 +484,63 @@
 
     host.appendChild(
       h(
-        "div.bk-start",
+        "div.page.bk-start",
         null,
         h(
-          "header.bk-start__head",
-          null,
-          startDom.kicker,
-          h("h2", null, "Mange bannere fra ett regneark"),
-          h(
-            "p",
-            null,
-            "Én rad per banner: overskrift og bildelenke. Verktøyet henter bildene, velger tekststørrelse for hvert format og lager alt i én ZIP – du kontrollerer og justerer før nedlasting."
-          ),
-          h("div.bk-ctl.bk-start__product", null, h("span.bk-ctl__label", null, "Produkt"), productSwitch())
-        ),
-        h(
-          "div.bk-sources",
+          "header.page-head",
           null,
           h(
-            "section.bk-source.bk-source--main",
+            "div.page-head__text",
             null,
-            h("h3", null, h("span.bk-num", null, "A"), "Google Sheets-lenke"),
-            h("div.bk-row", null, linkInput, linkBtn),
-            h("p.bk-hint", null, "Arket må være delt: Del → «Alle med lenken» → Leser. Lenken til en bestemt fane virker – den fanen brukes.")
-          ),
-          h("section.bk-source", null, h("h3", null, h("span.bk-num", null, "B"), "Last opp fil"), drop, fileInput),
-          h("section.bk-source", null, h("h3", null, h("span.bk-num", null, "C"), "Lim inn celler"), paste, pasteBtn)
+            startDom.kicker,
+            h("h1.page-head__title", null, "Mange bannere fra ett regneark"),
+            h(
+              "p.page-head__desc",
+              null,
+              "Én rad per banner: overskrift og bildelenke. Verktøyet henter bildene, velger tekststørrelse for hvert format og lager alt i én ZIP – du kontrollerer og justerer før nedlasting."
+            )
+          )
         ),
         h(
-          "div.bk-start__foot",
-          null,
-          startDom.template,
-          demoBtn
+          "section.bk-step",
+          { "aria-labelledby": "bk-step-product" },
+          h(
+            "div.bk-step__head",
+            null,
+            h("h2.bk-step__title", { id: "bk-step-product" }, h("span.step", null, "1"), "Velg produkt"),
+            productSwitch(),
+            h("p.bk-step__desc", null, "Bestemmer formatene og hvilke kolonner arket leses med.")
+          )
+        ),
+        h(
+          "section.bk-step",
+          { "aria-labelledby": "bk-step-sheet" },
+          h(
+            "div.bk-step__head",
+            null,
+            h("h2.bk-step__title", { id: "bk-step-sheet" }, h("span.step", null, "2"), "Hent regnearket"),
+            h("p.bk-step__desc", null, "Velg én av tre måter – alle gir det samme resultatet.")
+          ),
+          h(
+            "div.bk-sources",
+            null,
+            sourceCard(
+              "link",
+              "Google Sheets-lenke",
+              "Lim inn lenken til arket. Lenken til en bestemt fane virker – den fanen brukes.",
+              [linkInput, h("p.bk-hint", null, "Arket må være delt: Del → «Alle med lenken» → Leser.")],
+              linkBtn,
+              true
+            ),
+            sourceCard("upload", "Last opp fil", "Excel eller CSV fra maskinen din, maks 5 MB.", [drop, fileInput], fileBtn),
+            sourceCard("clipboard", "Lim inn celler", "Merk cellene i Google Sheets – med overskriftsraden – og kopier dem.", paste, pasteBtn)
+          ),
+          h(
+            "div.bk-start__foot",
+            null,
+            h("p.bk-start__foottext", null, h("b", null, "Har du ikke et ark ennå? "), "Start fra malen, eller se hvordan det virker med eksempeldata."),
+            h("div.bk-start__footacts", null, startDom.template, demoBtn)
+          )
         ),
         startDom.guide
       )
@@ -508,9 +552,9 @@
   var startDom = {};
   function renderStartProduct() {
     var label = window.BULK_PRODUCTS.get(state.product).label;
-    startDom.kicker.textContent = label + " · bulk";
+    startDom.kicker.textContent = label + " · Bulk";
     startDom.template.href = "/api/bulk/template.csv?product=" + encodeURIComponent(state.product);
-    startDom.template.textContent = "Last ned mal for " + label + " (CSV)";
+    startDom.templateLabel.textContent = "Last ned mal for " + label + " (CSV)";
     var next = guide();
     if (startDom.guide.open) next.open = true;
     startDom.guide.replaceWith(next);

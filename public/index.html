@@ -12,6 +12,8 @@
       href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <link rel="stylesheet" href="shared/ui.css" />
     <link rel="stylesheet" href="assets/banner.css" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="wallpaper/wallpaper.css" />
@@ -22,7 +24,7 @@
   <body>
     <!-- ============================ TOP BAR ============================ -->
     <header class="topbar">
-      <div class="brand">
+      <a class="brand" href="/#/" title="ABC design – oversikt">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 32 32" width="28" height="28">
             <rect width="32" height="32" rx="9" fill="currentColor" />
@@ -31,26 +33,32 @@
           </svg>
         </span>
         <span class="brand__text"><strong>ABC</strong> design</span>
-      </div>
+      </a>
 
       <!-- The two work areas. Annonser is this page; Native Premium is its own
            page (native/index.html) with the same bar. -->
       <nav class="areas" aria-label="Område">
-        <a class="area is-active" href="/#/" aria-current="page">Annonser</a>
-        <a class="area" href="/native/">Native Premium</a>
+        <a class="area is-active" href="/#/" aria-current="page" title="Bannere, Houseads, NT Live, Bulk og Wallpaper">Annonser</a>
+        <a class="area" href="/native/" title="Annonsørinnhold: artikkelsider med maler og AI">Native Premium</a>
       </nav>
 
-      <!-- Three products share the builder panel; the fourth tab is the log.
-           Which product is selected decides the formats, the form fields and
-           the furniture on the banner itself (see public/assets/formats.js). -->
-      <nav class="tabs" role="tablist" aria-label="Visning">
-        <button class="tab is-active" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="true" aria-controls="view-new">Norsk Tipping</button>
-        <button class="tab" data-tab="live" id="tab-live" role="tab" aria-selected="false" aria-controls="view-live" tabindex="-1" title="Dynamiske HTML5-annonser for Norsk Tipping: dagens kamper fra et regneark, med nedtelling, video og knapp">NT Live</button>
-        <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">ReadPeak</button>
-        <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1">Houseads</button>
-        <button class="tab" data-tab="bulk" id="tab-bulk" role="tab" aria-selected="false" aria-controls="view-bulk" tabindex="-1" title="Mange Houseads fra ett regneark">Bulk</button>
-        <button class="tab" data-tab="wallpaper" id="tab-wallpaper" role="tab" aria-selected="false" aria-controls="view-wallpaper" tabindex="-1">Wallpaper</button>
-        <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1">
+      <!-- One tab per tool, in three groups: the banner builder (three
+           products share one form), the automated/large-format tools, and the
+           log. The house icon is the overview of everything. -->
+      <nav class="tabs" role="tablist" aria-label="Verktøy">
+        <button class="tab tab--icon is-active" data-tab="home" id="tab-home" role="tab" aria-selected="true" aria-controls="view-home" title="Oversikt – alle verktøyene og hva de lager" aria-label="Oversikt">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
+        </button>
+        <span class="tabs__sep" aria-hidden="true"></span>
+        <button class="tab" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="Norsk Tipping-bannere i 4 formater, med vinnersjanse og 18+-merke">Norsk Tipping</button>
+        <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ReadPeak-annonser for alle annonsører: merkevare, ingress og «Les mer»">ReadPeak</button>
+        <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ABC Nyheters egne annonser (abc shopping) i 6 formater">Houseads</button>
+        <span class="tabs__sep" aria-hidden="true"></span>
+        <button class="tab" data-tab="live" id="tab-live" role="tab" aria-selected="false" aria-controls="view-live" tabindex="-1" title="Dynamiske HTML5-annonser for Norsk Tipping: dagens kamper fra et regneark">NT Live</button>
+        <button class="tab" data-tab="bulk" id="tab-bulk" role="tab" aria-selected="false" aria-controls="view-bulk" tabindex="-1" title="Mange bannere på én gang fra ett regneark – én rad per banner">Bulk</button>
+        <button class="tab" data-tab="wallpaper" id="tab-wallpaper" role="tab" aria-selected="false" aria-controls="view-wallpaper" tabindex="-1" title="Designeditor for wallpaper: bakgrunn 1920×850 og toppbanner 1000×300">Wallpaper</button>
+        <span class="tabs__sep" aria-hidden="true"></span>
+        <button class="tab" data-tab="history" id="tab-history" role="tab" aria-selected="false" aria-controls="view-history" tabindex="-1" title="Alt som er laget – last ned på nytt, rediger eller slett">
           Historikk <span class="tab__count" id="historyCount" hidden>0</span>
         </button>
       </nav>
@@ -66,12 +74,146 @@
     </header>
 
     <main class="main">
+      <!-- ============================ OVERSIKT ============================ -->
+      <!-- The start page: every tool, what it makes and when to use it. -->
+      <section class="view" id="view-home" role="tabpanel" aria-labelledby="tab-home" tabindex="0">
+        <div class="page home">
+          <header class="page-head">
+            <div class="page-head__text">
+              <p class="overline page-head__eyebrow">ABC design</p>
+              <h1 class="page-head__title">Hva skal du lage?</h1>
+              <p class="page-head__desc">
+                Velg verktøyet som passer jobben. Alt du lager, lagres i Historikk – klart til å
+                lastes ned igjen.
+              </p>
+            </div>
+          </header>
+
+          <section class="home__group" aria-labelledby="home-banners">
+            <div class="home__grouphead">
+              <h2 class="home__grouptitle" id="home-banners">Bannere</h2>
+              <p class="home__groupdesc">Ett bilde og én overskrift blir alle størrelsene – som bilde eller HTML5 til Campaign Manager 360.</p>
+            </div>
+            <div class="home__grid home__grid--3">
+              <a class="tool" href="#/norsktipping">
+                <span class="tool__formats" aria-hidden="true">
+                  <i style="--w:308;--h:380"></i><i style="--w:580;--h:500"></i><i style="--w:320;--h:400"></i><i style="--w:190;--h:190"></i>
+                </span>
+                <span class="tool__title">Norsk Tipping</span>
+                <span class="tool__desc">Spillbannere med vinnersjanse, 18+-merke og «Annonse» lagt på automatisk.</span>
+                <span class="tool__meta"><span class="badge">4 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__go">Lag bannere <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+              <a class="tool" href="#/readpeak">
+                <span class="tool__formats" aria-hidden="true">
+                  <i style="--w:308;--h:380"></i><i style="--w:190;--h:190"></i>
+                </span>
+                <span class="tool__title">ReadPeak</span>
+                <span class="tool__desc">Native-annonser for alle annonsører, med merkevare, ingress og «Les mer».</span>
+                <span class="tool__meta"><span class="badge">2 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__go">Lag annonse <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+              <a class="tool" href="#/houseads">
+                <span class="tool__formats" aria-hidden="true">
+                  <i style="--w:320;--h:400"></i><i style="--w:980;--h:300"></i><i style="--w:980;--h:500"></i><i style="--w:580;--h:500"></i><i style="--w:300;--h:600"></i><i style="--w:300;--h:250"></i>
+                </span>
+                <span class="tool__title">Houseads</span>
+                <span class="tool__desc">ABC Nyheters egne annonser for abc shopping, med Noto Serif-overskrift.</span>
+                <span class="tool__meta"><span class="badge">6 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__go">Lag Houseads <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+            </div>
+          </section>
+
+          <section class="home__group" aria-labelledby="home-auto">
+            <div class="home__grouphead">
+              <h2 class="home__grouptitle" id="home-auto">Automatisering</h2>
+              <p class="home__groupdesc">Når det er mange bannere, eller innholdet skal oppdatere seg selv.</p>
+            </div>
+            <div class="home__grid home__grid--2">
+              <a class="tool tool--row" href="#/live">
+                <span class="tool__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 16.24a6 6 0 0 1 0-8.49"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+                </span>
+                <span class="tool__body">
+                  <span class="tool__title">NT Live</span>
+                  <span class="tool__desc">Én HTML5-annonse som viser dagens kamper fra et Google-regneark – og oppdaterer seg selv hver dag.</span>
+                  <span class="tool__meta"><span class="badge badge--success">Dynamisk</span><span class="badge">HTML5 · CM360</span></span>
+                </span>
+                <span class="tool__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+              <a class="tool tool--row" href="#/bulk">
+                <span class="tool__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+                </span>
+                <span class="tool__body">
+                  <span class="tool__title">Bulk</span>
+                  <span class="tool__desc">Mange bannere på én gang: én rad i regnearket blir én banner i alle størrelser. Houseads, ReadPeak og Norsk Tipping.</span>
+                  <span class="tool__meta"><span class="badge">Regneark → ZIP</span><span class="badge">Bilde · HTML5</span></span>
+                </span>
+                <span class="tool__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+            </div>
+          </section>
+
+          <section class="home__group" aria-labelledby="home-big">
+            <div class="home__grouphead">
+              <h2 class="home__grouptitle" id="home-big">Store flater og innhold</h2>
+              <p class="home__groupdesc">Fri design på store formater, og hele annonsørsider.</p>
+            </div>
+            <div class="home__grid home__grid--2">
+              <a class="tool tool--row" href="#/wallpaper">
+                <span class="tool__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="7" y="4" width="10" height="4"/><path d="M7 8v12"/><path d="M17 8v12"/></svg>
+                </span>
+                <span class="tool__body">
+                  <span class="tool__title">Wallpaper</span>
+                  <span class="tool__desc">Designeditor for bakgrunn 1920×850 og toppbanner 1000×300, med maler, tekst, bilder og sikker sone.</span>
+                  <span class="tool__meta"><span class="badge">Editor</span><span class="badge">Bilde · HTML5</span></span>
+                </span>
+                <span class="tool__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+              <a class="tool tool--row" href="/native/">
+                <span class="tool__icon tool__icon--native" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+                </span>
+                <span class="tool__body">
+                  <span class="tool__title">Native Premium</span>
+                  <span class="tool__desc">Annonsørinnhold: hele artikkelsider bygd av ferdige seksjoner og maler – med AI som skriver første utkast.</span>
+                  <span class="tool__meta"><span class="badge">Nettside</span><span class="badge badge--ai">AI</span></span>
+                </span>
+                <span class="tool__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+              </a>
+            </div>
+          </section>
+
+          <a class="home__history" href="#/history">
+            <span class="tool__icon tool__icon--quiet" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            </span>
+            <span class="tool__body">
+              <span class="tool__title">Historikk</span>
+              <span class="tool__desc">De siste 30 pakkene du og kollegene har laget – last ned på nytt, åpne igjen eller slett.</span>
+            </span>
+            <span class="tool__go">Åpne Historikk <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+          </a>
+
+        </div>
+      </section>
+
       <!-- =========================== NY BANNER =========================== -->
-      <section class="view" id="view-new" role="tabpanel" aria-labelledby="tab-new" tabindex="0">
+      <section class="view is-hidden" id="view-new" role="tabpanel" aria-labelledby="tab-norsktipping" tabindex="-1">
         <div class="workspace">
           <!-- ---------------------- LEFT: form ---------------------- -->
           <form class="panel form" id="bannerForm" autocomplete="off" novalidate>
             <div class="form__scroll">
+              <!-- Which product this is and what it makes; filled per product
+                   from PRODUCT_INTRO in app.js. -->
+              <header class="form__intro">
+                <h2 class="form__title" id="productTitle">Norsk Tipping</h2>
+                <p class="form__desc" id="productDesc"></p>
+              </header>
+
               <!-- 1 · Bilde ------------------------------------------------ -->
               <section class="fgroup">
                 <h3 class="fgroup__title"><span class="fgroup__step">1</span>Bilde</h3>
@@ -324,6 +466,7 @@
                 <span class="btn-generate__spinner" aria-hidden="true"></span>
                 <span class="btn-generate__label">Generer bannere · 4 størrelser</span>
               </button>
+              <p class="form__hint" id="generateHint">Last opp et bilde eller hent det fra en lenke først.</p>
               <div class="result" id="result" hidden>
                 <div class="result__top">
                   <svg class="result__check" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -372,16 +515,23 @@
 
       <!-- =========================== HISTORIKK =========================== -->
       <section class="view is-hidden" id="view-history" role="tabpanel" aria-labelledby="tab-history" tabindex="-1">
-        <div class="history">
-          <div class="history__head">
-            <h2>Historikk</h2>
-            <span class="history__sub">De siste 30 genererte pakkene</span>
-          </div>
+        <div class="page history">
+          <header class="page-head">
+            <div class="page-head__text">
+              <h1 class="page-head__title">Historikk</h1>
+              <p class="page-head__desc">De siste 30 pakkene som er laget her – last ned på nytt, åpne igjen eller slett.</p>
+            </div>
+          </header>
           <div class="history__grid" id="historyGrid"></div>
-          <div class="empty" id="historyEmpty" hidden>
-            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
-            <p>Ingen bannere generert ennå.</p>
-            <button class="btn-ghost" data-goto="new">Lag din første banner</button>
+          <div class="empty-state" id="historyEmpty" hidden>
+            <span class="empty-state__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            </span>
+            <p class="empty-state__title">Ingenting her ennå</p>
+            <p class="empty-state__text">Alt du genererer i Annonser, Bulk, NT Live og Wallpaper havner her, klart til å lastes ned igjen.</p>
+            <div class="empty-state__actions">
+              <button class="btn btn--primary" data-goto="home">Velg et verktøy</button>
+            </div>
           </div>
         </div>
       </section>
@@ -391,7 +541,10 @@
     <div class="drawer-overlay" id="drawerOverlay" hidden></div>
     <aside class="drawer" id="settingsDrawer" aria-hidden="true" inert aria-label="Innstillinger">
       <header class="drawer__head">
-        <h2>Innstillinger</h2>
+        <div class="drawer__titles">
+          <h2>Innstillinger</h2>
+          <p class="drawer__sub">Gjelder bannerne for alle som bruker verktøyet.</p>
+        </div>
         <button class="iconbtn" id="closeSettings" aria-label="Lukk">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -407,6 +560,7 @@
 
         <section class="settings-group">
           <h3>Statiske merker</h3>
+          <p class="settings-group__desc">Merkingen som står fast på hver Norsk Tipping-banner.</p>
           <div class="field">
             <label class="field__label" for="setAnnonse">«Annonse»-tekst</label>
             <!-- Placeholder = the standard the field falls back to when cleared. -->
@@ -434,6 +588,7 @@
 
         <section class="settings-group">
           <h3>Eksport</h3>
+          <p class="settings-group__desc">Filformat, kvalitet og hvor tunge filene får være.</p>
           <div class="field">
             <label class="field__label">Standard filformat</label>
             <div class="segmented" id="setFormat" role="group" aria-label="Standard filformat">

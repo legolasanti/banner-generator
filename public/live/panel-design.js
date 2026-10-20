@@ -105,8 +105,8 @@
     } });
 
     root.appendChild(
-      form.card("Mal", [gallery, h("div.lv-actions.lv-actions--between", null, h("span.lv-fine", null, "Hold musepekeren over en mal for å se den rotere."), codeLink)], {
-        desc: "Hvordan hver kamp ser ut. Alle malene fungerer i alle fire formatene.",
+      form.card("Mal", [gallery, h("div.lv-actions", null, codeLink)], {
+        desc: "Hvordan hver kamp ser ut, i alle fire formatene. Hold pekeren over en mal for å se den rotere.",
       })
     );
 
@@ -114,8 +114,7 @@
     root.appendChild(
       form.card("Farge", [
         form.color({ value: state.design.accent, presets: LT.ACCENTS, onChange: function (v) { if (v !== state.design.accent) app.setDesign("accent", v); } }),
-        h("p.lv-fine", null, "Én aksentfarge; mørke og lyse toner til flater, knapper og animasjoner regnes ut av den."),
-      ])
+      ], { desc: "Én aksentfarge; mørke og lyse toner til flater, knapper og animasjoner regnes ut av den." })
     );
 
     // ---- background -------------------------------------------------------------
@@ -192,7 +191,7 @@
         ),
         motionDesc,
         form.field("Tekststørrelse", form.range({ min: 0.7, max: 1.4, step: 0.05, value: state.design.textScale, fmt: function (v) { return Math.round(v * 100) + " %"; }, onChange: function (v) { app.setDesign("textScale", v); } }), "Skalerer overskriften. Lange lagnavn krymper uansett av seg selv til de får plass."),
-      ])
+      ], { desc: "Hvordan kampene kommer inn, og hvor stor overskriften er." })
     );
 
     app.on("config", function () {
