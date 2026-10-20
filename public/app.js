@@ -543,8 +543,14 @@
   /** The "Pakke" chips — which combination of the product's formats to get. */
   function buildDownloadSets() {
     const active = currentSet();
+    const sets = productCfg().sets;
     el.downloadSet.innerHTML = "";
-    productCfg().sets.forEach((set) => {
+    // An even grid, never a ragged wrap: up to four choices share one row;
+    // with more (Houseads' "Alle 6" + six sizes) "Alle" gets the top row and
+    // the sizes sit three by three under it.
+    el.downloadSet.classList.toggle("is-many", sets.length > 4);
+    el.downloadSet.style.setProperty("--cols", sets.length > 4 ? 3 : sets.length);
+    sets.forEach((set) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "seg" + (set.id === active ? " is-active" : "");

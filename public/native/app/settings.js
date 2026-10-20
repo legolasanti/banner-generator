@@ -27,7 +27,7 @@
   }
 
   function view(host) {
-    var root = h("div.page.nx-page");
+    var root = h("div.page.nx-page.nx-page--settings");
     var body = h("div");
     root.appendChild(ui.pageHead("Innstillinger", "Det alle Native Premium-sider deler: merking, publisering, måling og AI-modeller.", null));
     root.appendChild(body);

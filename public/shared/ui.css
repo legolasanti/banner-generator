@@ -477,7 +477,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
    short mutually-exclusive choices (PNG/JPEG, Knapp/Tekst, filters). */
 .segmented, .lv-seg, .nx-seg, .wp-seg {
   display: inline-flex;
-  flex-wrap: wrap;
+  /* Never wrap: a ragged second row (two options under four) reads as a
+     different control. Too many options → .segmented--grid or a select. */
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-0-5);
   padding: 3px;
@@ -502,6 +504,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   cursor: pointer;
   transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
+.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b { min-width: 0; }
+:is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b) > span { overflow: hidden; text-overflow: ellipsis; }
 :is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):hover { color: var(--color-text); }
 :is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):is(.is-active, .is-on, [aria-pressed="true"], [aria-selected="true"]) {
   background: var(--color-surface);
@@ -515,6 +519,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   padding: 0 var(--space-2);
   font-size: var(--text-sm);
 }
+/* Grid: many options in even columns (set --cols); cells may hold two
+   lines. Used where a single row would not fit. */
+.segmented--grid { display: grid; width: 100%; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+.segmented--grid .seg { width: 100%; }
+
 /* Full width: options share the row equally. */
 .segmented--block, .segmented--wide, .lv-seg--block, .wp-seg--wide { display: flex; width: 100%; }
 :is(.segmented--block, .segmented--wide) .seg, .lv-seg--block .lv-seg__btn, .wp-seg--wide .wp-seg__b { flex: 1 1 0; min-width: 0; }

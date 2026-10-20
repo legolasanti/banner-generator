@@ -88,7 +88,7 @@
       });
       var fam = Fonts.find(font.family);
       var weights = fam ? fam.w : [400, 700];
-      var w = h("select.nx-input.nx-select.nx-select--sm");
+      var w = h("select.nx-input.nx-select.nx-fontweight");
       weights.forEach(function (x) { w.appendChild(h("option", { value: x, selected: x === font.weight }, String(x))); });
       w.addEventListener("change", function () { setFont({ weight: Number(w.value) }); });
       body.appendChild(h("div.nx-row", null, sel, w));
@@ -115,7 +115,7 @@
   function fontUpload(adapter, redraw) {
     var input = h("input", { type: "file", accept: ".woff2,.woff,.ttf,.otf", hidden: true });
     var family = h("input.nx-input", { type: "text", placeholder: "Skriftnavn, f.eks. FordAntenna" });
-    var weight = h("select.nx-input.nx-select.nx-select--sm");
+    var weight = h("select.nx-input.nx-select.nx-fontweight");
     [300, 400, 500, 600, 700, 800, 900].forEach(function (x) { weight.appendChild(h("option", { value: x, selected: x === 400 }, String(x))); });
     var italic = h("input", { type: "checkbox" });
     var license = h("input", { type: "checkbox" });

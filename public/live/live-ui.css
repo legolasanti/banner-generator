@@ -715,8 +715,9 @@ input[type="range"].lv-range {
 }
 .lv-tool__ctrls { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .lv-tool__spacer { flex: 1 1 auto; }
-/* The view controls stay together and keep to the right when they wrap. */
-.lv-tool__set { display: flex; align-items: flex-end; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-left: auto; }
+/* The view controls stay together; when they wrap they start at the left
+   edge under «Tidspunkt», so both rows share one alignment line. */
+.lv-tool__set { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--space-2) var(--space-6); }
 .lv-tool .lv-seg { flex-wrap: nowrap; padding: 2px; border-radius: var(--radius-md); }
 .lv-tool .lv-seg__btn { height: calc(var(--control-h-sm) - 6px); border-radius: var(--radius-sm); }
 .lv-time {

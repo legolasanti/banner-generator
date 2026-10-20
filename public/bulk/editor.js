@@ -42,7 +42,7 @@
     dom.counter = h("span.bk-ed__counter");
     dom.prev = h("button.iconbtn", { type: "button", title: "Forrige rad (Alt+←)", "aria-label": "Forrige rad" }, BULK.ui.icon("left", 18));
     dom.next = h("button.iconbtn", { type: "button", title: "Neste rad (Alt+→)", "aria-label": "Neste rad" }, BULK.ui.icon("right", 18));
-    dom.close = h("button.btn-primary.btn-sm", { type: "button" }, "Ferdig");
+    dom.close = h("button.btn-primary", { type: "button" }, "Ferdig");
     dom.duplicate = h("button.btn-ghost.btn-sm", { type: "button", title: "Lag en kopi av raden rett under" }, "Dupliser");
     dom.remove = h("button.btn-ghost.btn-sm.is-danger", { type: "button", title: "Fjern raden fra listen (regnearket endres ikke)" }, "Fjern");
     dom.duplicate.addEventListener("click", function () {

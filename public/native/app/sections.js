@@ -251,7 +251,8 @@
         n.hidden = q && n.dataset.q.indexOf(q) === -1;
       });
       Array.prototype.forEach.call(body.querySelectorAll(".nx-addgrid__sect"), function (sec) {
-        sec.hidden = !sec.querySelector("[data-q]:not([hidden])");
+        // Only a search hides a group; an empty group says why on its own.
+        sec.hidden = !!q && !sec.querySelector("[data-q]:not([hidden])");
       });
     }
     search.addEventListener("input", function () {
@@ -293,13 +294,17 @@
 
     function drawLibrary() {
       var row = h("div.nx-addgrid__row");
-      body.appendChild(h("div.nx-addgrid__sect", null, h("h3.nx-addgrid__group", null, "Fra biblioteket"), row));
+      var sect = h("div.nx-addgrid__sect", null, h("h3.nx-addgrid__group", null, "Fra biblioteket"), row);
+      body.appendChild(sect);
       row.appendChild(h("p.nx-muted", null, "Henter …"));
       NP.api.library().then(function (r) {
         ui.clear(row);
         libItems = (r.items || []).filter(function (x) { return x.kind === "section"; });
         if (!libItems.length) {
-          row.appendChild(h("p.nx-muted", null, "Biblioteket er tomt. Lagre en seksjon dit fra verktøylinjen over seksjonen (bokmerke-ikonet)."));
+          body.replaceChild(
+            ui.empty("bookmark", "Ingen lagrede seksjoner ennå", "Lagre en seksjon her fra verktøylinjen over den på siden (bokmerke-ikonet). Da kan hele teamet bruke den i nye saker."),
+            sect
+          );
           return;
         }
         libItems.forEach(function (item) {

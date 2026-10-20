@@ -88,7 +88,8 @@
             null,
             h("button.nx-pages__open", { type: "button", title: "Rediger denne siden", on: { click: function () { NP.store.setPage(pg.id); } } }, ui.icon(pg.id === cur ? "eye" : "file-text", 15)),
             label,
-            h("span.nx-muted.nx-pages__slug", { title: "Adresse i eksporten" }, i === 0 ? "/" : "/" + pg.slug + "/"),
+            // The main page lives at the root, so only variants show an address.
+            h("span.nx-muted.nx-pages__slug", { title: "Adresse i eksporten" }, i === 0 ? "" : "/" + pg.slug + "/"),
             ui.button("", { icon: "arrow-up", small: true, kind: "ghost", title: "Flytt opp", disabled: i === 0, onClick: function () { move(i, -1); } }),
             ui.button("", { icon: "trash", small: true, kind: "ghost", title: "Slett siden", disabled: p.pages.length === 1, onClick: function () { removePage(pg); } })
           )
@@ -97,10 +98,10 @@
       var p2 = project();
       box.appendChild(
         h(
-          "div.nx-row",
+          "div.nx-pages__add",
           null,
-          ui.button("Ny variant (kopi av denne)", { icon: "copy", small: true, disabled: p2.pages.length >= D.MAX_PAGES, onClick: function () { addPage(true); } }),
-          ui.button("Tom side", { icon: "file-plus", small: true, kind: "ghost", disabled: p2.pages.length >= D.MAX_PAGES, onClick: function () { addPage(false); } })
+          ui.button("Ny variant", { icon: "copy", small: true, title: "Ny variant – en kopi av siden du står på", disabled: p2.pages.length >= D.MAX_PAGES, onClick: function () { addPage(true); } }),
+          ui.button("Tom side", { icon: "file-plus", small: true, title: "Ny, tom side", disabled: p2.pages.length >= D.MAX_PAGES, onClick: function () { addPage(false); } })
         )
       );
       var nav = h("input", { type: "checkbox", checked: p2.variantNav });

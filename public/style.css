@@ -523,8 +523,10 @@ body {
 .result__alt-link { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 2px; }
 .result__alt-link:hover { color: var(--color-primary); }
 
-/* The Pakke choice: up to six options, so it wraps into even rows. */
-.segmented--wide .seg { flex: 1 1 auto; padding: 0 var(--space-2); font-size: var(--text-sm); }
+/* The Pakke choice: an even grid (columns set in app.js). Long labels such
+   as "Kun Nyhetsgrid 190×190" may take two lines inside their cell. */
+#downloadSet .seg { height: auto; min-height: var(--control-h-sm); padding: var(--space-1-5) var(--space-2); font-size: var(--text-sm); line-height: 1.2; white-space: normal; text-align: center; }
+#downloadSet.is-many .seg:first-child { grid-column: 1 / -1; }
 
 /* ----------------------------- Previews --------------------------------- */
 .previews { display: flex; flex-direction: column; }
@@ -606,18 +608,24 @@ body {
   animation: ui-pop 0.3s var(--ease) both;
 }
 .hcard:hover { box-shadow: var(--shadow-md); border-color: var(--color-border-strong); transform: translateY(-2px); }
+/* Every thumbnail is shown whole on one neutral well: the saved previews come
+   in many shapes (580×500, 308×380, 1920×850 strips), and cropping them to
+   one ratio cut headlines in half. */
 .hcard__thumb {
-  display: block; width: 100%; aspect-ratio: 580 / 500; object-fit: cover;
-  background: var(--color-surface-muted); border-bottom: 1px solid var(--color-border);
+  display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain;
+  padding: var(--space-3);
+  background: var(--color-surface-sunken); border-bottom: 1px solid var(--color-border);
 }
-/* Wallpaper and Bulk thumbnails are wide strips — show all of it. */
-.hcard__thumb--wide { object-fit: contain; background: var(--color-surface-sunken); }
+.hcard__thumb--wide { padding: var(--space-2); }
 .hcard__body { display: flex; flex-direction: column; flex: 1; padding: var(--space-3) var(--space-4) var(--space-4); }
 .hcard__name { font-weight: var(--weight-bold); font-size: var(--text-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hcard__head { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-0-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hcard__time { display: block; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-text-tertiary); margin-top: var(--space-1-5); }
-.hcard__actions { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin-top: auto; padding-top: var(--space-3); }
-.hcard__actions > * { flex: 1 1 auto; }
+/* All of a card's actions share one row in equal cells; four (Wallpaper:
+   Bilder, HTML5, Rediger, Slett) make a 2 × 2 grid rather than 3 + 1. */
+.hcard__actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1-5); margin-top: auto; padding-top: var(--space-3); }
+.hcard__actions:has(> :nth-child(4)) { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hcard__actions > * { width: 100%; padding-left: var(--space-2); padding-right: var(--space-2); }
 
 /* Which product a history entry came from (tone from .badge--success). */
 .hcard__tag { height: 20px; margin-left: var(--space-1-5); font-size: var(--text-2xs); vertical-align: 1px; }

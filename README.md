@@ -883,6 +883,18 @@ component, and the rules: one green action per screen, colour only for meaning
 and panel says what it is for, icon buttons always have a tooltip, contrast at
 least 4.5:1.
 
+Layout rules the screens follow (and that a new screen should too):
+
+- Every panel, card and dialog has inner padding — content never touches its
+  frame. Full-height dialogs keep their padding too.
+- A row of options never leaves one lonely control on a line of its own. A
+  segmented control stays on one line; with more options than fit, use
+  `.segmented--grid` (set `--cols`) or a select. Lists of cards use an
+  `auto-fill` grid that fills the width.
+- Controls side by side share one height (`--control-h-*`).
+- Bulk draws every format of a row on one line: the thumbnail scale shrinks
+  until frames and labels fit.
+
 ## HTML5 for Campaign Manager 360
 
 Under **Nedlastingstype**, pick **HTML5 · Campaign Manager 360** and fill in the

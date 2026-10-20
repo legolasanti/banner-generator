@@ -744,7 +744,8 @@
 .wp-kind.is-on { border-color: var(--color-primary); background: var(--color-primary-soft); box-shadow: 0 0 0 1px var(--color-primary); }
 .wp-kind__art { position: relative; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; pointer-events: none; }
 .wp-kind__art .wp-el { position: relative !important; left: auto !important; top: auto !important; }
-.wp-chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.wp-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1-5); }
+.wp-chips .wp-chip { justify-content: center; padding: 0 var(--space-2); }
 
 /* Quality check: each finding is a button that jumps to the element. */
 .wp-pf { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1-5); }
@@ -813,7 +814,9 @@
 
 .wp-pop--fonts { padding: var(--space-2); }
 .wp-fp { width: 300px; display: flex; flex-direction: column; gap: var(--space-2); }
-.wp-fp-cats { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+/* Six categories in an even 3 × 2 grid instead of a ragged 4 + 2 wrap. */
+.wp-fp-cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+.wp-fp-cats .wp-chip { justify-content: center; padding: 0 var(--space-2); }
 .wp-fp-list { height: 340px; overflow-y: auto; display: flex; flex-direction: column; }
 .wp-fp-head {
   padding: var(--space-2) var(--space-2) var(--space-1);

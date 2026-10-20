@@ -488,12 +488,53 @@
   }
 
   function applyDensity() {
+    applyScale();
+    Object.keys(cards).forEach(function (rid) { stale[rid] = true; });
+    redrawVisible();
+  }
+
+  // Gap between thumbnails (--space-4) and the narrowest a thumbnail can be
+  // before its label is drawn.
+  var THUMB_GAP = 16;
+  var THUMB_LABEL_W = 84;
+  var lastScale = 0;
+
+  /**
+   * The thumbnail scale: the S/M/L choice, but never so big that a row's
+   * formats stop fitting on one line — a lone format wrapping under the rest
+   * reads as a different banner.
+   */
+  function applyScale() {
     // ReadPeak's and Norsk Tipping's formats are a third the width of the
     // widest house formats; drawn at the house scale they would be stamps.
     var boost = state.product === "houseads" ? 1 : SMALL_FORMAT_BOOST;
-    dom.list.style.setProperty("--bk-scale", (DENSITY[state.density] || DENSITY.m) * boost);
-    Object.keys(cards).forEach(function (rid) { stale[rid] = true; });
-    redrawVisible();
+    var scale = Math.min((DENSITY[state.density] || DENSITY.m) * boost, fitScale());
+    if (scale === lastScale) return;
+    lastScale = scale;
+    dom.list.style.setProperty("--bk-scale", scale);
+  }
+
+  function fitScale() {
+    var specs = store.specs();
+    var box = dom.list && dom.list.querySelector(".bk-card:not([hidden]) .bk-thumbs");
+    var avail = box ? box.clientWidth : 0;
+    if (!specs.length || !avail) return Infinity;
+    // Labels wider than their frame take room too. Measure the drawn ones
+    // ("300×250 110 %" is wider than "300×250"); the constant covers first paint.
+    var labelW = THUMB_LABEL_W;
+    dom.list.querySelectorAll(".bk-card:not([hidden]) .bk-thumb__label").forEach(function (l) { labelW = Math.max(labelW, l.scrollWidth); });
+    // A pixel per thumbnail for sub-pixel rounding.
+    avail -= specs.length;
+    var gaps = THUMB_GAP * (specs.length - 1);
+    var sum = specs.reduce(function (a, sp) { return a + sp.width; }, 0);
+    var scale = (avail - gaps) / sum;
+    // Shrink until frames and labels fit together.
+    for (var i = 0; i < 6; i++) {
+      var total = gaps + specs.reduce(function (a, sp) { return a + Math.max(sp.width * scale, labelW); }, 0);
+      if (total <= avail) break;
+      scale *= avail / total;
+    }
+    return Math.max(scale, 0.1);
   }
 
   // ---- row cards --------------------------------------------------------
@@ -774,6 +815,9 @@
     dom.scroll = host;
     dom.warnings = h("ul.bk-warnings", { hidden: true });
     dom.list = h("div.bk-list");
+    // The fit follows the list's width: window resizes and the editor
+    // column opening both change it.
+    if (window.ResizeObserver) new ResizeObserver(function () { applyScale(); }).observe(dom.list);
     dom.emptyTitle = h("p.empty-state__title", null, "Ingen rader i dette utvalget");
     dom.emptyText = h("p.empty-state__text");
     dom.empty = h("div.empty-state.bk-empty", { hidden: true, role: "status" }, dom.emptyTitle, dom.emptyText);

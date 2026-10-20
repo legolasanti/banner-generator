@@ -865,6 +865,18 @@ noe (grønt ferdig, gult advarsel, rødt feil/slett, blått info, fiolett AI), h
 side og hvert panel sier hva det er til, ikonknapper har alltid verktøytips,
 kontrast minst 4,5:1.
 
+Layoutregler skjermene følger (og som en ny skjerm også bør følge):
+
+- Hvert panel, kort og hver dialog har indre luft — innholdet ligger aldri mot
+  kanten. Dialoger i full høyde beholder også luften.
+- En rad med valg etterlater aldri én ensom kontroll på en egen linje. Et
+  segmentert valg holder seg på én linje; med flere valg enn det er plass til
+  bruker du `.segmented--grid` (sett `--cols`) eller en nedtrekksliste. Lister
+  med kort bruker et `auto-fill`-rutenett som fyller bredden.
+- Kontroller side om side har samme høyde (`--control-h-*`).
+- Bulk tegner alle formatene i en rad på én linje: miniatyrskalaen krymper til
+  rammer og etiketter får plass.
+
 ## HTML5 til Campaign Manager 360
 
 Under **Nedlastingstype** velger du **HTML5 · Campaign Manager 360** og fyller

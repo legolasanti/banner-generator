@@ -67,19 +67,19 @@
     var playBtn = form.button("", { kind: "icon", size: "sm", icon: "pause", ariaLabel: "Pause", title: "Pause / spill (mellomrom)" });
     var nextBtn = form.button("", { kind: "icon", size: "sm", icon: "right", ariaLabel: "Neste kamp", title: "Neste kamp (→)" });
 
-    var layoutSeg = form.seg({
-      value: state.ui.layout,
+    // One control for what the board shows: all four formats, or one of
+    // them large. (Two controls — Alle/Ett plus a format picker that appeared
+    // on "Ett" — made the toolbar jump to a second row.)
+    function viewValue() { return state.ui.layout === "fokus" ? "fokus:" + state.ui.focusKey : "alle"; }
+    var viewSeg = form.seg({
+      value: viewValue(),
       size: "sm",
       label: "Visning",
-      items: [["alle", "Alle", "Alle fire formatene", "grid"], ["fokus", "Ett", "Ett format stort", "focus"]],
-      onChange: function (v) { app.setUi({ layout: v }); applyLayout(); },
-    });
-    var focusSeg = form.seg({
-      value: state.ui.focusKey,
-      size: "sm",
-      label: "Format",
-      items: specs.map(function (s) { return [s.key, s.name, s.width + "×" + s.height]; }),
-      onChange: function (v) { app.setUi({ focusKey: v }); applyLayout(); },
+      items: [["alle", "Alle", "Alle fire formatene", "grid"]].concat(specs.map(function (s) { return ["fokus:" + s.key, s.name, s.name + " " + s.width + "×" + s.height + " – stort"]; })),
+      onChange: function (v) {
+        app.setUi(v === "alle" ? { layout: "alle" } : { layout: "fokus", focusKey: v.slice(6) });
+        applyLayout();
+      },
     });
     var bgSeg = form.seg({
       value: state.ui.bg,
@@ -112,7 +112,7 @@
       h(
         "div.lv-tool__set",
         null,
-        toolGroup("Visning", "Alle fire formatene, eller ett stort", layoutSeg, focusSeg),
+        toolGroup("Visning", "Alle fire formatene, eller ett av dem stort", viewSeg),
         toolGroup("Zoom", null, zoomSeg),
         toolGroup("Bakgrunn", "Flaten bak annonsene", bgSeg)
       )
@@ -149,8 +149,7 @@
       );
       frame.addEventListener("dblclick", function () {
         app.setUi({ layout: "fokus", focusKey: spec.key });
-        layoutSeg.setValue("fokus");
-        focusSeg.setValue(spec.key);
+        viewSeg.setValue(viewValue());
         applyLayout();
       });
       (spec.key === "desktop" ? hero : trio).appendChild(art);
@@ -350,7 +349,7 @@
     // ---- layout & scale ------------------------------------------------------------
     function applyLayout() {
       var focus = state.ui.layout === "fokus";
-      focusSeg.hidden = !focus;
+      viewSeg.setValue(viewValue());
       board.classList.toggle("is-focus", focus);
       cards.forEach(function (c) { c.art.hidden = focus && c.spec.key !== state.ui.focusKey; });
       trio.hidden = focus && state.ui.focusKey === "desktop";
