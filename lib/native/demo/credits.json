@@ -232,43 +232,11 @@
   "license": "Unsplash License"
  },
  {
-  "name": "bike-rain-junction",
-  "file": "bike-rain-junction.jpg",
-  "alt": "Syklist i regnet i et lyskryss",
-  "author": "Semyon Borisov",
-  "source": "https://unsplash.com/photos/xwUP54AhCAY",
-  "license": "Unsplash License"
- },
- {
-  "name": "bike-city-street",
-  "file": "bike-city-street.jpg",
-  "alt": "Syklist i en bygate mot en kirke",
-  "author": "Lorenzo Zunino",
-  "source": "https://unsplash.com/photos/BrSErzj70co",
-  "license": "Unsplash License"
- },
- {
   "name": "coast-road-hills",
   "file": "coast-road-hills.jpg",
   "alt": "Svingete kystvei langs fjorden",
   "author": "Arvid Høidahl",
   "source": "https://unsplash.com/photos/OJNRKMmwyo8",
-  "license": "Unsplash License"
- },
- {
-  "name": "bike-street-corner",
-  "file": "bike-street-corner.jpg",
-  "alt": "Sykkelvei på et gatehjørne i byen",
-  "author": "Yohan Marion",
-  "source": "https://unsplash.com/photos/2k8x7C5liH0",
-  "license": "Unsplash License"
- },
- {
-  "name": "ebike-traffic",
-  "file": "ebike-traffic.jpg",
-  "alt": "Syklist med hjelm i bytrafikken",
-  "author": "Gotrax",
-  "source": "https://unsplash.com/photos/QG8ZX5KZLng",
   "license": "Unsplash License"
  },
  {
@@ -496,14 +464,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "lofoten-peak",
-  "file": "lofoten-peak.jpg",
-  "alt": "Fjelltopp i morgenlys over et fiskevær",
-  "author": "Johny Goerend",
-  "source": "https://unsplash.com/photos/q913abUzFCI",
-  "license": "Unsplash License"
- },
- {
   "name": "fjord-mist-boat",
   "file": "fjord-mist-boat.jpg",
   "alt": "Båt i en tåkete fjord",
@@ -592,14 +552,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "ev-snow-suv",
-  "file": "ev-snow-suv.jpg",
-  "alt": "Hvit SUV på snødekt vidde med rosa fjell i bakgrunnen",
-  "author": "M G",
-  "source": "https://unsplash.com/photos/KYSEbj4bjO8",
-  "license": "Unsplash License"
- },
- {
   "name": "road-dovre-snow",
   "file": "road-dovre-snow.jpg",
   "alt": "Svingete vei gjennom snødekt fjelldal",
@@ -632,35 +584,11 @@
   "license": "Unsplash License"
  },
  {
-  "name": "ev-charging-night",
-  "file": "ev-charging-night.jpg",
-  "alt": "Elbil som lader på en opplyst ladestasjon om kvelden",
-  "author": "YRKA PICTURED",
-  "source": "https://unsplash.com/photos/VnO7esC-LjA",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-interior-modern",
-  "file": "ev-interior-modern.jpg",
-  "alt": "Førerplass i en moderne bil med digitale skjermer",
-  "author": "Avenir Visuals",
-  "source": "https://unsplash.com/photos/LJPylI8jh1U",
-  "license": "Unsplash License"
- },
- {
   "name": "road-forest-aerial",
   "file": "road-forest-aerial.jpg",
   "alt": "Vei gjennom snødekt granskog sett ovenfra",
   "author": "Thanos Amoutzias",
   "source": "https://unsplash.com/photos/QtNXq-g_mnU",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-suv-road",
-  "file": "ev-suv-road.jpg",
-  "alt": "Lysegrønn elbil i fart på en svingete fjellvei",
-  "author": "Hyundai Motor Group",
-  "source": "https://unsplash.com/photos/WSqivhqBjeo",
   "license": "Unsplash License"
  },
  {
@@ -1000,14 +928,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "couple-moving-boxes",
-  "file": "couple-moving-boxes.jpg",
-  "alt": "Ungt par sitter blant flytteesker i ny bolig",
-  "author": "Vitaly Gariev",
-  "source": "https://unsplash.com/photos/pyMjFpH8USU",
-  "license": "Unsplash License"
- },
- {
   "name": "headphones-cream",
   "file": "headphones-cream.jpg",
   "alt": "Kremhvite trådløse hodetelefoner mot hvit bakgrunn",
@@ -1208,14 +1128,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "house-car-garden",
-  "file": "house-car-garden.jpg",
-  "alt": "Trehus med elbil i hagen",
-  "author": "Polina Kuzovkova",
-  "source": "https://unsplash.com/photos/cXpa6NF0olI",
-  "license": "Unsplash License"
- },
- {
   "name": "boot-shopping-plants",
   "file": "boot-shopping-plants.jpg",
   "alt": "Handleposer og planter i et bagasjerom",
@@ -1301,14 +1213,6 @@
   "alt": "Mann med briller i en handlegate",
   "author": "Centre for Ageing Better",
   "source": "https://unsplash.com/photos/dusPCcKbrKM",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-interior-bright",
-  "file": "ev-interior-bright.jpg",
-  "alt": "Lys førerplass i en elbil med skjermer",
-  "author": "Vitali Adutskevich",
-  "source": "https://unsplash.com/photos/y42KNKdYuDI",
   "license": "Unsplash License"
  },
  {
@@ -1621,14 +1525,6 @@
   "alt": "Energiingeniør med hjelm og vernebriller smiler",
   "author": "ThisisEngineering",
   "source": "https://unsplash.com/photos/cdSKgXv2Vz4",
-  "license": "Unsplash License"
- },
- {
-  "name": "bolig-living-warm",
-  "file": "bolig-living-warm.jpg",
-  "alt": "Lys stue med hyller og spiseplass",
-  "author": "Puscas Adryan",
-  "source": "https://unsplash.com/photos/2cfj0Y5ch00",
   "license": "Unsplash License"
  },
  {
@@ -2024,14 +1920,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "fest-hands-sunset",
-  "file": "fest-hands-sunset.jpg",
-  "alt": "Publikum med hendene i været i solnedgang ved vannet",
-  "author": "Daniela Becerra",
-  "source": "https://unsplash.com/photos/SvwmxHVO9ko",
-  "license": "Unsplash License"
- },
- {
   "name": "fest-dance-sun",
   "file": "fest-dance-sun.jpg",
   "alt": "Festivalpublikum danser i motlys",
@@ -2184,14 +2072,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "folk-kvinne-smil",
-  "file": "folk-kvinne-smil.jpg",
-  "alt": "Kvinne med et bredt smil",
-  "author": "Michael Mims",
-  "source": "https://unsplash.com/photos/fWWiaDox0BU",
-  "license": "Unsplash License"
- },
- {
   "name": "folk-mann-fjell",
   "file": "folk-mann-fjell.jpg",
   "alt": "Smilende mann på fjelltur",
@@ -2229,6 +2109,158 @@
   "alt": "Eldre kvinne med briller ved sjøen",
   "author": "Age Cymru",
   "source": "https://unsplash.com/photos/KBRytaQYDGA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-wet-street",
+  "file": "bergen-wet-street.jpg",
+  "alt": "Våt brosteinsgate i Bergen en regnværsdag",
+  "author": "Karen Cann",
+  "source": "https://unsplash.com/photos/xIZWgklH73E",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-hill-street",
+  "file": "bergen-hill-street.jpg",
+  "alt": "Bratt gate med trehus i Bergen",
+  "author": "Agata Ciosek",
+  "source": "https://unsplash.com/photos/7fibGvwTB-A",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-cobble-lane",
+  "file": "bergen-cobble-lane.jpg",
+  "alt": "Smalt brosteinssmug mellom hvite trehus i Bergen",
+  "author": "Mikhail | luxkstn",
+  "source": "https://unsplash.com/photos/B4lCxQ2Vs-w",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trondheim-bike-parked",
+  "file": "trondheim-bike-parked.jpg",
+  "alt": "Sykkel parkert i en gate med gamle trehus i Trondheim",
+  "author": "snap wander",
+  "source": "https://unsplash.com/photos/D7ggPf5j10U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "oslo-cyclist-street",
+  "file": "oslo-cyclist-street.jpg",
+  "alt": "Syklist med hjelm i en gate i Oslo",
+  "author": "Eirik Skarstein",
+  "source": "https://unsplash.com/photos/6uj3xIWKDLY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "reine-night-reflection",
+  "file": "reine-night-reflection.jpg",
+  "alt": "Reine i Lofoten med lys i husene og speilblankt vann i mørketida",
+  "author": "David Becker",
+  "source": "https://unsplash.com/photos/XdTeYqWnkTI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "reine-aurora",
+  "file": "reine-aurora.jpg",
+  "alt": "Nordlys over Reine i Lofoten",
+  "author": "Johny Goerend",
+  "source": "https://unsplash.com/photos/x3WQMj5QkEE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lofoten-pink-noon",
+  "file": "lofoten-pink-noon.jpg",
+  "alt": "Rosa himmel over snødekte fjell i Lofoten midt på dagen",
+  "author": "Pascal Debrunner",
+  "source": "https://unsplash.com/photos/cb1xSplprkg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-sofa-corner",
+  "file": "lamp-sofa-corner.jpg",
+  "alt": "Bordlampe med skjerm ved en mørk sofa",
+  "author": "Andre da Silva",
+  "source": "https://unsplash.com/photos/N0m8evXqvTs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabin-snow-trees",
+  "file": "cabin-snow-trees.jpg",
+  "alt": "Hytte mellom snødekte grantrær",
+  "author": "Nico Knaack",
+  "source": "https://unsplash.com/photos/opYSnus7-oU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-kvinne-host",
+  "file": "folk-kvinne-host.jpg",
+  "alt": "Kvinne smiler utendørs om høsten",
+  "author": "Christopher John",
+  "source": "https://unsplash.com/photos/rI66xRC2PSM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-aerial",
+  "file": "fest-aerial.jpg",
+  "alt": "Festivalområdet i grønt sett ovenfra",
+  "author": "Liosha Shyp",
+  "source": "https://unsplash.com/photos/tIMuld0vWgo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-aerial-snow-road",
+  "file": "ev-aerial-snow-road.jpg",
+  "alt": "Hvit bil på en snødekt vei, sett rett ovenfra",
+  "author": "White Field Photo",
+  "source": "https://unsplash.com/photos/nnrN8p9XjeA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-cockpit-night",
+  "file": "ev-cockpit-night.jpg",
+  "alt": "Hånd på rattet og digitale skjermer i en bil i skumringen",
+  "author": "Randy Tarampi",
+  "source": "https://unsplash.com/photos/cPVj7QlcKyM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "car-valley-aerial",
+  "file": "car-valley-aerial.jpg",
+  "alt": "Rød bil på en rett vei gjennom en grønn fjelldal",
+  "author": "Hendrik Morkel",
+  "source": "https://unsplash.com/photos/BMFwfSIB7sM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-charging-port",
+  "file": "ev-charging-port.jpg",
+  "alt": "Ladekabel i ladeluken på en grå elbil",
+  "author": "Michael Fousert",
+  "source": "https://unsplash.com/photos/YhXlYJYlr3c",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "car-rear-seats",
+  "file": "car-rear-seats.jpg",
+  "alt": "Baksetet i en bil sett fra forsetene",
+  "author": "THLT LCX",
+  "source": "https://unsplash.com/photos/TjURD8n3hbU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "winter-road-hood",
+  "file": "winter-road-hood.jpg",
+  "alt": "Snødekt vei gjennom granskog sett over panseret",
+  "author": "Shashidhar S",
+  "source": "https://unsplash.com/photos/CM4pL5ftpWc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-window",
+  "file": "face-woman-window.jpg",
+  "alt": "Smilende kvinne ved et vindu",
+  "author": "Phước Sang",
+  "source": "https://unsplash.com/photos/jBqMJdzTcgA",
   "license": "Unsplash License"
  }
 ]
