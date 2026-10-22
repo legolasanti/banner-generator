@@ -531,9 +531,50 @@
       });
     }
 
+    // ---- "Spill av animasjon" ------------------------------------------------------
+    // Plays the section's entrance again. A section whose look follows the
+    // scroll (an overgang or a scroll effect) is also scrolled past the way a
+    // reader would: from just below the screen up into place.
+    var tour = 0;
+    function replay(id) {
+      var el = sectionEl(id);
+      if (!el || !win || !win.NPRuntime || !win.NPRuntime.replay) return false;
+      if (reduced) {
+        ui.toast("Slå av «Redusert bevegelse» for å se animasjonen");
+        return false;
+      }
+      var run = ++tour;
+      var vh = win.innerHeight;
+      var top = el.getBoundingClientRect().top + win.scrollY;
+      var scrolled = el.hasAttribute("data-np-motion");
+      if (!scrolled) {
+        var r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > vh * 0.8) win.scrollTo(0, Math.max(0, top - vh * 0.15));
+        win.NPRuntime.replay(el);
+        return true;
+      }
+      var from = Math.max(0, top - vh);
+      var to = Math.max(0, Math.min(top + Math.min(el.offsetHeight, vh) * 0.6, docu.documentElement.scrollHeight - vh));
+      var ms = 2200;
+      var t0 = 0;
+      win.scrollTo(0, from);
+      win.NPRuntime.replay(el);
+      function step(t) {
+        if (run !== tour || !win) return;
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / ms);
+        var e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        win.scrollTo(0, from + (to - from) * e);
+        if (k < 1) win.requestAnimationFrame(step);
+      }
+      win.requestAnimationFrame(step);
+      return true;
+    }
+
     return {
       refresh: full,
       fit: fit,
+      replay: replay,
       setReducedMotion: setReducedMotion,
       scrollTo: function (id) {
         var el = sectionEl(id);

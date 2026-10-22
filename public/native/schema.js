@@ -59,6 +59,43 @@
     ["reveal", "Avdekk nedenfra (maske)"],
     ["stagger", "Elementene ett og ett"],
     ["rise", "Løft med fjæring"],
+    ["mask-left", "Avdekk fra venstre (maske)"],
+    ["iris", "Åpnes som en sirkel"],
+    ["tilt", "Vippes opp i 3D"],
+    ["drop", "Senkes ned ovenfra"],
+    ["settle", "Fra nært til normalt (zoom ut)"],
+  ];
+
+  // Every entrance that actually moves (the fields for tempo, curve … only
+  // show for these).
+  var MOVING = ANIMATIONS.map(function (a) { return a[0]; }).filter(function (k) { return k !== "none"; });
+
+  // How the entrance moves. "smooth" is the curve every page had before.
+  var EASINGS = [
+    ["smooth", "Myk (standard)"],
+    ["expo", "Elegant – rask start, lang utglidning"],
+    ["spring", "Fjærende – skyter litt over"],
+    ["snappy", "Kvikk inn og ut"],
+    ["gentle", "Rolig og jevn"],
+  ];
+
+  // How a section takes over from the one above it while the reader scrolls.
+  var TRANSITIONS = [
+    ["none", "Ingen (vanlig rulling)"],
+    ["stack", "Legger seg over forrige som et kort"],
+    ["cover", "Ruller over forrige (forrige står fast)"],
+    ["curtain", "Gardin – åpnes fra midten"],
+    ["zoom", "Vokser ut til full bredde"],
+    ["iris", "Sirkel som åpner seg"],
+    ["blend", "Fargene flyter over i hverandre"],
+  ];
+
+  var HEADING_FX = [
+    ["none", "Ingen"],
+    ["words", "Ord for ord nedenfra (maske)"],
+    ["fade-words", "Ordene tones inn ett og ett"],
+    ["letters", "Bokstav for bokstav"],
+    ["highlight", "Understrek tegnes inn"],
   ];
 
   // Section edge shapes (the section's own colour bites into its neighbour).
@@ -164,10 +201,60 @@
       type: "select",
       label: "Tempo",
       group: "Bevegelse",
-      options: [["fast", "Raskt"], ["normal", "Normalt"], ["slow", "Rolig"]],
+      options: [["fast", "Raskt"], ["normal", "Normalt"], ["slow", "Rolig"], ["xslow", "Svært rolig"]],
       default: "normal",
+      when: { anim: MOVING },
     },
-    { key: "animDelay", type: "number", label: "Forsinkelse (sek)", group: "Bevegelse", min: 0, max: 2, step: 0.1, default: 0 },
+    {
+      key: "animEase",
+      type: "select",
+      label: "Bevegelseskurve",
+      group: "Bevegelse",
+      options: EASINGS,
+      default: "smooth",
+      when: { anim: MOVING },
+      help: "Elegant passer til det meste. Fjærende gir liv til kort og knapper.",
+    },
+    { key: "animDelay", type: "number", label: "Forsinkelse (sek)", group: "Bevegelse", min: 0, max: 2, step: 0.1, default: 0, when: { anim: MOVING } },
+    {
+      key: "animStep",
+      type: "number",
+      label: "Tid mellom elementene (ms)",
+      group: "Bevegelse",
+      min: 30,
+      max: 400,
+      step: 10,
+      default: 90,
+      when: { anim: "stagger" },
+      help: "Kort, tall, steg og produkter kommer inn etter hverandre med dette mellomrommet.",
+    },
+    {
+      key: "animRepeat",
+      type: "toggle",
+      label: "Spill av hver gang seksjonen kommer inn",
+      group: "Bevegelse",
+      default: false,
+      when: { anim: MOVING },
+      help: "Av: bare første gang. På: også når leseren scroller tilbake.",
+    },
+    {
+      key: "headFx",
+      type: "select",
+      label: "Mellomtitler",
+      group: "Bevegelse",
+      options: HEADING_FX,
+      default: "none",
+      help: "Gjelder seksjonens mellomtitler (H2). Heroens tittel har sin egen innstilling under Innhold.",
+    },
+    {
+      key: "transition",
+      type: "select",
+      label: "Overgang fra seksjonen over",
+      group: "Bevegelse",
+      options: TRANSITIONS,
+      default: "none",
+      help: "Hvordan seksjonen tar over skjermen fra den over mens leseren scroller. Bruk på noen få, store skifter.",
+    },
     {
       key: "scrollFx",
       type: "select",
@@ -179,9 +266,13 @@
         ["scale-in", "Vokser inn fra 90 %"],
         ["drift", "Innholdet glir saktere (dybde)"],
         ["sticky-fade", "Står fast og tones ut (scene-skifte)"],
+        ["slide-x", "Glir sidelengs (stor tekst)"],
+        ["tilt-in", "Vippes inn i 3D"],
+        ["blur-out", "Blir uskarp når den forlater skjermen"],
+        ["layers", "Kortene flytter seg i lag (dybde)"],
       ],
       default: "none",
-      help: "Følger scrollingen direkte. Virker i moderne nettlesere; andre ser seksjonen uten effekt.",
+      help: "Følger scrollingen direkte. Én slik effekt per skjermbilde er nok.",
     },
     { key: "anchor", type: "text", label: "Anker-ID (for lenker til #id)", group: "Navigasjon", max: 40, default: "" },
     { key: "chapter", type: "text", label: "Navn i kapittelmenyen", group: "Navigasjon", max: 40, default: "", help: "Fyll ut for at seksjonen skal få et punkt i kapittelmenyen (slås på under Side)." },
@@ -215,6 +306,28 @@
       default: 25,
       when: { stickyCta: true },
       group: "Flytende knapp",
+    },
+    {
+      key: "motion",
+      type: "select",
+      label: "Styrke på animasjonene",
+      group: "Bevegelse",
+      options: [["calm", "Rolig – korte bevegelser"], ["normal", "Normal"], ["bold", "Kraftig – store bevegelser"]],
+      default: "normal",
+      help: "Gjelder alle seksjonene. Lesere som har slått av animasjoner, ser ingen bevegelse uansett.",
+    },
+    {
+      key: "hoverFx",
+      type: "select",
+      label: "Når musen er over",
+      group: "Bevegelse",
+      options: [
+        ["none", "Ingen effekt"],
+        ["subtle", "Diskret – knapper og lenker"],
+        ["lift", "Løft – også kort og produkter løftes"],
+        ["rich", "Rik – kort løftes og bildene zoomer"],
+      ],
+      default: "subtle",
     },
     { key: "feedback", type: "toggle", label: "«Likte du saken?» Ja/Nei nederst", default: false, group: "Avslutning" },
     { key: "feedbackQ", type: "text", label: "Spørsmål", max: 80, default: "Likte du denne saken?", when: { feedback: true }, group: "Avslutning" },
@@ -1192,6 +1305,9 @@
     HARD_MAX: HARD_MAX,
     DEVICES: DEVICES,
     ANIMATIONS: ANIMATIONS,
+    EASINGS: EASINGS,
+    TRANSITIONS: TRANSITIONS,
+    HEADING_FX: HEADING_FX,
     STYLE_FIELDS: STYLE_FIELDS,
     EXTRA_FIELDS: EXTRA_FIELDS,
     SHAPES: SHAPES,

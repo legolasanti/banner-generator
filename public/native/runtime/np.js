@@ -127,28 +127,255 @@
   window.addEventListener("resize", requestFrame);
 
   // ---- entrance animations ------------------------------------------------------
+  // Clip-path entrances let go of their clip once played (.np-done), so
+  // shadows and hover lifts inside the section are never cut off.
+
+  function seconds(el, prop, dflt) {
+    var v = window.getComputedStyle(el).getPropertyValue(prop).trim();
+    var n = parseFloat(v);
+    if (!isFinite(n)) return dflt;
+    return /ms$/.test(v) ? n / 1000 : n;
+  }
+
+  // Once played (.np-done) the stagger delays go too, so a hover on a card
+  // reacts at once instead of waiting for its turn in the entrance.
+  function play(sec) {
+    splitHeadings(sec);
+    sec.classList.add("np-in");
+    clearTimeout(sec.__np_doneTimer);
+    var steps = sec.classList.contains("np-anim-stagger") ? $all(".np-st", sec).length * seconds(sec, "--np-step", 0.09) : 0;
+    var wait = (seconds(sec, "--np-delay", 0) + seconds(sec, "--np-dur", 0.9) * 1.3 + Math.min(steps, 4)) * 1000 + 80;
+    sec.__np_doneTimer = setTimeout(function () {
+      if (sec.classList.contains("np-in")) sec.classList.add("np-done");
+    }, wait);
+  }
+
+  function unplay(sec) {
+    clearTimeout(sec.__np_doneTimer);
+    sec.classList.remove("np-in", "np-done");
+  }
+
+  /** Elements matching `sel` in scope, the scope itself included. */
+  function $self(sel, scope) {
+    var list = $all(sel, scope);
+    if (scope && scope.nodeType === 1 && scope.matches(sel)) list.unshift(scope);
+    return list;
+  }
+
   function bindReveal(scope) {
-    $all(".np-sec", scope).forEach(function (sec) {
+    $self(".np-sec", scope).forEach(function (sec) {
       if (!once(sec, "reveal")) return;
-      if (EDITOR && !window.NP_PLAY_ANIMATIONS) {
-        sec.classList.add("np-in");
+      if ((EDITOR && !window.NP_PLAY_ANIMATIONS) || reduced || !io) {
+        sec.classList.add("np-in", "np-done");
+        if (!EDITOR && !reduced) splitHeadings(sec);
         return;
       }
-      if (reduced || !io) {
-        sec.classList.add("np-in");
-        return;
-      }
+      var repeat = sec.classList.contains("np-repeat");
       var obs = onVisible(
         sec,
-        function (el, visible) {
-          if (!visible) return;
-          el.classList.add("np-in");
-          obs.unobserve(el);
+        function (el, visible, entry) {
+          if (visible) {
+            play(el);
+            if (!repeat) obs.unobserve(el);
+          } else if (repeat && entry && entry.intersectionRatio === 0 && el.classList.contains("np-in")) {
+            // Only once it is wholly off screen, so it never blinks in view.
+            unplay(el);
+          }
         },
-        { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+        { threshold: [0, 0.12], rootMargin: "0px 0px -6% 0px" }
       );
     });
   }
+
+  // ---- heading effects (Stil → Mellomtitler) ----------------------------------------
+  // The H2s of a section with .np-hfx-* are split into words (or letters) here,
+  // never in the stored HTML: without JavaScript the heading is plain text.
+  // The words stay real text in the heading, so screen readers read it whole;
+  // the letter mode adds an aria-label because some readers spell spans.
+  var HFX = /\bnp-hfx-(words|fade-words|letters|highlight)\b/;
+
+  function splitNode(node, mode, counter) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+      if (child.nodeType === 1) {
+        if (!/^(BR|IMG|SVG)$/i.test(child.nodeName)) splitNode(child, mode, counter);
+        return;
+      }
+      if (child.nodeType !== 3 || !child.nodeValue) return;
+      var frag = doc.createDocumentFragment();
+      child.nodeValue.split(/(\s+)/).forEach(function (part) {
+        if (!part) return;
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(doc.createTextNode(" "));
+          return;
+        }
+        var outer = doc.createElement("span");
+        outer.className = "np-hw";
+        if (mode === "letters") {
+          Array.from(part).forEach(function (ch) {
+            var c = doc.createElement("span");
+            c.className = "np-hc";
+            c.style.setProperty("--i", counter.n++);
+            c.textContent = ch;
+            outer.appendChild(c);
+          });
+        } else {
+          var inner = doc.createElement("span");
+          inner.className = "np-hwi";
+          inner.style.setProperty("--i", counter.n++);
+          inner.textContent = part;
+          outer.appendChild(inner);
+        }
+        frag.appendChild(outer);
+      });
+      node.replaceChild(frag, child);
+    });
+  }
+
+  function splitHeadings(sec) {
+    var m = HFX.exec(sec.className);
+    if (!m) return;
+    $all("h2", sec).forEach(function (h) {
+      if (h.__np_split || h.isContentEditable) return;
+      h.__np_split = h.innerHTML;
+      if (m[1] === "highlight") {
+        var hl = doc.createElement("span");
+        hl.className = "np-hl";
+        while (h.firstChild) hl.appendChild(h.firstChild);
+        h.appendChild(hl);
+        return;
+      }
+      if (m[1] === "letters" && !h.hasAttribute("aria-label")) {
+        h.setAttribute("aria-label", h.textContent.replace(/\s+/g, " ").trim());
+        h.__np_label = true;
+      }
+      splitNode(h, m[1], { n: 0 });
+    });
+  }
+
+  /** Puts the editor's headings back as typed (it edits them in place). */
+  function joinHeadings(sec) {
+    $all("h2", sec).forEach(function (h) {
+      if (h.__np_split === undefined || h.isContentEditable) return;
+      h.innerHTML = h.__np_split;
+      if (h.__np_label) h.removeAttribute("aria-label");
+      h.__np_split = undefined;
+      h.__np_label = false;
+    });
+  }
+
+  /**
+   * Plays a section's entrance again from the start (the editor's
+   * "Spill av animasjon"). Returns how long it runs, in ms.
+   */
+  function replay(sec) {
+    if (!sec || reduced) return 0;
+    unplay(sec);
+    void sec.offsetWidth; // commit the hidden state before showing again
+    var total = (seconds(sec, "--np-delay", 0) + seconds(sec, "--np-dur", 0.9) * 1.6) * 1000 + 900;
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        play(sec);
+      });
+    });
+    if (EDITOR) {
+      clearTimeout(sec.__np_joinTimer);
+      sec.__np_joinTimer = setTimeout(function () {
+        if (sec.isConnected) joinHeadings(sec);
+      }, total);
+    }
+    return total;
+  }
+
+  // ---- scroll-linked section motion (Stil → Overgang / Effekt mens man scroller) ---
+  // Sections with [data-np-motion] get their progress as custom properties,
+  // which np.css turns into transforms, clips and opacity:
+  //   --np-tp  0 → 1 while the section's top travels from the bottom of the
+  //            screen to near the top (its entrance)
+  //   --np-c   0 → 1 over the whole time the section is on screen
+  //   --np-x   0 → 1 while it leaves (its bottom from the screen's bottom to top)
+  // "stack" and "cover" also pin the section above (sticky) so this one
+  // slides over it; "stack" dims and shrinks it as it is covered. All reads
+  // happen before all writes, in the one scroll frame.
+  var motion = []; // { sec, prev }
+  var pinned = []; // sections pinned for a stack/cover above them
+
+  function prevSection(sec) {
+    var n = sec.previousElementSibling;
+    while (n && !(n.classList && n.classList.contains("np-sec"))) n = n.previousElementSibling;
+    return n;
+  }
+
+  function clamp01(v) {
+    return v < 0 ? 0 : v > 1 ? 1 : v;
+  }
+
+  function setVar(el, name, v) {
+    var t = v.toFixed(3);
+    if (el["__np" + name] === t) return;
+    el["__np" + name] = t;
+    el.style.setProperty(name, t);
+  }
+
+  function unpin(el) {
+    el.classList.remove("np-tr-under", "np-tr-recede", "np-tr-gone");
+    el.style.removeProperty("--np-stick");
+    el.style.removeProperty("--np-cv");
+    el.__np__stick = el["__np--np-cv"] = undefined;
+  }
+
+  function motionFrame(vh) {
+    if (!motion.length && !pinned.length) return;
+    motion = motion.filter(function (m) { return m.sec.isConnected; });
+    var headH = 0;
+    var reads = motion.map(function (m) {
+      if (!headH) headH = parseFloat(window.getComputedStyle(m.sec).getPropertyValue("--np-head-h")) || 0;
+      var tr = m.sec.className.match(/\bnp-tr-(stack|cover)\b/);
+      var prev = tr ? prevSection(m.sec) : null;
+      return { m: m, r: m.sec.getBoundingClientRect(), tr: tr && tr[1], prev: prev, prevH: prev ? prev.offsetHeight : 0 };
+    });
+    var keep = [];
+    reads.forEach(function (x) {
+      var sec = x.m.sec;
+      var r = x.r;
+      var tp = clamp01((vh - r.top) / (vh * 0.85));
+      setVar(sec, "--np-tp", tp);
+      setVar(sec, "--np-c", clamp01((vh - r.top) / (vh + r.height)));
+      var ex = clamp01(1 - r.bottom / vh);
+      setVar(sec, "--np-x", ex);
+      sec.classList.toggle("np-tr-full", tp >= 0.999);
+      sec.classList.toggle("np-x-on", ex > 0.001);
+      if (x.prev) {
+        var p = x.prev;
+        keep.push(p);
+        if (pinned.indexOf(p) === -1) pinned.push(p);
+        p.classList.add("np-tr-under");
+        p.classList.toggle("np-tr-recede", x.tr === "stack");
+        var top = Math.min(headH, vh - x.prevH);
+        if (p.__np__stick !== top) {
+          p.__np__stick = top;
+          p.style.setProperty("--np-stick", top + "px");
+        }
+        if (x.tr === "stack") setVar(p, "--np-cv", clamp01((vh - r.top) / Math.max(1, vh - headH)));
+        // Wholly covered: hide it, so a see-through section further down never
+        // shows the pinned one through itself.
+        p.classList.toggle("np-tr-gone", r.top <= headH + 1);
+      }
+    });
+    pinned = pinned.filter(function (p) {
+      if (keep.indexOf(p) !== -1 && p.isConnected) return true;
+      unpin(p);
+      return false;
+    });
+  }
+
+  function bindMotion(scope) {
+    if (reduced) return;
+    $self("[data-np-motion]", scope).forEach(function (sec) {
+      if (!once(sec, "motion")) return;
+      motion.push({ sec: sec });
+    });
+  }
+  persistent.push(motionFrame);
 
   // ---- videos ---------------------------------------------------------------------
   function shown(el) {
@@ -1008,6 +1235,7 @@
 
   function bind(scope) {
     bindReveal(scope);
+    bindMotion(scope);
     bindAmbient(scope);
     bindPlayers(scope);
     bindStories(scope);
@@ -1041,6 +1269,7 @@
     // The editor re-renders sections; dropped nodes take their own listeners
     // along, dispose() drops what was registered outside them.
     dispose: dispose,
+    replay: replay,
     resetScrollers: function () {
       scrollers = [];
     },

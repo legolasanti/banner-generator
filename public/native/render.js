@@ -384,9 +384,15 @@
       if (o.align) cls.push("np-align-" + p + "-" + o.align);
       if (o.minH) cls.push("np-minh-" + p + "-" + o.minH);
     });
-    if (st.anim && st.anim !== "none") cls.push("np-anim-" + st.anim);
+    if (st.anim && st.anim !== "none") {
+      cls.push("np-anim-" + st.anim);
+      if (st.animEase && st.animEase !== "smooth") cls.push("np-ease-" + st.animEase);
+      if (st.animRepeat) cls.push("np-repeat");
+    }
     if (st.animSpeed && st.animSpeed !== "normal") cls.push("np-speed-" + st.animSpeed);
     if (st.scrollFx && st.scrollFx !== "none") cls.push("np-sfx-" + st.scrollFx);
+    if (st.transition && st.transition !== "none") cls.push("np-tr", "np-tr-" + st.transition);
+    if (st.headFx && st.headFx !== "none") cls.push("np-hfx", "np-hfx-" + st.headFx);
     if (st.shapeTop && st.shapeTop !== "none") cls.push("np-shape-t", "np-shape-t-" + st.shapeTop);
     if (st.shapeBottom && st.shapeBottom !== "none") cls.push("np-shape-b", "np-shape-b-" + st.shapeBottom);
     if (st.grain) cls.push("np-grain");
@@ -428,6 +434,7 @@
     if (st.bg === "custom" && st.bgColor) style.push("--np-sec-bg:" + st.bgColor);
     if (st.bg === "gradient") style.push("--np-sec-bg:" + gradientCss(st, theme));
     if (st.animDelay) style.push("--np-delay:" + Number(st.animDelay).toFixed(1) + "s");
+    if (st.anim === "stagger" && st.animStep && st.animStep !== 90) style.push("--np-step:" + Math.round(st.animStep) + "ms");
     if (o.style) style.push(o.style);
     var bgLayer = "";
     if (st.bg === "image" && st.bgImage && ctx.assets[st.bgImage]) {
@@ -456,6 +463,8 @@
         "data-np-section": ctx.mode === "editor" ? section.id : null,
         "data-np-type": section.type,
         "data-np-chapter": st.chapter || null,
+        // Sections whose look follows the scroll: np.js feeds them progress.
+        "data-np-motion": (st.transition && st.transition !== "none") || (st.scrollFx && st.scrollFx !== "none") ? true : null,
       }) +
       ">" + body + "</" + tag + ">"
     );
@@ -1528,6 +1537,16 @@
     return ctx.page.sections.map(function (s, i) { return renderSection(ctx, s, i); }).join("\n");
   }
 
+  /** Page-wide motion options (Side → Bevegelse) as body classes. */
+  function motionClasses(extras) {
+    var x = extras || {};
+    var out = "";
+    if (x.motion && x.motion !== "normal") out += " np-mv-" + x.motion;
+    // "subtle" is the stylesheet's own hover, so it needs no class.
+    if (x.hoverFx && x.hoverFx !== "subtle") out += " np-hover-" + x.hoverFx;
+    return out;
+  }
+
   function renderDocument(ctx) {
     var p = ctx.project;
     var hasVariants = p.variantNav && p.pages.length > 1;
@@ -1546,7 +1565,9 @@
       '<style id="np-theme">' + themeCss(p.theme, { hasVariants: hasVariants }) + (ctx.fontCss || "") + "</style>",
       ctx.cssText ? "<style>" + ctx.cssText + "</style>" : '<link rel="stylesheet" href="' + esc(ctx.cssHref) + '">',
       '<style id="np-custom">' + D.scopeCss((p.extras && p.extras.customCss) || "") + "</style>",
-      "<script>document.documentElement.classList.add('np-js')</script>",
+      // Content only hides for animation once this class is set; if np.js
+      // never arrives (blocked, offline), the class comes off again.
+      "<script>document.documentElement.classList.add('np-js');setTimeout(function(){if(!window.NPRuntime)document.documentElement.classList.remove('np-js')},3500)</script>",
       tracking && ctx.settings.headHtml ? expandMacros(ctx.settings.headHtml) : "",
       tracking && p.tracking.headHtml ? expandMacros(p.tracking.headHtml) : "",
       ctx.extraHead || "",
@@ -1554,7 +1575,7 @@
     ].filter(Boolean).join("\n");
     var body = [
       "<body" + attrs({
-        class: "np" + (p.theme.headingCase === "upper" ? " np-upper" : "") + (isDark(p.theme.colors.page || "#ffffff") ? " np-dark-page" : ""),
+        class: "np" + (p.theme.headingCase === "upper" ? " np-upper" : "") + (isDark(p.theme.colors.page || "#ffffff") ? " np-dark-page" : "") + motionClasses(p.extras),
         "data-np-project": D.slugify(p.meta.slug || p.name, "annonse"),
         "data-np-page": ctx.page.slug,
         "data-np-advertiser": p.advertiser.name || null,

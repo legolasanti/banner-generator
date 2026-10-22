@@ -3,8 +3,9 @@
    section, generated from its schema.
 
      Innhold    the block's own fields
-     Stil       background, spacing, alignment, entrance animation — the
-                spacing and alignment can differ on tablet and mobile
+     Stil       background, spacing, alignment, motion (entrance, heading
+                effect, transition, scroll effect, with a replay button) —
+                the spacing and alignment can differ on tablet and mobile
      Synlighet  hide on desktop / tablet / mobile
 
    While the user types here the canvas updates; the form itself is only
@@ -21,6 +22,7 @@
   var D = window.NativeDoc;
 
   var DEV_LABEL = { desktop: "Desktop", tablet: "Nettbrett", mobile: "Mobil" };
+  var MOTION_GROUP = "Bevegelse";
 
   function create(host) {
     var root = h("div.nx-props");
@@ -138,10 +140,12 @@
         if (f.group && f.group !== lastGroup) {
           lastGroup = f.group;
           body.appendChild(h("h4.nx-group", null, f.group));
+          if (f.group === MOTION_GROUP) body.appendChild(replayRow(s));
         }
         var overridden = notMain && f.rs && s.rs[device] && s.rs[device].style && s.rs[device].style[f.key] !== undefined;
         var node = NP.fields.control(f, effective[f.key], function (v, opts) {
           NP.store.setStyle(s.id, f.key, v, f.rs ? device : "desktop");
+          if (f.group === MOTION_GROUP) replaySoon(s.id);
           if (f.type === "select" || f.type === "toggle" || f.type === "image" || f.type === "video" || (opts && opts.from !== "panel")) requestAnimationFrame(draw);
         }, { project: project() });
         if (notMain && f.rs) {
@@ -159,6 +163,28 @@
         }
         body.appendChild(node);
       });
+    }
+
+    // Motion is invisible in a still editor: changing an option plays it, and
+    // the button plays it again whenever the user wants to see it.
+    var replayTimer = null;
+    function replaySoon(id) {
+      clearTimeout(replayTimer);
+      replayTimer = setTimeout(function () { replay(id); }, 260);
+    }
+
+    function replay(id) {
+      var canvas = NP.editor && NP.editor.canvas;
+      if (canvas && canvas.replay) canvas.replay(id);
+    }
+
+    function replayRow(s) {
+      return h(
+        "div.nx-motion-play",
+        null,
+        ui.button("Spill av animasjon", { small: true, icon: "play", title: "Vis hvordan seksjonen kommer inn – og overgangen, om den har en", onClick: function () { replay(s.id); } }),
+        h("span.nx-muted", null, "Endringer spilles av automatisk.")
+      );
     }
 
     function showTab(body, s) {

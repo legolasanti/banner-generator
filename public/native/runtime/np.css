@@ -180,10 +180,10 @@ html.np-js .np-anim-fade-up:not(.np-in) > .np-wrap,
 html.np-js .np-anim-slide-left:not(.np-in) > .np-wrap,
 html.np-js .np-anim-slide-right:not(.np-in) > .np-wrap,
 html.np-js .np-anim-zoom:not(.np-in) > .np-wrap { opacity: 0; }
-html.np-js .np-anim-fade-up:not(.np-in) > .np-wrap { transform: translateY(36px); }
-html.np-js .np-anim-slide-left:not(.np-in) > .np-wrap { transform: translateX(-48px); }
-html.np-js .np-anim-slide-right:not(.np-in) > .np-wrap { transform: translateX(48px); }
-html.np-js .np-anim-zoom:not(.np-in) > .np-wrap { transform: scale(0.94); }
+html.np-js .np-anim-fade-up:not(.np-in) > .np-wrap { transform: translateY(calc(36px * var(--np-mv, 1))); }
+html.np-js .np-anim-slide-left:not(.np-in) > .np-wrap { transform: translateX(calc(-48px * var(--np-mv, 1))); }
+html.np-js .np-anim-slide-right:not(.np-in) > .np-wrap { transform: translateX(calc(48px * var(--np-mv, 1))); }
+html.np-js .np-anim-zoom:not(.np-in) > .np-wrap { transform: scale(calc(1 - 0.06 * var(--np-mv, 1))); }
 html.np-js .np-sec > .np-wrap { transition: opacity 0.9s cubic-bezier(0.22, 0.61, 0.36, 1), transform 1s cubic-bezier(0.22, 0.61, 0.36, 1); }
 @media (prefers-reduced-motion: reduce) {
   html.np-js .np-sec > .np-wrap { opacity: 1 !important; transform: none !important; transition: none !important; }
@@ -624,17 +624,28 @@ html:not(.np-js) .np-share { display: none; }
 .np-shape-t-zigzag { --np-mt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'%3E%3Cpath transform=%22matrix%281 0 0 -1 0 60%29%22 d='M0 0H1200V30L1175 60L1150 30L1125 60L1100 30L1075 60L1050 30L1025 60L1000 30L975 60L950 30L925 60L900 30L875 60L850 30L825 60L800 30L775 60L750 30L725 60L700 30L675 60L650 30L625 60L600 30L575 60L550 30L525 60L500 30L475 60L450 30L425 60L400 30L375 60L350 30L325 60L300 30L275 60L250 30L225 60L200 30L175 60L150 30L125 60L100 30L75 60L50 30L25 60L0 30Z'/%3E%3C/svg%3E"); }
 
 /* ------------------------------ motion -------------------------------- */
-.np-sec { --np-dur: 0.9s; }
+/* Timing comes from variables: --np-dur (Tempo), --np-ease / --np-ease-clip
+   (Bevegelseskurve), --np-delay, --np-step (stagger) and --np-mv (Side →
+   Styrke, multiplies every distance). */
+.np { --np-mv: 1; }
+.np-mv-calm { --np-mv: 0.5; }
+.np-mv-bold { --np-mv: 1.7; }
+.np-sec { --np-dur: 0.9s; --np-ease: cubic-bezier(0.22, 0.61, 0.36, 1); --np-ease-clip: cubic-bezier(0.65, 0, 0.35, 1); }
 .np-speed-fast { --np-dur: 0.55s; }
 .np-speed-slow { --np-dur: 1.5s; }
-html.np-js .np-sec > .np-wrap { transition: opacity var(--np-dur) cubic-bezier(0.22, 0.61, 0.36, 1) var(--np-delay, 0s), transform calc(var(--np-dur) * 1.1) cubic-bezier(0.22, 0.61, 0.36, 1) var(--np-delay, 0s), filter var(--np-dur) ease var(--np-delay, 0s), clip-path calc(var(--np-dur) * 1.2) cubic-bezier(0.65, 0, 0.35, 1) var(--np-delay, 0s); }
+.np-speed-xslow { --np-dur: 2.2s; }
+.np-anim-rise { --np-ease: cubic-bezier(0.34, 1.4, 0.64, 1); }
+.np-ease-expo { --np-ease: cubic-bezier(0.16, 1, 0.3, 1); --np-ease-clip: cubic-bezier(0.16, 1, 0.3, 1); }
+.np-ease-spring { --np-ease: cubic-bezier(0.34, 1.56, 0.64, 1); }
+.np-ease-snappy { --np-ease: cubic-bezier(0.65, 0, 0.35, 1); --np-ease-clip: cubic-bezier(0.83, 0, 0.17, 1); }
+.np-ease-gentle { --np-ease: cubic-bezier(0.37, 0, 0.63, 1); --np-ease-clip: cubic-bezier(0.37, 0, 0.63, 1); }
+html.np-js .np-sec > .np-wrap { transition: opacity var(--np-dur) var(--np-ease) var(--np-delay, 0s), transform calc(var(--np-dur) * 1.1) var(--np-ease) var(--np-delay, 0s), filter var(--np-dur) ease var(--np-delay, 0s), clip-path calc(var(--np-dur) * 1.2) var(--np-ease-clip) var(--np-delay, 0s); }
 html.np-js .np-anim-blur:not(.np-in) > .np-wrap { opacity: 0; filter: blur(16px); transform: scale(1.03); }
-html.np-js .np-anim-reveal:not(.np-in) > .np-wrap { clip-path: inset(100% 0 0 0); transform: translateY(40px); }
+html.np-js .np-anim-reveal:not(.np-in) > .np-wrap { clip-path: inset(100% 0 0 0); transform: translateY(calc(40px * var(--np-mv, 1))); }
 html.np-js .np-anim-reveal > .np-wrap { clip-path: inset(0 0 0 0); }
-html.np-js .np-anim-rise:not(.np-in) > .np-wrap { opacity: 0; transform: translateY(70px) scale(0.97); }
-html.np-js .np-anim-rise > .np-wrap { transition-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1); }
-html.np-js .np-anim-stagger .np-st, html.np-js .np-anim-stagger > .np-wrap > :not(:has(.np-st)) { transition: opacity calc(var(--np-dur) * 0.9) ease, transform var(--np-dur) cubic-bezier(0.22, 0.61, 0.36, 1); transition-delay: calc(var(--np-delay, 0s) + var(--i, 0) * 90ms); }
-html.np-js .np-anim-stagger:not(.np-in) .np-st, html.np-js .np-anim-stagger:not(.np-in) > .np-wrap > :not(:has(.np-st)) { opacity: 0; transform: translateY(28px); }
+html.np-js .np-anim-rise:not(.np-in) > .np-wrap { opacity: 0; transform: translateY(calc(70px * var(--np-mv, 1))) scale(0.97); }
+html.np-js .np-anim-stagger .np-st, html.np-js .np-anim-stagger > .np-wrap > :not(:has(.np-st)) { transition: opacity calc(var(--np-dur) * 0.9) ease, transform var(--np-dur) var(--np-ease); transition-delay: calc(var(--np-delay, 0s) + var(--i, 0) * var(--np-step, 90ms)); }
+html.np-js .np-anim-stagger:not(.np-in) .np-st, html.np-js .np-anim-stagger:not(.np-in) > .np-wrap > :not(:has(.np-st)) { opacity: 0; transform: translateY(calc(28px * var(--np-mv, 1))); }
 @media (prefers-reduced-motion: reduce) {
   html.np-js .np-sec > .np-wrap, html.np-js .np-st { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
   .np-bgfx-kenburns .np-bgimg__in, .np-kb .np-hero__media img, .np-kb .np-hero__media video { animation: none !important; }
@@ -1275,3 +1286,93 @@ html:not(.np-js) .np-fb { display: none; }
 
 .np-credit-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; padding: 22px 20px; font: 14px/1.4 var(--np-font-sys); border-top: 1px solid rgba(127, 127, 127, 0.2); }
 .np-credit-line strong { font-weight: 800; }
+
+/* =======================================================================
+   Motion system 2 — entrances, heading effects, section transitions,
+   scroll-linked effects and hover. Everything here is opt-in per section
+   (Stil → Bevegelse) or per page (Side → Bevegelse); hidden start states
+   only apply under html.np-js, and reduced motion switches all of it off.
+   ======================================================================= */
+
+/* ---- more entrances ---- */
+html.np-js .np-anim-mask-left:not(.np-in) > .np-wrap { clip-path: inset(0 100% 0 0); transform: translateX(calc(-28px * var(--np-mv, 1))); }
+html.np-js .np-anim-mask-left > .np-wrap { clip-path: inset(0 0 0 0); }
+html.np-js .np-anim-iris:not(.np-in) > .np-wrap { clip-path: circle(0% at 50% 55%); transform: scale(calc(1 + 0.05 * var(--np-mv, 1))); }
+html.np-js .np-anim-iris > .np-wrap { clip-path: circle(75% at 50% 55%); }
+html.np-js .np-anim-tilt { perspective: 1400px; }
+html.np-js .np-anim-tilt > .np-wrap { transform-origin: 50% 0%; }
+html.np-js .np-anim-tilt:not(.np-in) > .np-wrap { opacity: 0; transform: rotateX(calc(18deg * var(--np-mv, 1))) translateY(calc(48px * var(--np-mv, 1))); }
+html.np-js .np-anim-drop:not(.np-in) > .np-wrap { opacity: 0; transform: translateY(calc(-40px * var(--np-mv, 1))); }
+html.np-js .np-anim-settle:not(.np-in) > .np-wrap { opacity: 0; transform: scale(calc(1 + 0.08 * var(--np-mv, 1))); filter: blur(8px); }
+/* Played clip entrances drop the clip (np.js adds .np-done). */
+html.np-js .np-done.np-anim-reveal > .np-wrap,
+html.np-js .np-done.np-anim-mask-left > .np-wrap,
+html.np-js .np-done.np-anim-iris > .np-wrap { clip-path: none; }
+
+html.np-js .np-done .np-st, html.np-js .np-anim-stagger.np-done > .np-wrap > * { transition-delay: 0s; }
+
+/* ---- heading effects: H2s split by np.js ---- */
+.np-hw { display: inline-block; }
+.np-hfx-words .np-hw { overflow: hidden; vertical-align: top; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+.np-hwi, .np-hc { display: inline-block; }
+html.np-js .np-hfx .np-hwi { transition: transform calc(var(--np-dur) * 1.15) cubic-bezier(0.16, 1, 0.3, 1), opacity var(--np-dur) ease, filter var(--np-dur) ease; transition-delay: calc(var(--np-delay, 0s) + 0.12s + var(--i, 0) * 55ms); }
+html.np-js .np-hfx-words:not(.np-in) .np-hwi { transform: translateY(110%); }
+html.np-js .np-hfx-fade-words:not(.np-in) .np-hwi { opacity: 0; transform: translateY(0.35em); filter: blur(6px); }
+html.np-js .np-hfx-letters .np-hc { transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); transition-delay: calc(var(--np-delay, 0s) + 0.08s + var(--i, 0) * 22ms); }
+html.np-js .np-hfx-letters:not(.np-in) .np-hc { opacity: 0; transform: translateY(0.5em) rotate(8deg); }
+.np-hl { background: linear-gradient(var(--np-accent), var(--np-accent)) 0 94% / 100% 0.12em no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-size calc(var(--np-dur) * 1.3) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--np-delay, 0s) + 0.3s); }
+html.np-js .np-sec:not(.np-in) .np-hl { background-size: 0% 0.12em; }
+
+/* ---- section transitions (Overgang fra seksjonen over) ---- */
+/* blend needs no script: the section's top fades into the one above it. */
+.np-tr-blend:not(.np-shape-t) { --np-blend: clamp(64px, 11vw, 150px); z-index: 2; margin-top: calc(var(--np-blend) * -1); border-top: var(--np-blend) solid transparent; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--np-blend)); mask-image: linear-gradient(to bottom, transparent 0, #000 var(--np-blend)); }
+.np-tr-blend:not(.np-shape-t) .np-bgimg { top: calc(var(--np-blend) * -1); }
+.np-tr-blend.np-bg-none { background: var(--np-page, #fff); }
+@media (prefers-reduced-motion: no-preference) {
+  html.np-js .np-tr-stack, html.np-js .np-tr-cover { z-index: 3; }
+  html.np-js .np-tr-stack.np-bg-none, html.np-js .np-tr-cover.np-bg-none { background: var(--np-page, #fff); }
+  html.np-js .np-tr-stack { border-radius: calc(28px * (1 - var(--np-tp, 1))) calc(28px * (1 - var(--np-tp, 1))) 0 0; box-shadow: 0 -28px 60px -20px rgba(0, 0, 0, calc(0.35 * (1 - var(--np-tp, 1)))); overflow: clip; }
+  html.np-js .np-tr-under { position: sticky; top: var(--np-stick, 0px); z-index: 1; }
+  html.np-js .np-tr-under ~ .np-sec.np-bg-none { background: var(--np-page, #fff); }
+  html.np-js .np-tr-recede { transform: scale(calc(1 - 0.06 * var(--np-cv, 0))); transform-origin: 50% 35%; }
+  html.np-js .np-tr-recede.np-bg-none { background: var(--np-page, #fff); }
+  html.np-js .np-tr-recede::after { content: ""; position: absolute; inset: 0; z-index: 5; background: #000; opacity: calc(0.4 * var(--np-cv, 0)); pointer-events: none; }
+  html.np-js .np-tr-gone { visibility: hidden; }
+  html.np-js .np-tr-curtain:not(.np-tr-full) { clip-path: inset(calc((1 - var(--np-tp, 1)) * 24%) calc((1 - var(--np-tp, 1)) * 9%) 0 round calc((1 - var(--np-tp, 1)) * 36px)); }
+  html.np-js .np-tr-zoom:not(.np-tr-full) { transform: scale(calc(0.84 + 0.16 * var(--np-tp, 1))); transform-origin: 50% 0%; border-radius: calc((1 - var(--np-tp, 1)) * 40px); overflow: clip; }
+  html.np-js .np-tr-iris:not(.np-tr-full) { clip-path: circle(calc(10% + var(--np-tp, 1) * 65%) at 50% 50%); }
+}
+
+/* ---- scroll-linked effects driven by np.js (--np-c, --np-tp, --np-x) ---- */
+@media (prefers-reduced-motion: no-preference) {
+  html.np-js .np-sfx-slide-x > .np-wrap { translate: calc((0.5 - var(--np-c, 0.5)) * 18vw * var(--np-mv, 1)) 0; }
+  html.np-js .np-sfx-slide-x { overflow-x: clip; }
+  html.np-js .np-sfx-tilt-in { perspective: 1400px; }
+  html.np-js .np-sfx-tilt-in > .np-wrap { transform-origin: 50% 100%; rotate: x calc((1 - var(--np-tp, 1)) * 22deg * var(--np-mv, 1)); scale: calc(0.93 + 0.07 * var(--np-tp, 1)); }
+  html.np-js .np-sfx-blur-out.np-x-on > .np-wrap > * { filter: blur(calc(var(--np-x, 0) * 14px)); opacity: calc(1 - var(--np-x, 0) * 0.85); }
+  html.np-js .np-sfx-layers .np-st:nth-child(odd) { translate: 0 calc((var(--np-c, 0.5) - 0.5) * -70px * var(--np-mv, 1)); }
+  html.np-js .np-sfx-layers .np-st:nth-child(even) { translate: 0 calc((var(--np-c, 0.5) - 0.5) * 50px * var(--np-mv, 1)); }
+}
+
+/* ---- hover (Side → Når musen er over). "subtle" is the stylesheet above. ---- */
+.np-hover-none .np-btn:hover, .np-hover-none a.np-prod:hover, .np-hover-none .np-card:hover { transform: none; box-shadow: none; filter: none; }
+.np-hover-none .np-card:hover .np-card__img img { transform: none; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .np-hover-lift .np-btn, .np-hover-rich .np-btn { transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s, background-color 0.2s, color 0.2s; }
+  .np-hover-lift .np-btn:hover, .np-hover-rich .np-btn:hover { transform: translateY(-3px); box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.45); }
+  .np-hover-lift :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item), .np-hover-rich :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item),
+  html.np-js .np-hover-lift .np-sec.np-done :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item), html.np-js .np-hover-rich .np-sec.np-done :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item) { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; transition-delay: 0s; }
+  .np-hover-lift :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item):hover, .np-hover-rich :is(.np-card, .np-prod, .np-tm, .np-step, .np-rank__item):hover { transform: translateY(-6px); box-shadow: 0 24px 50px -20px rgba(15, 25, 45, 0.35); }
+  .np-hover-rich :is(.np-card__img, .np-prod__img, .np-it__media, .np-figure--crop) { overflow: hidden; border-radius: var(--np-radius); }
+  .np-hover-rich :is(.np-card__img, .np-prod__img, .np-it__media, .np-figure--crop) img { transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1); }
+  .np-hover-rich :is(.np-card, .np-prod):hover img, .np-hover-rich :is(.np-it__media, .np-figure--crop):hover img { transform: scale(1.06); }
+  .np-hover-lift .np-rich a, .np-hover-rich .np-rich a { transition: text-decoration-thickness 0.25s, text-underline-offset 0.25s, color 0.2s; }
+  .np-hover-lift .np-rich a:hover, .np-hover-rich .np-rich a:hover { text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.np-js .np-hwi, html.np-js .np-hc { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
+  .np-hl { transition: none !important; background-size: 100% 0.12em !important; }
+  html.np-js .np-tr, html.np-js .np-tr-under, html.np-js .np-sfx-slide-x > .np-wrap, html.np-js .np-sfx-tilt-in > .np-wrap, html.np-js .np-sfx-layers .np-st { clip-path: none !important; transform: none !important; translate: none !important; rotate: none !important; scale: none !important; }
+  html.np-js .np-tr-gone { visibility: visible !important; }
+}
