@@ -113,6 +113,13 @@
     } else if (mod && (key === "0")) {
       e.preventDefault();
       WPE.canvas.fit();
+    } else if (!mod && e.shiftKey && e.code === "Digit1") {
+      // Shift+1 / Shift+2 as in Figma: fit everything, fit the selection.
+      e.preventDefault();
+      WPE.canvas.fit();
+    } else if (!mod && e.shiftKey && e.code === "Digit2") {
+      e.preventDefault();
+      if (!WPE.canvas.zoomToSelection()) WPE.toast("Velg et element først", "err");
     } else if (mod && (key === "=" || key === "+")) {
       e.preventDefault();
       WPE.canvas.zoomBy(1.2);

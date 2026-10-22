@@ -6,7 +6,10 @@
    page content covering the middle. The screen width can be switched
    between common sizes, which is the honest way to show what a 1280px laptop
    actually sees of the sides. Hover effects are live here, as in HTML5.
-   Nothing in the mock page imitates a real site — it is grey placeholders.
+   The page is a plain news front page with invented headlines and tinted
+   photo blocks — believable enough to judge the ad next to content, without
+   copying any real site's design. A dashed line marks the fold of a laptop
+   screen (spec: the top 700 px of the background are what is sure to show).
    ========================================================================= */
 (function () {
   "use strict";
@@ -22,12 +25,37 @@
   var width = 1440;
   var dom = {};
 
+  var NAV = ["Nyheter", "Innenriks", "Utenriks", "Økonomi", "Sport", "Kultur", "Helse", "Bolig", "Reise", "Mat"];
+  var LEAD = { kicker: "Siste nytt", title: "Strømprisen faller i hele landet før helgen", lede: "Milde vinder og fulle magasiner gir de laveste prisene siden i fjor sommer." };
+  var STORIES = [
+    "Slik blir været i helgen",
+    "Ny undersøkelse: Nordmenn sparer mer enn før",
+    "Fem turer du rekker før snøen kommer",
+    "Derfor stiger boligprisene i Bergen",
+    "Landslaget klart for sluttspillet",
+    "Ekspertene: Dette bør du sjekke før vinteren",
+    "Rekordmange tok toget i sommer",
+    "Kokkens beste tips til en rask middag",
+  ];
+  // Muted photo stand-ins, so the page has colour without real pictures.
+  var TINTS = ["#c9d6df", "#d8cfc4", "#cdd8c5", "#d6c9d6", "#c5d3d8", "#dcd3bf", "#c9cfdc", "#d3dcc9", "#e0cdc5"];
+
   function mockContent() {
-    var cards = [];
-    for (var i = 0; i < 10; i++) {
-      cards.push(h("div.wp-mock__card", null, h("div.wp-mock__img"), h("div.wp-mock__line"), h("div.wp-mock__line.is-short")));
-    }
-    return h("div.wp-mock__content", null, h("div.wp-mock__title"), h("div.wp-mock__cards", null, cards));
+    var lead = h("article.wp-mock__lead", null,
+      h("div.wp-mock__img.wp-mock__img--lead", { style: { background: "linear-gradient(135deg, " + TINTS[0] + ", " + TINTS[4] + ")" } }),
+      h("div.wp-mock__leadtext", null,
+        h("span.wp-mock__kicker", null, LEAD.kicker),
+        h("h3.wp-mock__h1", null, LEAD.title),
+        h("p.wp-mock__lede", null, LEAD.lede)));
+    var cards = STORIES.map(function (t, i) {
+      return h("article.wp-mock__card", null,
+        h("div.wp-mock__img", { style: { background: TINTS[(i + 1) % TINTS.length] } }),
+        h("h4.wp-mock__h2", null, t));
+    });
+    return h("div.wp-mock__content", null,
+      h("nav.wp-mock__sections", null, NAV.map(function (n, i) { return h("span" + (i === 0 ? ".is-on" : ""), null, n); })),
+      lead,
+      h("div.wp-mock__cards", null, cards));
   }
 
   function page() {
@@ -38,7 +66,8 @@
     var totalH = HEADER_H + bgSpec.height;
     var root = h("div.wp-mock", { style: { width: V + "px", height: totalH + "px" } });
     root.appendChild(h("div.wp-mock__header", { style: { height: HEADER_H + "px" } },
-      h("div.wp-mock__logo"), h("div.wp-mock__search"), h("div.wp-mock__nav")));
+      h("span.wp-mock__logo", null, "Nyhetssiden"), h("div.wp-mock__search", null, "Søk i saker …"),
+      h("span.wp-mock__nav", null, "Meny  ·  Logg inn")));
 
     var bgWrap = h("div.ad-exit.wp-mock__bg", { style: { left: (V - bgSpec.width) / 2 + "px", top: HEADER_H + "px" } });
     var bg = h("div");
@@ -56,6 +85,11 @@
     var content = mockContent();
     Object.assign(content.style, { left: colX + "px", top: HEADER_H + tbSpec.height + "px", width: Spec.CONTENT_W + "px" });
     root.appendChild(content);
+
+    // Where a laptop screen ends: below it, nothing is sure to be seen.
+    var safe = bgSpec.safe;
+    root.appendChild(h("div.wp-mock__fold", { style: { top: HEADER_H + safe.y + safe.height + "px" } },
+      h("span", null, "Skjermkant på en vanlig bærbar – det under synes først når leseren scroller")));
     return { node: root, height: totalH };
   }
 

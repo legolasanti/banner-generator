@@ -249,6 +249,7 @@
         h("li", null, h("b", null, "Shift"), " + dra hjørne: fri skalering / låst akse"),
         h("li", null, h("b", null, "Alt"), " + dra: flytt uten magnet"),
         h("li", null, h("b", null, "Ctrl/⌘ + hjul"), " zoom · ", h("b", null, "Mellomrom"), " + dra: panorer"),
+        h("li", null, h("b", null, "Shift + 1"), " tilpass til vinduet · ", h("b", null, "Shift + 2"), " zoom til markering"),
         h("li", null, h("b", null, "Ctrl/⌘ + D"), " dupliser · ", h("b", null, "Piltaster"), " flytt 1 px (Shift: 10)"),
         h("li", null, h("b", null, "Ctrl/⌘ + Z"), " angre · ", h("b", null, "Ctrl/⌘ + Shift + Z"), " gjør om")
       ),

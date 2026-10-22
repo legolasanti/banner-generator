@@ -92,12 +92,21 @@
     dom.guides = document.createElementNS(SVG_NS, "svg");
     dom.guides.setAttribute("class", "wp-guides");
     dom.sel = h("div.wp-sel");
+    // Names above the artboards and a key to the overlays below them —
+    // outside the design, so they never cover it.
+    dom.frameTags = h("div.wp-frametags");
+    dom.legend = h("div.wp-legend", { "aria-hidden": "true" });
+    dom.empty = emptyCard();
     dom.marquee = h("div.wp-marquee", { hidden: true });
     dom.scaler.appendChild(dom.roots.background);
     dom.scaler.appendChild(dom.tbHost);
     dom.wrap.appendChild(dom.scaler);
     dom.wrap.appendChild(dom.guides);
+    // Tags go under the selection layer: a rotate handle stays on top.
+    dom.wrap.appendChild(dom.frameTags);
     dom.wrap.appendChild(dom.sel);
+    dom.wrap.appendChild(dom.legend);
+    dom.wrap.appendChild(dom.empty);
     dom.world.appendChild(dom.wrap);
     dom.world.appendChild(dom.marquee);
     host.appendChild(dom.world);
@@ -283,6 +292,26 @@
     schedule(false);
   }
 
+  /** Zoom so the selection fills the window, centred. False if none. */
+  function zoomToSelection() {
+    var sel = store.selected();
+    if (!dom.stage || !sel.length) return false;
+    var u = geom.unionBounds(sel);
+    var o = origin();
+    var sw = dom.stage.clientWidth - PAD * 2;
+    var sh = dom.stage.clientHeight - PAD * 2;
+    if (sw <= 0 || sh <= 0) return false;
+    var z = WPE.util.clamp(Math.min(sw / Math.max(u.w, 1), sh / Math.max(u.h, 1)), MIN_ZOOM, MAX_ZOOM);
+    store.setView({ zoom: z });
+    layout();
+    var wr = dom.wrap.getBoundingClientRect();
+    var sr = dom.stage.getBoundingClientRect();
+    dom.stage.scrollLeft += wr.left + (o.x + u.x + u.w / 2) * z - (sr.left + sr.width / 2);
+    dom.stage.scrollTop += wr.top + (o.y + u.y + u.h / 2) * z - (sr.top + sr.height / 2);
+    schedule(false);
+    return true;
+  }
+
   /** Centre of what is visible, in active-artboard px — where new things go. */
   function viewCenter() {
     var sr = dom.stage.getBoundingClientRect();
@@ -305,13 +334,6 @@
     var t = svgEl("text", { x: x, y: y, class: cls || "wp-g-label" }, parent);
     t.textContent = text;
     return t;
-  }
-
-  function tag(parent, x, y, text, cls) {
-    var g = svgEl("g", { class: cls }, parent);
-    var w = text.length * 6.6 + 12;
-    svgEl("rect", { x: x, y: y, width: w, height: 18, rx: 4 }, g);
-    label(g, x + 6, y + 13, text, "wp-g-taglabel");
   }
 
   function drawGuides() {
@@ -356,7 +378,6 @@
         }, g);
       }
       svgEl("rect", { x: s.x * z + 1, y: s.y * z + 1, width: s.width * z - 2, height: s.height * z - 2, class: "wp-g-safe" }, g);
-      tag(g, s.x * z + 2, (s.y + s.height) * z - 21, "Sikker sone " + s.width + "×" + s.height, "wp-g-safetag");
     }
 
     if (both) {
@@ -367,8 +388,11 @@
         x: t.x * z + 0.5, y: t.y * z + 0.5, width: t.width * z - 1, height: t.height * z - 1,
         class: "wp-g-tbframe" + (active ? " is-active" : ""),
       }, g);
-      tag(g, t.x * z + 2, (t.y + t.height) * z + 3, "Toppbanner 1000×300" + (active ? " · redigeres" : ""), "wp-g-tbtag" + (active ? " is-active" : ""));
     }
+    drawFrameTags(z, both, spec);
+    drawLegend(both, spec);
+    var doc = store.state.doc;
+    dom.empty.hidden = !!(doc.artboards.background.elements.length || doc.artboards.topbanner.elements.length);
 
     var o = origin();
     var aspec = store.boardSpec();
@@ -376,6 +400,79 @@
       if (sg.axis === "x") svgEl("line", { x1: (o.x + sg.at) * z, y1: o.y * z, x2: (o.x + sg.at) * z, y2: (o.y + aspec.height) * z, class: "wp-g-snap" }, g);
       else svgEl("line", { x1: o.x * z, y1: (o.y + sg.at) * z, x2: (o.x + aspec.width) * z, y2: (o.y + sg.at) * z, class: "wp-g-snap" }, g);
     });
+  }
+
+  /** Shown on a design with nothing on it yet: the three ways to start. */
+  function emptyCard() {
+    var go = function (panel, icon, label) {
+      return h("button.wp-btn.wp-btn--ghost.wp-btn--sm", {
+        type: "button",
+        on: { pointerdown: function (e) { e.stopPropagation(); }, click: function () { WPE.panels.open(panel, {}); } },
+      }, WPE.util.icon(icon, 15), label);
+    };
+    return h("div.wp-emptycard", { hidden: true, on: { pointerdown: function (e) { e.stopPropagation(); } } },
+      h("b", null, "Tomt design"),
+      h("p", null, "Start med en ferdig mal, eller bygg selv med tekst, bilder og former. Bilder kan også dras rett inn her."),
+      h("div.wp-emptycard__acts", null,
+        h("button.wp-btn.wp-btn--primary.wp-btn--sm", {
+          type: "button",
+          on: { pointerdown: function (e) { e.stopPropagation(); }, click: function () { WPE.panels.open("templates", {}); } },
+        }, WPE.util.icon("layout-template", 15), "Velg en mal"),
+        go("text", "type", "Tekst"),
+        go("images", "image", "Bilde")
+      )
+    );
+  }
+
+  /** The artboards' names above their top edge; in Samlet a click picks one. */
+  function drawFrameTags(z, both, spec) {
+    WPE.util.clear(dom.frameTags);
+    var v = store.state.view;
+    var list = both
+      ? [{ key: "background", x: 0 }, { key: "topbanner", x: Spec.get("background").site.topbanner.x }]
+      : [{ key: v.board, x: 0 }];
+    list.forEach(function (t) {
+      var bs = Spec.get(t.key);
+      var active = both && v.board === t.key;
+      var node = h(both ? "button.wp-frametag" : "span.wp-frametag", {
+        type: both ? "button" : null,
+        class: active ? "is-active" : "",
+        style: { left: t.x * z + "px" },
+        title: both ? (active ? "Du redigerer " + bs.name.toLowerCase() : "Klikk for å redigere " + bs.name.toLowerCase()) : null,
+        // The stage reads pointerdown as "start selecting"; a tag is a button.
+        on: both ? { pointerdown: function (e) { e.stopPropagation(); }, click: function () { store.setBoard(t.key); } } : null,
+      }, h("b", null, bs.name), h("span.wp-frametag__size", null, bs.width + "×" + bs.height), active ? h("span.wp-frametag__state", null, "· redigeres") : null);
+      dom.frameTags.appendChild(node);
+    });
+    // In Samlet the two tags share a line: zoomed far out, the background's
+    // tag drops its size, then «redigeres» (the colour still says it), and
+    // only then hides, rather than run under the other one.
+    if (both) {
+      var first = dom.frameTags.children[0];
+      var gapTo = parseFloat(dom.frameTags.children[1].style.left) - 6;
+      [".wp-frametag__size", ".wp-frametag__state"].forEach(function (part) {
+        var n = first.offsetWidth > gapTo && first.querySelector(part);
+        if (n) n.remove();
+      });
+      if (first.offsetWidth > gapTo) first.hidden = true;
+    }
+  }
+
+  /** A key under the artboard for whichever overlays are switched on. */
+  function drawLegend(both, spec) {
+    WPE.util.clear(dom.legend);
+    var v = store.state.view;
+    var items = [];
+    if (v.safe) {
+      var s = spec.safe;
+      var full = s.x === 0 && s.y === 0 && s.width === spec.width && s.height === spec.height;
+      items.push(h("span.wp-legend__i", null, h("i.wp-legend__safe"),
+        full ? "Hele flaten er synlig" : "Sikker sone " + s.width + "×" + s.height + " – logo, tekst og knapper her"));
+    }
+    if (v.site && spec.site) items.push(h("span.wp-legend__i", null, h("i.wp-legend__site"), "Dekkes av nettsiden"));
+    if (both) items.push(h("span.wp-legend__i", null, h("i.wp-legend__tb"), "Toppbanneret ligger her"));
+    items.forEach(function (n) { dom.legend.appendChild(n); });
+    dom.legend.hidden = !items.length;
   }
 
   // ---- selection -----------------------------------------------------------------
@@ -474,6 +571,7 @@
     setZoom: setZoom,
     zoomBy: zoomBy,
     fit: fit,
+    zoomToSelection: zoomToSelection,
     viewCenter: viewCenter,
     setSnapGuides: setSnapGuides,
     setHover: setHover,

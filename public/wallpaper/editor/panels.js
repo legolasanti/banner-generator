@@ -349,107 +349,211 @@
   var TYPE_ICON = { text: "type", shape: "shapes", line: "minus", image: "image", icon: "star" };
 
   function layersPanel() {
-    var list = h("ol.wp-layers");
-    var dragId = null;
-    function render() {
-      util.clear(list);
-      var els = store.elements();
-      var sel = store.state.view.sel;
-      if (!els.length) {
-        list.appendChild(h("li.wp-empty-sm", null, "Ingen elementer på " + store.boardSpec().name.toLowerCase() + " ennå."));
-        return;
-      }
-      els.slice().reverse().forEach(function (el) {
-        var name = h("span.wp-layer__name", { title: "Dobbeltklikk for å gi nytt navn" }, Doc.displayName(el));
-        name.addEventListener("dblclick", function (e) {
-          e.stopPropagation();
-          var input = h("input.wp-layer__rename", { type: "text", value: el.name || Doc.displayName(el), maxlength: 60 });
-          name.replaceWith(input);
-          input.focus();
-          input.select();
-          var done = function () {
+    var wrap = h("div.wp-layergroups");
+    var drag = null; // { id, board }
+
+    // Acting on a row makes its artboard the one being edited (the store
+    // edits one artboard at a time); in Samlet view that is just a click.
+    function onBoard(key) {
+      if (store.state.view.board !== key) store.setBoard(key);
+    }
+
+    function row(el, key, active) {
+      var sel = active ? store.state.view.sel : [];
+      var name = h("span.wp-layer__name", { title: "Dobbeltklikk for å gi nytt navn" }, Doc.displayName(el));
+      name.addEventListener("dblclick", function (e) {
+        e.stopPropagation();
+        onBoard(key);
+        var input = h("input.wp-layer__rename", { type: "text", value: el.name || Doc.displayName(el), maxlength: 60 });
+        var target = wrap.querySelector('.wp-layer[data-id="' + el.id + '"] .wp-layer__name');
+        (target || name).replaceWith(input);
+        input.focus();
+        input.select();
+        var done = function () {
+          store.checkpoint();
+          store.update(el.id, { name: input.value.trim() });
+        };
+        input.addEventListener("blur", done);
+        input.addEventListener("keydown", function (ev) { if (ev.key === "Enter") input.blur(); ev.stopPropagation(); });
+      });
+      var toggle = function (field) {
+        onBoard(key);
+        store.checkpoint();
+        var patch = {};
+        patch[field] = !el[field];
+        store.update(el.id, patch);
+      };
+      return h("li.wp-layer" + (sel.indexOf(el.id) !== -1 ? ".is-sel" : "") + (el.hidden ? ".is-hidden" : ""), {
+        draggable: true, dataset: { id: el.id, board: key },
+        on: {
+          click: function (e) {
+            if (e.target.closest("button")) return;
+            var cur = store.state.view.board === key ? store.state.view.sel : [];
+            onBoard(key);
+            if (e.shiftKey) store.select(cur.indexOf(el.id) === -1 ? cur.concat(el.id) : cur.filter(function (x) { return x !== el.id; }));
+            else store.select([el.id]);
+          },
+          dragstart: function (e) { drag = { id: el.id, board: key }; e.dataTransfer.effectAllowed = "move"; e.currentTarget.classList.add("is-drag"); },
+          dragend: function (e) { drag = null; e.currentTarget.classList.remove("is-drag"); },
+          // Layers move within their own artboard only.
+          dragover: function (e) { if (drag && drag.board === key) { e.preventDefault(); e.currentTarget.classList.add("is-over"); } },
+          dragleave: function (e) { e.currentTarget.classList.remove("is-over"); },
+          drop: function (e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove("is-over");
+            if (!drag || drag.board !== key || drag.id === el.id) return;
+            var moving = drag.id;
+            onBoard(key);
+            var index = store.elements().findIndex(function (x) { return x.id === el.id; });
             store.checkpoint();
-            store.update(el.id, { name: input.value.trim() });
-          };
-          input.addEventListener("blur", done);
-          input.addEventListener("keydown", function (ev) { if (ev.key === "Enter") input.blur(); ev.stopPropagation(); });
-        });
-        var row = h("li.wp-layer" + (sel.indexOf(el.id) !== -1 ? ".is-sel" : "") + (el.hidden ? ".is-hidden" : ""), {
-          draggable: true, dataset: { id: el.id },
-          on: {
-            click: function (e) {
-              if (e.target.closest("button")) return;
-              if (e.shiftKey) store.select(sel.indexOf(el.id) === -1 ? sel.concat(el.id) : sel.filter(function (x) { return x !== el.id; }));
-              else store.select([el.id]);
-            },
-            dragstart: function (e) { dragId = el.id; e.dataTransfer.effectAllowed = "move"; row.classList.add("is-drag"); },
-            dragend: function () { dragId = null; row.classList.remove("is-drag"); },
-            dragover: function (e) { if (dragId) { e.preventDefault(); row.classList.add("is-over"); } },
-            dragleave: function () { row.classList.remove("is-over"); },
-            drop: function (e) {
-              e.preventDefault();
-              row.classList.remove("is-over");
-              if (!dragId || dragId === el.id) return;
-              var index = store.elements().findIndex(function (x) { return x.id === el.id; });
-              store.checkpoint();
-              store.moveTo(dragId, index);
-            },
+            store.moveTo(moving, index);
           },
         },
-          h("span.wp-layer__grip", null, util.icon("grip-vertical", 14)),
-          h("span.wp-layer__type", null, util.icon(TYPE_ICON[el.type] || "square", 15)),
-          name,
-          h("button.wp-layer__btn" + (el.hidden ? ".is-on" : ""), { type: "button", title: el.hidden ? "Vis" : "Skjul", "aria-label": (el.hidden ? "Vis " : "Skjul ") + Doc.displayName(el), on: { click: function () { store.checkpoint(); store.update(el.id, { hidden: !el.hidden }); } } }, util.icon(el.hidden ? "eye-off" : "eye", 15)),
-          h("button.wp-layer__btn" + (el.locked ? ".is-on" : ""), { type: "button", title: el.locked ? "Lås opp" : "Lås", "aria-label": (el.locked ? "Lås opp " : "Lås ") + Doc.displayName(el), on: { click: function () { store.checkpoint(); store.update(el.id, { locked: !el.locked }); } } }, util.icon(el.locked ? "lock" : "lock-open", 15))
-        );
-        list.appendChild(row);
-      });
+      },
+        h("span.wp-layer__grip", null, util.icon("grip-vertical", 14)),
+        h("span.wp-layer__type", null, util.icon(TYPE_ICON[el.type] || "square", 15)),
+        name,
+        h("button.wp-layer__btn" + (el.hidden ? ".is-on" : ""), { type: "button", title: el.hidden ? "Vis" : "Skjul", "aria-label": (el.hidden ? "Vis " : "Skjul ") + Doc.displayName(el), on: { click: function () { toggle("hidden"); } } }, util.icon(el.hidden ? "eye-off" : "eye", 15)),
+        h("button.wp-layer__btn" + (el.locked ? ".is-on" : ""), { type: "button", title: el.locked ? "Lås opp" : "Lås", "aria-label": (el.locked ? "Lås opp " : "Lås ") + Doc.displayName(el), on: { click: function () { toggle("locked"); } } }, util.icon(el.locked ? "lock" : "lock-open", 15))
+      );
+    }
+
+    function group(key) {
+      var spec = window.WallpaperSpec.get(key);
+      var els = store.state.doc.artboards[key].elements;
+      var active = store.state.view.board === key;
+      var combined = !!store.state.view.combined;
+      var head = h(combined ? "button.wp-layergroup__head" : "div.wp-layergroup__head", {
+        type: combined ? "button" : null,
+        title: combined && !active ? "Rediger " + spec.name.toLowerCase() : null,
+        on: combined ? { click: function () { onBoard(key); } } : null,
+      }, h("b", null, spec.name), h("span.wp-layergroup__meta", null, els.length + (els.length === 1 ? " element" : " elementer")),
+        active && combined ? h("span.wp-layergroup__badge", null, "redigeres") : null);
+      var list = h("ol.wp-layers");
+      if (!els.length) list.appendChild(h("li.wp-empty-sm", null, "Ingen elementer på " + spec.name.toLowerCase() + " ennå."));
+      els.slice().reverse().forEach(function (el) { list.appendChild(row(el, key, active)); });
+      return h("section.wp-layergroup" + (active ? ".is-active" : ""), null, head, list);
+    }
+
+    function render() {
+      util.clear(wrap);
+      // Samlet shows both artboards, the top banner first since it lies on
+      // top of the background on the page.
+      var keys = store.state.view.combined ? ["topbanner", "background"] : [store.state.view.board];
+      keys.forEach(function (key) { wrap.appendChild(group(key)); });
     }
     render();
-    var unsub = store.subscribe(function (what) { if (what === "doc" || what === "sel" || what === "board") render(); });
+    var shownCombined = !!store.state.view.combined;
+    var unsub = store.subscribe(function (what) {
+      // "view" also fires for every zoom step; only Samlet on/off matters here.
+      if (what === "view") {
+        if (!!store.state.view.combined === shownCombined) return;
+        shownCombined = !!store.state.view.combined;
+      }
+      if (what === "doc" || what === "sel" || what === "board" || what === "view") render();
+    });
     layersPanel.cleanup = unsub;
-    return [list];
+    return [wrap];
   }
 
   // ---- templates ----------------------------------------------------------------------------------
+  // The category picked in «Maler»; kept while the editor is open.
+  var tplCategory = "";
+
+  /**
+   * A template as it lands on a 1280px screen: the safe area of the
+   * background (the sides a reader sees), the top banner in place and a
+   * light page mock over the middle — what sells a wallpaper, rather than
+   * the whole 1920 board with an empty centre.
+   */
+  function tplThumb(t) {
+    var Spec = window.WallpaperSpec;
+    var bgSpec = Spec.get("background");
+    var safe = bgSpec.safe;
+    var site = bgSpec.site;
+    var doc = Doc.normalizeDoc(t.make());
+    WPE.fontload.ensureDoc(doc);
+    var thumb = h("div.wp-tpl__thumb");
+    var page = h("div", { style: { position: "absolute", left: "0", top: "0", width: safe.width + "px", height: safe.height + "px", transformOrigin: "0 0" } });
+    var bgNode = h("div", { style: { position: "absolute", left: -safe.x + "px", top: -safe.y + "px" } });
+    var tbNode = h("div", { style: { position: "absolute", left: site.topbanner.x - safe.x + "px", top: site.topbanner.y - safe.y + "px" } });
+    Render.renderArtboard(bgNode, doc.artboards.background, { width: bgSpec.width, height: bgSpec.height }, { assetUrl: WPE.canvas.assetUrl });
+    Render.renderArtboard(tbNode, doc.artboards.topbanner, { width: 1000, height: 300 }, { assetUrl: WPE.canvas.assetUrl });
+    var lines = [];
+    for (var i = 0; i < 4; i++) {
+      lines.push(h("div.wp-tplpage__card", null, h("i"), h("b"), h("b.is-short")));
+    }
+    var mock = h("div.wp-tplpage", {
+      style: { left: site.content.x - safe.x + "px", top: site.content.y - safe.y + "px", width: site.content.width + "px", height: safe.height - (site.content.y - safe.y) + "px" },
+    }, h("div.wp-tplpage__nav"), h("div.wp-tplpage__cards", null, lines));
+    page.appendChild(bgNode);
+    page.appendChild(tbNode);
+    page.appendChild(mock);
+    thumb.appendChild(page);
+    // Scale to whatever width the drawer gives the card, once laid out.
+    requestAnimationFrame(function () {
+      page.style.transform = "scale(" + thumb.clientWidth / safe.width + ")";
+    });
+    return thumb;
+  }
+
   function templatesPanel() {
-    return [
-      h("div.wp-templates", null, WPE.templates.map(function (t) {
-        var doc = Doc.normalizeDoc(t.make());
-        WPE.fontload.ensureDoc(doc);
-        var thumb = h("div.wp-tpl__thumb");
-        // The whole wallpaper as it lands on the page: background with the
-        // top banner in place.
-        var ab = h("div", { style: { position: "absolute", left: "0", top: "0", width: "1920px", height: "850px" } });
-        var bgNode = h("div");
-        var tbNode = h("div");
-        Render.renderArtboard(bgNode, doc.artboards.background, { width: 1920, height: 850 }, { assetUrl: WPE.canvas.assetUrl });
-        Render.renderArtboard(tbNode, doc.artboards.topbanner, { width: 1000, height: 300 }, { assetUrl: WPE.canvas.assetUrl });
-        var site = window.WallpaperSpec.get("background").site.topbanner;
-        ab.appendChild(bgNode);
-        ab.appendChild(h("div", { style: { position: "absolute", left: site.x + "px", top: site.y + "px" } }, tbNode));
-        ab.style.transformOrigin = "0 0";
-        thumb.appendChild(ab);
-        // Scale to whatever width the drawer gives the card, once laid out.
-        requestAnimationFrame(function () {
-          ab.style.transform = "scale(" + thumb.clientWidth / 1920 + ")";
-        });
-        return h("button.wp-tpl", {
-          type: "button",
-          on: {
-            click: function () {
-              var d = store.state.doc;
-              var hasContent = d.artboards.background.elements.length || d.artboards.topbanner.elements.length;
-              if (hasContent && !confirm("Erstatte designet med malen «" + t.name + "»? (Kan angres)")) return;
-              var fresh = Doc.normalizeDoc(t.make());
-              WPE.fontload.ensureDoc(fresh);
-              store.load(fresh);
-              WPE.canvas.fit();
-            },
+    var list = h("div.wp-templates");
+    var cats = [];
+    WPE.templates.forEach(function (t) {
+      if (t.category && cats.indexOf(t.category) === -1) cats.push(t.category);
+    });
+    if (cats.indexOf(tplCategory) === -1) tplCategory = "";
+    var chips = h("div.wp-tplcats", { role: "group", "aria-label": "Bransje" });
+
+    function card(t) {
+      return h("button.wp-tpl", {
+        type: "button",
+        on: {
+          click: function () {
+            var d = store.state.doc;
+            var hasContent = d.artboards.background.elements.length || d.artboards.topbanner.elements.length;
+            if (hasContent && !confirm("Erstatte designet med malen «" + t.name + "»? (Kan angres)")) return;
+            var fresh = Doc.normalizeDoc(t.make());
+            WPE.fontload.ensureDoc(fresh);
+            store.load(fresh);
+            WPE.canvas.fit();
           },
-        }, thumb, h("span.wp-tpl__name", null, t.name), h("span.wp-tpl__desc", null, t.desc));
-      })),
-    ];
+        },
+      }, tplThumb(t),
+        h("span.wp-tpl__name", null, t.name, t.category ? h("span.wp-tpl__cat", null, t.category) : null),
+        h("span.wp-tpl__desc", null, t.desc));
+    }
+
+    // Thumbnails are rendered once; the filter only shows and hides them.
+    var cards = WPE.templates.map(function (t) {
+      var node = card(t);
+      node.dataset.category = t.category || "";
+      list.appendChild(node);
+      return node;
+    });
+
+    function apply() {
+      Array.prototype.forEach.call(chips.children, function (c) {
+        var on = c.dataset.category === tplCategory;
+        c.classList.toggle("is-on", on);
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      cards.forEach(function (n) {
+        n.hidden = !!tplCategory && n.dataset.category !== tplCategory;
+      });
+    }
+
+    [""].concat(cats).forEach(function (c) {
+      var count = c ? WPE.templates.filter(function (t) { return t.category === c; }).length : WPE.templates.length;
+      chips.appendChild(h("button.wp-chip.wp-chip--sm", {
+        type: "button",
+        dataset: { category: c },
+        on: { click: function () { tplCategory = c; apply(); } },
+      }, c || "Alle", h("span.wp-chip__n", null, String(count))));
+    });
+    apply();
+    return [chips, list];
   }
 
   // ---- rail ---------------------------------------------------------------------------------------
@@ -510,7 +614,8 @@
     // Re-open the current drawer when the artboard changes: several panels
     // (images, background, layers) talk about "this" artboard.
     store.subscribe(function (what) {
-      if (what === "board" && ["images", "background", "layers"].indexOf(current) !== -1) open(current, panelOpts);
+      // (Lag follows the artboard itself, without losing its scroll position.)
+      if (what === "board" && ["images", "background"].indexOf(current) !== -1) open(current, panelOpts);
     });
   }
 

@@ -57,6 +57,7 @@
         },
       }, h("span.wp-boards__shape.wp-boards__shape--" + key), h("span", null, h("b", null, spec.name), h("small", null, spec.width + "×" + spec.height)));
       b.dataset.key = key;
+      b.dataset.size = spec.width + "×" + spec.height;
       wrap.appendChild(b);
       return b;
     }));
@@ -118,10 +119,29 @@
     ), { align: "right" });
   }
 
+  function zoomMenu(anchor) {
+    var item = function (label, keys, fn, disabled) {
+      return h("button.wp-menu__item.wp-menu__item--row", { type: "button", disabled: !!disabled, on: { click: function () { util.closePopover(); fn(); } } },
+        h("span", null, h("b", null, label)), keys ? h("kbd.wp-kbd", null, keys) : null);
+    };
+    var hasSel = store.state.view.sel.length > 0;
+    util.popover(anchor, h("div.wp-menu.wp-menu--zoom", null,
+      item("Tilpass til vinduet", "⇧1", function () { WPE.canvas.fit(); }),
+      item("Zoom til markering", "⇧2", function () { WPE.canvas.zoomToSelection(); }, !hasSel),
+      h("hr.wp-menu__sep"),
+      [0.5, 1, 2].map(function (z) {
+        return item(Math.round(z * 100) + " %", "", function () { WPE.canvas.setZoom(z); });
+      }),
+      h("hr.wp-menu__sep"),
+      item("Zoom inn", "⌘ +", function () { WPE.canvas.zoomBy(1.2); }),
+      item("Zoom ut", "⌘ −", function () { WPE.canvas.zoomBy(1 / 1.2); })
+    ));
+  }
+
   function topbar() {
     dom.undo = toolBtn("undo-2", "Angre (Ctrl/⌘+Z)", function () { store.undo(); });
     dom.redo = toolBtn("redo-2", "Gjør om (Ctrl/⌘+Shift+Z)", function () { store.redo(); });
-    dom.zoomLab = h("button.wp-zoomlab", { type: "button", title: "Tilpass til vinduet (Ctrl/⌘+0)", on: { click: function () { WPE.canvas.fit(); } } }, "100 %");
+    dom.zoomLab = h("button.wp-zoomlab", { type: "button", title: "Zoomnivå", "aria-haspopup": "true", on: { click: function () { zoomMenu(dom.zoomLab); } } }, "100 %");
     dom.status = h("span.wp-status", { title: "Designet lagres automatisk i denne nettleseren", "aria-live": "polite" });
     dom.toggles = [
       viewToggle("safe", "shield", "Sikker sone",
@@ -157,10 +177,17 @@
     if (!what || what === "board" || what === "view") {
       dom.boardBtns.forEach(function (b) {
         var on = v.combined ? b.dataset.key === "combined" : b.dataset.key === v.board;
-        // In Samlet view, mark which artboard the next edit goes to.
-        b.classList.toggle("is-sub", !!v.combined && b.dataset.key === v.board);
         b.classList.toggle("is-on", on);
         b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      // In Samlet view the artboard the next edit goes to says so in its
+      // second line, in the canvas's selection colour — not a second
+      // highlighted button.
+      dom.boardBtns.forEach(function (b) {
+        if (!b.dataset.size) return;
+        var editing = !!v.combined && b.dataset.key === v.board;
+        b.classList.toggle("is-editing", editing);
+        b.querySelector("small").textContent = editing ? "redigeres" : b.dataset.size;
       });
     }
     dom.undo.disabled = !store.canUndo();
