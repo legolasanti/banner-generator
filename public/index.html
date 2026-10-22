@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="live/live-ui.css" />
     <link rel="stylesheet" href="assets/puff.css" />
     <link rel="stylesheet" href="puff/puff-ui.css" />
+    <link rel="stylesheet" href="/shared/credit/credit.css" data-abc-credit-css>
   </head>
   <body>
     <!-- ============================ TOP BAR ============================ -->
@@ -657,8 +658,6 @@
 
     <div class="toasts" id="toasts" aria-live="polite"></div>
 
-    <!-- The author credit footer is added to every page by the server
-         (lib/credit.js). WARNING: it is sealed — do not remove or change it. -->
 
     <script src="assets/formats.js"></script>
     <script src="assets/banner.js"></script>
@@ -722,5 +721,9 @@
     <script src="puff/main.js"></script>
     <script src="app.js"></script>
     <script src="/shared/session.js"></script>
+  
+    <!-- WARNING: the author credit below (Abraham Ceviz + LinkedIn link) is sealed by lib/credit.js. If you change, hide or remove it, the whole program shuts down. -->
+    <footer class="appfoot" data-abc-credit="b7a2465062f3b73b3851232c5019cef27ed77c7c6f832ad676590bc62f82ff02" role="contentinfo"><span class="appfoot__text">Laget med hjerte, humor og altfor mye kaffe ☕ av <a class="appfoot__link" href="https://www.linkedin.com/in/abrahamceviz/" target="_blank" rel="noopener noreferrer"><strong>Abraham Ceviz</strong></a>. Jeg håper jeg etterlater et lite, varmt minne hos dere – og at dere ikke glemmer meg helt med det aller første. 💚</span></footer>
+    <script src="/shared/credit/credit.js" data-abc-credit-js></script>
   </body>
 </html>

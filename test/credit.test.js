@@ -122,16 +122,17 @@ test("an intact tree starts without a word", () => {
   assert.deepEqual(codes, []);
 });
 
-test("no page in public/ hard-codes its own copy of the footer", () => {
-  const pages = [];
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith(".html")) pages.push(p);
-    }
-  };
-  walk(PUBLIC_DIR);
-  assert.ok(pages.length >= 3);
-  for (const p of pages) assert.doesNotMatch(fs.readFileSync(p, "utf8"), /<footer class="appfoot"/, path.relative(ROOT, p));
+test("the main pages carry the sealed credit in their own HTML", () => {
+  for (const page of ["index.html", "native/index.html", "design-system.html"]) {
+    const html = fs.readFileSync(path.join(PUBLIC_DIR, page), "utf8");
+    assert.ok(html.includes(credit.footerHtml()), page);
+    assert.equal(credit.inject(html), html, page + " is not given a second footer");
+  }
+});
+
+test("the program locks itself when a main page loses the footer", () => {
+  const t = scratchTree();
+  const html = fs.readFileSync(path.join(PUBLIC_DIR, "index.html"), "utf8");
+  fs.writeFileSync(path.join(t.pub, "index.html"), html.replace(credit.footerHtml(), ""));
+  assert.deepEqual(credit.problems(t.pub, t.license), ["public/index.html no longer carries the credit"]);
 });
