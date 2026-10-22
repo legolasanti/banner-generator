@@ -323,6 +323,15 @@
     el.__np__stick = el["__np--np-cv"] = undefined;
   }
 
+  // Where an element sits on screen ignoring transforms: a section that is
+  // itself shrinking under the next card ("stack" chains like a deck) must
+  // not look less covered, or the one beneath it would reappear.
+  function layoutTop(el) {
+    var y = 0;
+    for (var n = el; n; n = n.offsetParent) y += n.offsetTop;
+    return y - (window.scrollY || window.pageYOffset);
+  }
+
   function motionFrame(vh) {
     if (!motion.length && !pinned.length) return;
     motion = motion.filter(function (m) { return m.sec.isConnected; });
@@ -331,7 +340,9 @@
       if (!headH) headH = parseFloat(window.getComputedStyle(m.sec).getPropertyValue("--np-head-h")) || 0;
       var tr = m.sec.className.match(/\bnp-tr-(stack|cover)\b/);
       var prev = tr ? prevSection(m.sec) : null;
-      return { m: m, r: m.sec.getBoundingClientRect(), tr: tr && tr[1], prev: prev, prevH: prev ? prev.offsetHeight : 0 };
+      var top = layoutTop(m.sec);
+      var h = m.sec.offsetHeight;
+      return { m: m, r: { top: top, bottom: top + h, height: h }, tr: tr && tr[1], prev: prev, prevH: prev ? prev.offsetHeight : 0 };
     });
     var keep = [];
     reads.forEach(function (x) {

@@ -1006,12 +1006,33 @@
 
   var CHART_COLORS = ["--np-primary", "--np-accent", "--np-dark"];
 
+  /**
+   * What the middle of a donut says: the highlighted share (else the
+   * largest), the largest, the sum, or the editor's own text — with a small
+   * line under it (the share's name, "totalt", or the editor's own).
+   */
+  function donutCenter(p, hl, total, fmt) {
+    var items = p.items || [];
+    var largest = items.reduce(function (best, it) { return !best || it.value > best.value ? it : best; }, null);
+    var pick = p.center === "largest" ? largest : (hl && items[hl - 1]) || largest;
+    var out;
+    if (p.center === "total") out = { value: fmt(total), sub: "totalt" };
+    else if (p.center === "custom") out = { value: p.centerText || "", sub: "" };
+    else out = { value: pick ? fmt(pick.value) : "", sub: pick ? pick.label : "" };
+    if (p.centerSub) out.sub = p.centerSub;
+    return out;
+  }
+
   R.chart = function (ctx, s) {
     var p = s.props;
     var max = p.items.reduce(function (m, it) { return Math.max(m, Math.abs(it.value)); }, 0) || 1;
     var total = p.items.reduce(function (m, it) { return m + Math.max(0, it.value); }, 0) || 1;
+    // Norwegian numbers: decimal comma, a (non-breaking) space every three
+    // digits from 10 000 up ("14 000 kr", "1234 kr", "12,5 %").
     var fmt = function (v) {
-      return String(Math.round(v * 10) / 10).replace(".", ",") + (p.unit ? " " + p.unit : "");
+      var parts = String(Math.round(v * 10) / 10).split(".");
+      if (Math.abs(Number(parts[0])) >= 10000) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+      return parts.join(",") + (p.unit ? "\u00a0" + p.unit : "");
     };
     var hl = Number(p.highlight) || 0;
     var body;
@@ -1026,18 +1047,21 @@
         acc += share;
         return '<li class="np-st"' + si(i) + '><i style="background:' + col + '"></i><span' + ed(ctx, "items." + it.id + ".label") + ">" + esc(it.label) + "</span><strong>" + esc(fmt(it.value)) + "</strong></li>";
       });
+      var mid = donutCenter(p, hl, total, fmt);
       body =
-        '<div class="np-donut"><div class="np-donut__ring" style="background:conic-gradient(' + stops.join(",") + ')"><span>' +
-        esc(p.items[hl ? hl - 1 : 0] ? fmt(p.items[hl ? hl - 1 : 0].value) : "") + "</span></div>" +
+        '<div class="np-donut"><div class="np-donut__ring" style="--np-donut:conic-gradient(' + stops.join(",") + ')">' +
+        '<span class="np-donut__mid"><span class="np-donut__v"' + (p.center === "custom" ? ed(ctx, "centerText") : "") + ">" + esc(mid.value) + "</span>" +
+        (mid.sub ? '<span class="np-donut__s">' + esc(mid.sub) + "</span>" : "") + "</span></div>" +
         '<ul class="np-donut__legend">' + legend.join("") + "</ul></div>";
     } else if (p.kind === "column") {
       body =
-        '<div class="np-cols" style="--n:' + p.items.length + '">' +
+        '<div class="np-cols' + (p.items.length >= 7 ? " np-cols--many" : "") + (p.items.length >= 13 ? " np-cols--lots" : "") + '" style="--n:' + p.items.length + '">' +
         p.items.map(function (it, i) {
           var pct = Math.max(2, Math.round((Math.abs(it.value) / max) * 100));
           return (
-            '<div class="np-col' + (hl === i + 1 ? " is-hl" : "") + '"' + si(i) + '><span class="np-col__v">' + esc(fmt(it.value)) + "</span>" +
-            '<div class="np-col__bar"><div class="np-col__fill" style="height:' + pct + '%"></div></div>' +
+            '<div class="np-col' + (hl === i + 1 ? " is-hl" : "") + '"' + si(i) + ">" +
+            // The value rides on top of its own bar.
+            '<div class="np-col__bar"><div class="np-col__fill" style="height:' + pct + '%"><span class="np-col__v">' + esc(fmt(it.value)) + "</span></div></div>" +
             '<span class="np-col__lab"' + ed(ctx, "items." + it.id + ".label") + ">" + esc(it.label) + "</span></div>"
           );
         }).join("") +

@@ -852,7 +852,7 @@
           key: "items",
           type: "list",
           label: "Søyler",
-          maxItems: 10,
+          maxItems: 24,
           itemLabel: "Søyle",
           item: [
             { key: "label", type: "text", label: "Navn", max: 40, default: "" },
@@ -863,7 +863,18 @@
         { key: "unit", type: "text", label: "Enhet", max: 12, default: "" },
         { key: "source", type: "text", label: "Kilde", max: 120, default: "" },
         { key: "kind", type: "select", label: "Diagramtype", options: [["bar", "Liggende søyler"], ["column", "Stående søyler"], ["donut", "Smultring (andeler)"]], default: "bar", ai: false },
-        { key: "highlight", type: "number", label: "Uthev søyle nr. (0 = ingen)", min: 0, max: 10, step: 1, default: 0, ai: false },
+        { key: "highlight", type: "number", label: "Uthev søyle nr. (0 = ingen)", min: 0, max: 24, step: 1, default: 0, ai: false },
+        {
+          key: "center",
+          type: "select",
+          label: "Midt i smultringen",
+          options: [["auto", "Uthevet andel, ellers den største"], ["largest", "Den største andelen"], ["total", "Summen av alle"], ["custom", "Egen tekst"]],
+          default: "auto",
+          when: { kind: "donut" },
+          ai: false,
+        },
+        { key: "centerText", type: "text", label: "Tekst i midten", max: 14, default: "", when: { kind: "donut", center: "custom" }, hint: "Kort: et tall eller to ord." },
+        { key: "centerSub", type: "text", label: "Liten tekst under (valgfritt)", max: 28, default: "", when: { kind: "donut" }, help: "Tom = navnet på andelen, eller «totalt» for summen." },
       ],
     },
 

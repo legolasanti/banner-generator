@@ -1622,3 +1622,45 @@ div.np-acc { color: inherit; }
    fade only ever runs over background. */
 .np-sec:is(:has(+ .np-tr-blend:not(.np-shape-t)), :has(+ #np-after-hero + .np-tr-blend:not(.np-shape-t))) { --np-blend: clamp(64px, 11vw, 150px); border-bottom: var(--np-blend) solid transparent; }
 .np-sec:is(:has(+ .np-tr-blend:not(.np-shape-t)), :has(+ #np-after-hero + .np-tr-blend:not(.np-shape-t))) > .np-bgimg { bottom: calc(var(--np-blend) * -1); }
+
+/* ---- donut: the ring is masked, so the hole shows whatever is behind it
+   (gradient, photo, custom colour); the middle has a value and a small line. */
+.np-sec .np-donut__ring::before { inset: 0; background: var(--np-donut); -webkit-mask: radial-gradient(circle closest-side, transparent 55.5%, #000 56%); mask: radial-gradient(circle closest-side, transparent 55.5%, #000 56%); }
+.np-donut__mid { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 52%; text-align: center; }
+.np-donut__ring .np-donut__v { line-height: 1; }
+.np-donut__ring .np-donut__s { font: 600 13px/1.25 var(--np-font-sys); opacity: 0.75; letter-spacing: 0.02em; }
+
+/* ---- many columns on a phone: values and names turn vertical so twelve
+   months stay legible at 390 px; past twelve the chart scrolls sideways. */
+@media (max-width: 599px) {
+  .np-cols--many { gap: 5px; height: 300px; }
+  .np-cols--many .np-col { gap: 6px; }
+  .np-cols--many .np-col__v, .np-cols--many .np-col__lab { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; min-height: 0; text-align: left; }
+  /* Fixed rows, so every bar stands on the same baseline. */
+  .np-cols--many .np-col__v { font-size: 12px; height: 54px; }
+  .np-cols--many .np-col__lab { font-size: 11.5px; line-height: 1; height: 66px; overflow: hidden; text-overflow: ellipsis; }
+  .np-cols--many .np-col__fill { border-radius: 5px 5px 2px 2px; }
+  .np-cols--lots { grid-template-columns: repeat(var(--n), minmax(26px, 1fr)); overflow-x: auto; scrollbar-width: thin; padding-bottom: 6px; }
+}
+
+.np-donut__ring .np-donut__v { white-space: nowrap; font-size: clamp(1.3rem, 1rem + 1.2vw, 2.1rem); }
+@media (max-width: 599px) { .np-sec .np-donut__ring { width: min(100%, 240px); } }
+
+/* Column values sit just above their bar; the bar area keeps room on top
+   for the tallest one. Names never break inside a word. */
+.np-col__bar { padding-top: 30px; }
+.np-col__fill { position: relative; }
+.np-col__fill > .np-col__v { position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); }
+.np-col__lab { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.np-cols--many .np-col__lab { font-size: 13px; }
+.np-donut__ring { container-type: inline-size; }
+.np-donut__ring .np-donut__v { font-size: min(2.1rem, 10.5cqi); }
+@media (max-width: 599px) {
+  .np-cols--many .np-col__bar { padding-top: 58px; }
+  .np-cols--many .np-col__fill > .np-col__v { height: auto; transform: translateX(-50%) rotate(180deg); }
+  .np-cols--many .np-col__lab { font-size: 11.5px; }
+}
+/* Dimming the other columns tints the bar only, not the value on it. */
+.np-cols:has(.is-hl) .np-col:not(.is-hl) .np-col__fill { opacity: 1; background: linear-gradient(180deg, color-mix(in srgb, var(--np-primary) 28%, transparent), color-mix(in srgb, var(--np-primary) 45%, transparent)); }
+.np-on-dark .np-cols:has(.is-hl) .np-col:not(.is-hl) .np-col__fill { background: rgba(255, 255, 255, 0.42); }
+.np-col.is-hl .np-col__v { font-weight: 800; }

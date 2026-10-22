@@ -269,3 +269,70 @@ test("the Tema panel warns about a font that is not in the catalogue", () => {
   const src = fs.readFileSync(path.join(__dirname, "../public/native/app/theme.js"), "utf8");
   assert.match(src, /font\.source === "google" && !Fonts\.has\(font\.family\)[\s\S]{0,200}nx-note--warn/);
 });
+
+test("stacked sections chain like a deck and nothing stays pinned after them", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const sec = (name, bg, transition, words) => ({ type: "richText", props: { html: "<h2>" + name + "</h2><p>" + "Tekst. ".repeat(words || 60) + "</p>" }, style: { bg, transition: transition || "none", minH: "screen" } });
+  const html = render([sec("A", "soft"), sec("B", "dark", "stack"), sec("C", "brand", "stack"), sec("D", "soft", "cover"), sec("E", "none", "none", 300), sec("F", "dark", "none", 300)], { inline: true });
+  for (const [w, h] of [[1280, 800], [390, 844]]) {
+    const page = await open(html, w, h);
+    await page.evaluate(() => (document.documentElement.style.scrollBehavior = "auto"));
+    const total = await page.evaluate(() => document.documentElement.scrollHeight);
+    const seen = [];
+    for (let y = 0; y < total; y += Math.round(h * 0.4)) {
+      await page.evaluate((yy) => window.scrollTo(0, yy), y);
+      await new Promise((r) => setTimeout(r, 60));
+      seen.push(await page.evaluate(() => {
+        const el = document.elementFromPoint(innerWidth / 2, innerHeight * 0.6);
+        const s = el && el.closest(".np-sec");
+        return s ? s.querySelector("h2").textContent : "-";
+      }));
+    }
+    // The section in front only ever moves forward: A … B … C … D … E … F.
+    // ("-" = the footer under the last section.)
+    const order = seen.filter((x) => x !== "-").filter((x, i, all) => x !== all[i - 1]);
+    assert.deepEqual(order, ["A", "B", "C", "D", "E", "F"], w + ": " + seen.join(""));
+    await page.close();
+  }
+});
+
+// ---- charts -------------------------------------------------------------------------
+test("a donut's middle: highlighted or largest share by default, or the sum, or own text", () => {
+  const donut = (props) => render([{ type: "chart", props: Object.assign({ kind: "donut", unit: "kr", items: [{ label: "Mat", value: 4200 }, { label: "Bolig", value: 9800 }] }, props) }]);
+  const mid = (html) => /<span class="np-donut__mid">([\s\S]*?)<\/span><\/span>/.exec(html)[1].replace(/<[^>]+>/g, "|");
+  assert.equal(D.normalizeSection({ type: "chart", props: { kind: "donut" } }).props.center, "auto");
+  assert.match(mid(donut({})), /9800 kr\|\|Bolig/);
+  assert.match(mid(donut({ highlight: 1 })), /4200 kr\|\|Mat/);
+  assert.match(mid(donut({ center: "total" })), /14 000 kr\|\|totalt/);
+  assert.match(mid(donut({ center: "custom", centerText: "3 av 4", centerSub: "velger elbil" })), /3 av 4\|\|velger elbil/);
+  // The ring is drawn by a mask, so the hole shows the section behind it.
+  assert.match(donut({}), /class="np-donut__ring" style="--np-donut:conic-gradient\(/);
+});
+
+test("twelve months fit: up to 24 columns, values ride on their bars, many columns are marked", () => {
+  const months = Array.from({ length: 12 }, (_, i) => ({ label: "M" + (i + 1), value: 100 + i }));
+  const sec = D.normalizeSection({ type: "chart", props: { kind: "column", items: months } });
+  assert.equal(sec.props.items.length, 12);
+  const html = render([{ type: "chart", props: { kind: "column", items: months } }]);
+  assert.match(html, /class="np-cols np-cols--many" style="--n:12"/);
+  assert.match(html, /<div class="np-col__fill" style="height:\d+%"><span class="np-col__v">/);
+  assert.match(CSS, /\.np-cols--many \.np-col__v, \.np-cols--many \.np-col__lab \{ writing-mode: vertical-rl;/);
+});
+
+test("twelve columns stay legible on a phone: no overlapping names or values, no sideways page", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const names = ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"];
+  const page = await open(render([{ type: "chart", props: { kind: "column", unit: "kr", items: names.map((label, i) => ({ label, value: 800 + i * 410 })) } }], { inline: true }), 390, 844);
+  await page.evaluate(() => document.querySelectorAll(".np-sec").forEach((s) => s.classList.add("np-in")));
+  await new Promise((r) => setTimeout(r, 1400));
+  const r = await page.evaluate(() => {
+    const over = (sel) => {
+      const rs = [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect());
+      return rs.filter((b, i) => i && b.left < rs[i - 1].right - 0.5).length;
+    };
+    const labs = [...document.querySelectorAll(".np-col__lab")];
+    return { labels: over(".np-col__lab"), values: over(".np-col__v"), wide: document.documentElement.scrollWidth > innerWidth, cut: labs.filter((l) => l.scrollHeight > l.clientHeight + 1).length, base: new Set([...document.querySelectorAll(".np-col__bar")].map((b) => Math.round(b.getBoundingClientRect().bottom))).size };
+  });
+  assert.deepEqual(r, { labels: 0, values: 0, wide: false, cut: 0, base: 1 });
+  await page.close();
+});
