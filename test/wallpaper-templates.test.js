@@ -75,15 +75,15 @@ test("all fonts come from the catalogue (nothing silently falls back)", () => {
 
 test("the photo list matches the kit on disk, and every kit photo is used and credited", async () => {
   const kit = await demo.catalogue();
-  const byName = Object.fromEntries(kit.map((p) => [p.name, p]));
+  const byKey = Object.fromEntries(kit.map((p) => [p.key, p]));
   const photos = WPE.TEMPLATE_PHOTOS;
-  assert.deepEqual(Object.keys(photos).sort(), Object.keys(byName).sort());
-  for (const [name, [id, w, h]] of Object.entries(photos)) {
-    assert.equal(id, byName[name].id, name + " id is the file's sha256");
-    assert.ok(w > 0 && h > 0, name);
+  assert.deepEqual(Object.keys(photos).sort(), Object.keys(byKey).sort(), "run node lib/wallpaper/demo-build.js");
+  for (const [key, [id, w, h]] of Object.entries(photos)) {
+    assert.equal(id, byKey[key].id, key + " id is the file's sha256");
+    assert.ok(w > 0 && h > 0, key);
   }
   for (const p of kit) {
-    for (const k of ["name", "file", "alt", "author", "source", "license"]) assert.ok(p[k], p.name + " " + k);
+    for (const k of ["name", "key", "file", "alt", "author", "source", "license"]) assert.ok(p[k], p.name + " " + k);
     assert.match(p.source, /^https:\/\/unsplash\.com\/photos\//);
     assert.ok(p.buffer.length <= 480 * 1024, p.name + " is " + p.buffer.length + " bytes");
   }
@@ -92,6 +92,25 @@ test("the photo list matches the kit on disk, and every kit photo is used and cr
   for (const p of kit) assert.ok(used.has(p.id), p.name + " is not used by any template");
   const ids = new Set(kit.map((p) => p.id));
   for (const id of used) assert.ok(ids.has(id), "unknown asset " + id);
+});
+
+test("every photo is cut to its frame, so a package ships no hidden pixels", () => {
+  for (const { t, doc } of built) {
+    for (const key of Spec.ORDER) {
+      for (const e of doc.artboards[key].elements) {
+        if (e.type !== "image") continue;
+        const off = Math.abs(e.natW / e.natH - e.w / e.h) / (e.w / e.h);
+        assert.ok(off < 0.01, `${t.id}/${key} ${e.name}: photo ${e.natW}×${e.natH} in a ${e.w}×${e.h} frame`);
+      }
+    }
+  }
+});
+
+test("the cut matches what object-fit: cover shows at the focus point", () => {
+  const { coverRect } = require("../lib/wallpaper/demo-build");
+  assert.deepEqual(coverRect(1800, 1200, 460, 640, 0, 50), { left: 0, top: 0, width: 863, height: 1200 });
+  assert.deepEqual(coverRect(1800, 1200, 460, 640, 100, 50), { left: 937, top: 0, width: 863, height: 1200 });
+  assert.deepEqual(coverRect(800, 1000, 1000, 300, 50, 30), { left: 0, top: 228, width: 800, height: 240 });
 });
 
 test("the photos are big enough not to blur where they are placed", () => {

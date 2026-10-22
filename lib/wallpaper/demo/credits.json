@@ -1,338 +1,674 @@
 [
  {
-  "name": "trollstigen",
-  "file": "trollstigen.jpg",
-  "alt": "Hårnålssvingene i Trollstigen sett ovenfra",
-  "author": "Bruna Santos",
-  "source": "https://unsplash.com/photos/iMOBvfoKqWE",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-snow-suv",
-  "file": "ev-snow-suv.jpg",
-  "alt": "Hvit SUV på snødekt vidde med rosa fjell i bakgrunnen",
-  "author": "M G",
-  "source": "https://unsplash.com/photos/KYSEbj4bjO8",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-suv-road",
-  "file": "ev-suv-road.jpg",
-  "alt": "Lysegrønn elbil i fart på en svingete fjellvei",
-  "author": "Hyundai Motor Group",
-  "source": "https://unsplash.com/photos/WSqivhqBjeo",
-  "license": "Unsplash License"
- },
- {
-  "name": "home-charger-hand",
-  "file": "home-charger-hand.jpg",
-  "alt": "Hånd setter laderen i en elbil hjemme",
-  "author": "Evnex Ltd",
-  "source": "https://unsplash.com/photos/QYyMOk2YfX8",
-  "license": "Unsplash License"
- },
- {
-  "name": "ev-charging-night",
-  "file": "ev-charging-night.jpg",
-  "alt": "Elbil som lader på en opplyst ladestasjon om kvelden",
-  "author": "YRKA PICTURED",
-  "source": "https://unsplash.com/photos/VnO7esC-LjA",
-  "license": "Unsplash License"
- },
- {
-  "name": "energi-ev-home",
-  "file": "energi-ev-home.jpg",
-  "alt": "Kvinne setter elbilen til lading hjemme",
-  "author": "Zaptec",
-  "source": "https://unsplash.com/photos/DQQ2jvg-mjI",
-  "license": "Unsplash License"
- },
- {
-  "name": "folk-kvinne-kroller",
-  "file": "folk-kvinne-kroller.jpg",
-  "alt": "Smilende kvinne med krøller",
-  "author": "Nolan Manning",
-  "source": "https://unsplash.com/photos/Ll9YOG20UFI",
-  "license": "Unsplash License"
- },
- {
-  "name": "folk-mann-skjorte",
-  "file": "folk-mann-skjorte.jpg",
-  "alt": "Ung mann i lys skjorte smiler",
-  "author": "AL Kaium",
-  "source": "https://unsplash.com/photos/tE_l_mh0KM8",
-  "license": "Unsplash License"
- },
- {
-  "name": "folk-kvinne-smil",
-  "file": "folk-kvinne-smil.jpg",
-  "alt": "Kvinne med et bredt smil",
-  "author": "Michael Mims",
-  "source": "https://unsplash.com/photos/fWWiaDox0BU",
-  "license": "Unsplash License"
- },
- {
-  "name": "bank-couple-keys",
-  "file": "bank-couple-keys.jpg",
+  "name": "bank-couple-keys-320x640-40-50",
+  "key": "bank-couple-keys@320x640@40,50",
+  "file": "bank-couple-keys-320x640-40-50.jpg",
   "alt": "Par tar imot nøklene ved inngangsdøren",
   "author": "Hannah Bechtel",
   "source": "https://unsplash.com/photos/1El98zbDWzA",
-  "license": "Unsplash License"
+  "license": "Unsplash License",
+  "cut": {
+   "from": "bank-couple-keys.jpg",
+   "x": 426,
+   "y": 0,
+   "width": 534,
+   "height": 1067
+  }
  },
  {
-  "name": "oslo-new-apartments",
-  "file": "oslo-new-apartments.jpg",
-  "alt": "Nye leilighetsbygg langs en kanal i Oslo",
-  "author": "Emmanuel Appiah",
-  "source": "https://unsplash.com/photos/GLnZNGNCqj4",
-  "license": "Unsplash License"
- },
- {
-  "name": "bank-keys-hall",
-  "file": "bank-keys-hall.jpg",
+  "name": "bank-keys-hall-460x300-50-50",
+  "key": "bank-keys-hall@460x300@50,50",
+  "file": "bank-keys-hall-460x300-50-50.jpg",
   "alt": "Hånd holder husnøkler i gangen i en ny leilighet",
   "author": "Jakub Żerdzicki",
   "source": "https://unsplash.com/photos/3HfGnyPfWqQ",
-  "license": "Unsplash License"
+  "license": "Unsplash License",
+  "cut": {
+   "from": "bank-keys-hall.jpg",
+   "x": 0,
+   "y": 14,
+   "width": 1800,
+   "height": 1174
+  }
  },
  {
-  "name": "mat-apples-crates",
-  "file": "mat-apples-crates.jpg",
-  "alt": "Kasser med røde epler",
-  "author": "Terra Slaybaugh",
-  "source": "https://unsplash.com/photos/LCDYCLEJlEo",
-  "license": "Unsplash License"
- },
- {
-  "name": "mat-salmon-tray",
-  "file": "mat-salmon-tray.jpg",
-  "alt": "Ovnsbakt laks med brokkoli og grønnsaker på brett",
-  "author": "Ben Libby",
-  "source": "https://unsplash.com/photos/xJBeGxiSYBE",
-  "license": "Unsplash License"
- },
- {
-  "name": "vegetables",
-  "file": "vegetables.jpg",
-  "alt": "Grønnsaker og krydder på et skjærebrett",
-  "author": "Webvilla",
-  "source": "https://unsplash.com/photos/hv1MrBzGGNY",
-  "license": "Unsplash License"
- },
- {
-  "name": "headphones-black-dark",
-  "file": "headphones-black-dark.jpg",
-  "alt": "Svarte hodetelefoner mot mørk bakgrunn",
-  "author": "Totte Annerbrink",
-  "source": "https://unsplash.com/photos/NehdOHCXsjs",
-  "license": "Unsplash License"
- },
- {
-  "name": "headphones-black-detail",
-  "file": "headphones-black-detail.jpg",
-  "alt": "Nærbilde av svarte hodetelefoner",
-  "author": "Jason Leung",
-  "source": "https://unsplash.com/photos/EEsPPzyvA_o",
-  "license": "Unsplash License"
- },
- {
-  "name": "headphones-cream",
-  "file": "headphones-cream.jpg",
-  "alt": "Kremhvite trådløse hodetelefoner mot hvit bakgrunn",
-  "author": "VCOM",
-  "source": "https://unsplash.com/photos/C0k_JxvcilU",
-  "license": "Unsplash License"
- },
- {
-  "name": "lofoten-sunrise",
-  "file": "lofoten-sunrise.jpg",
-  "alt": "Fiskevær i Lofoten i soloppgang",
-  "author": "Johny Goerend",
-  "source": "https://unsplash.com/photos/McSOHojERSI",
-  "license": "Unsplash License"
- },
- {
-  "name": "village-night",
-  "file": "village-night.jpg",
-  "alt": "Fiskevær med lys i blåtimen",
-  "author": "Joshua Kettle",
-  "source": "https://unsplash.com/photos/QbuxfHpGHlA",
-  "license": "Unsplash License"
- },
- {
-  "name": "rib-sunset",
-  "file": "rib-sunset.jpg",
-  "alt": "Ribbåt på havet i solnedgang",
-  "author": "Ming",
-  "source": "https://unsplash.com/photos/rUYWKj-1DwM",
-  "license": "Unsplash License"
- },
- {
-  "name": "film-night-car",
-  "file": "film-night-car.jpg",
-  "alt": "Mann ved en bil med røde baklys i tett tåke om natten",
-  "author": "Donny Jiang",
-  "source": "https://unsplash.com/photos/41xHdTcuWq0",
-  "license": "Unsplash License"
- },
- {
-  "name": "film-fire-silhouette",
-  "file": "film-fire-silhouette.jpg",
-  "alt": "Silhuett av en person foran store flammer",
-  "author": "Christopher Bill",
-  "source": "https://unsplash.com/photos/6a9LCJW49hg",
-  "license": "Unsplash License"
- },
- {
-  "name": "film-rooftop-skyline",
-  "file": "film-rooftop-skyline.jpg",
-  "alt": "Person sitter alene på et tak foran skyskrapere om natten",
-  "author": "Jabari Timothy",
-  "source": "https://unsplash.com/photos/rfjwtsgVhk0",
-  "license": "Unsplash License"
- },
- {
-  "name": "fest-singer-smoke",
-  "file": "fest-singer-smoke.jpg",
-  "alt": "Vokalist i røyk og spotlys",
-  "author": "Mohd Zuber saifi",
-  "source": "https://unsplash.com/photos/pFwPM1_YI2M",
-  "license": "Unsplash License"
- },
- {
-  "name": "fest-hands-sunset",
-  "file": "fest-hands-sunset.jpg",
-  "alt": "Publikum med hendene i været i solnedgang ved vannet",
-  "author": "Daniela Becerra",
-  "source": "https://unsplash.com/photos/SvwmxHVO9ko",
-  "license": "Unsplash License"
- },
- {
-  "name": "fest-main-stage",
-  "file": "fest-main-stage.jpg",
-  "alt": "Hovedscenen lyser opp over publikum om kvelden",
-  "author": "Colin Lloyd",
-  "source": "https://unsplash.com/photos/8H72wMWxj90",
-  "license": "Unsplash License"
- },
- {
-  "name": "loft-exterior-sunset",
-  "file": "loft-exterior-sunset.jpg",
-  "alt": "Gammel teglsteinsfabrikk med buede vinduer i kveldssol",
-  "author": "Henry Williams",
-  "source": "https://unsplash.com/photos/8Cd4v-UYMm0",
-  "license": "Unsplash License"
- },
- {
-  "name": "loft-after",
-  "file": "loft-after.jpg",
-  "alt": "Ferdig loftsleilighet med teglvegger og hems",
-  "author": "Aaron Huber",
-  "source": "https://unsplash.com/photos/s95oB2n9jng",
-  "license": "Unsplash License"
- },
- {
-  "name": "loft-rooftop",
-  "file": "loft-rooftop.jpg",
-  "alt": "Takterrasse med utsikt over byen i solnedgang",
-  "author": "garrett parker",
-  "source": "https://unsplash.com/photos/xQWLtlQb7L0",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-woman-coat",
-  "file": "portrait-woman-coat.jpg",
-  "alt": "Kvinne i rød kåpe en vinterdag",
-  "author": "Jan Kopřiva",
-  "source": "https://unsplash.com/photos/iTeWbTWsSso",
-  "license": "Unsplash License"
- },
- {
-  "name": "face-woman-scarf",
-  "file": "face-woman-scarf.jpg",
-  "alt": "Smilende kvinne med skjerf",
-  "author": "AIII YOOOO",
-  "source": "https://unsplash.com/photos/48P0Sg7pFwg",
-  "license": "Unsplash License"
- },
- {
-  "name": "face-woman-red",
-  "file": "face-woman-red.jpg",
-  "alt": "Mørkhåret kvinne i rød genser smiler",
-  "author": "Rita Malçok",
-  "source": "https://unsplash.com/photos/oOhTXx5mJqI",
-  "license": "Unsplash License"
- },
- {
-  "name": "cabin-window-night",
-  "file": "cabin-window-night.jpg",
+  "name": "cabin-window-night-460x640-70-50",
+  "key": "cabin-window-night@460x640@70,50",
+  "file": "cabin-window-night-460x640-70-50.jpg",
   "alt": "Rød hytte med lys i vinduet en vinterkveld",
   "author": "Rich Jones",
   "source": "https://unsplash.com/photos/LLkH4W3gB4o",
-  "license": "Unsplash License"
+  "license": "Unsplash License",
+  "cut": {
+   "from": "cabin-window-night.jpg",
+   "x": 729,
+   "y": 0,
+   "width": 958,
+   "height": 1333
+  }
  },
  {
-  "name": "candles-autumn",
-  "file": "candles-autumn.jpg",
+  "name": "candles-autumn-460x640-40-50",
+  "key": "candles-autumn@460x640@40,50",
+  "file": "candles-autumn-460x640-40-50.jpg",
   "alt": "Levende lys og høstløv i vinduskarmen",
   "author": "Sixteen Miles Out",
   "source": "https://unsplash.com/photos/bdVmIkx_gIs",
-  "license": "Unsplash License"
+  "license": "Unsplash License",
+  "cut": {
+   "from": "candles-autumn.jpg",
+   "x": 390,
+   "y": 0,
+   "width": 1026,
+   "height": 1428
+  }
  },
  {
-  "name": "stove-fire",
-  "file": "stove-fire.jpg",
-  "alt": "Fyr i peisen i en hytte",
-  "author": "Clay Banks",
-  "source": "https://unsplash.com/photos/DYMlVra-Tgw",
-  "license": "Unsplash License"
- },
- {
-  "name": "jobb-office-green",
-  "file": "jobb-office-green.jpg",
-  "alt": "Lyst kontorlandskap med planter og store vinduer",
-  "author": "PJ DC",
-  "source": "https://unsplash.com/photos/9plQScBF9Vw",
-  "license": "Unsplash License"
- },
- {
-  "name": "jobb-city-view",
-  "file": "jobb-city-view.jpg",
-  "alt": "Utsikt over byen og åsene bak",
-  "author": "Katja Ano",
-  "source": "https://unsplash.com/photos/mzVNxP1PH3M",
-  "license": "Unsplash License"
- },
- {
-  "name": "jobb-team-laptop",
-  "file": "jobb-team-laptop.jpg",
-  "alt": "Kolleger samlet rundt en laptop",
-  "author": "Jud Mackrill",
-  "source": "https://unsplash.com/photos/Of_m3hMsoAA",
-  "license": "Unsplash License"
- },
- {
-  "name": "hiker-fjord-cliff",
-  "file": "hiker-fjord-cliff.jpg",
-  "alt": "Turgåer på en fjellknaus høyt over fjorden",
-  "author": "Kjell-Jostein Sivertsen",
-  "source": "https://unsplash.com/photos/3oC6ClgVdgA",
-  "license": "Unsplash License"
- },
- {
-  "name": "folk-mann-fjell",
-  "file": "folk-mann-fjell.jpg",
-  "alt": "Smilende mann på fjelltur",
-  "author": "Ali Kazal",
-  "source": "https://unsplash.com/photos/mpPfqvh04Fc",
-  "license": "Unsplash License"
- },
- {
-  "name": "coast-road-hills",
-  "file": "coast-road-hills.jpg",
+  "name": "coast-road-hills-320x640-35-50",
+  "key": "coast-road-hills@320x640@35,50",
+  "file": "coast-road-hills-320x640-35-50.jpg",
   "alt": "Svingete kystvei langs fjorden",
   "author": "Arvid Høidahl",
   "source": "https://unsplash.com/photos/OJNRKMmwyo8",
-  "license": "Unsplash License"
+  "license": "Unsplash License",
+  "cut": {
+   "from": "coast-road-hills.jpg",
+   "x": 394,
+   "y": 0,
+   "width": 675,
+   "height": 1349
+  }
+ },
+ {
+  "name": "energi-ev-home-530x300-55-40",
+  "key": "energi-ev-home@530x300@55,40",
+  "file": "energi-ev-home-530x300-55-40.jpg",
+  "alt": "Kvinne setter elbilen til lading hjemme",
+  "author": "Zaptec",
+  "source": "https://unsplash.com/photos/DQQ2jvg-mjI",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "energi-ev-home.jpg",
+   "x": 0,
+   "y": 72,
+   "width": 1800,
+   "height": 1019
+  }
+ },
+ {
+  "name": "ev-charging-night-460x640-40-50",
+  "key": "ev-charging-night@460x640@40,50",
+  "file": "ev-charging-night-460x640-40-50.jpg",
+  "alt": "Elbil som lader på en opplyst ladestasjon om kvelden",
+  "author": "YRKA PICTURED",
+  "source": "https://unsplash.com/photos/VnO7esC-LjA",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "ev-charging-night.jpg",
+   "x": 202,
+   "y": 0,
+   "width": 1294,
+   "height": 1800
+  }
+ },
+ {
+  "name": "ev-snow-suv-460x640-78-60",
+  "key": "ev-snow-suv@460x640@78,60",
+  "file": "ev-snow-suv-460x640-78-60.jpg",
+  "alt": "Hvit SUV på snødekt vidde med rosa fjell i bakgrunnen",
+  "author": "M G",
+  "source": "https://unsplash.com/photos/KYSEbj4bjO8",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "ev-snow-suv.jpg",
+   "x": 731,
+   "y": 0,
+   "width": 863,
+   "height": 1200
+  }
+ },
+ {
+  "name": "ev-suv-road-580x300-38-60",
+  "key": "ev-suv-road@580x300@38,60",
+  "file": "ev-suv-road-580x300-38-60.jpg",
+  "alt": "Lysegrønn elbil i fart på en svingete fjellvei",
+  "author": "Hyundai Motor Group",
+  "source": "https://unsplash.com/photos/WSqivhqBjeo",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "ev-suv-road.jpg",
+   "x": 0,
+   "y": 161,
+   "width": 1800,
+   "height": 931
+  }
+ },
+ {
+  "name": "face-woman-red-440x300-50-35",
+  "key": "face-woman-red@440x300@50,35",
+  "file": "face-woman-red-440x300-50-35.jpg",
+  "alt": "Mørkhåret kvinne i rød genser smiler",
+  "author": "Rita Malçok",
+  "source": "https://unsplash.com/photos/oOhTXx5mJqI",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "face-woman-red.jpg",
+   "x": 17,
+   "y": 0,
+   "width": 1767,
+   "height": 1205
+  }
+ },
+ {
+  "name": "face-woman-scarf-320x640-50-30",
+  "key": "face-woman-scarf@320x640@50,30",
+  "file": "face-woman-scarf-320x640-50-30.jpg",
+  "alt": "Smilende kvinne med skjerf",
+  "author": "AIII YOOOO",
+  "source": "https://unsplash.com/photos/48P0Sg7pFwg",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "face-woman-scarf.jpg",
+   "x": 150,
+   "y": 0,
+   "width": 900,
+   "height": 1800
+  }
+ },
+ {
+  "name": "fest-hands-sunset-460x640-30-50",
+  "key": "fest-hands-sunset@460x640@30,50",
+  "file": "fest-hands-sunset-460x640-30-50.jpg",
+  "alt": "Publikum med hendene i været i solnedgang ved vannet",
+  "author": "Daniela Becerra",
+  "source": "https://unsplash.com/photos/SvwmxHVO9ko",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "fest-hands-sunset.jpg",
+   "x": 281,
+   "y": 0,
+   "width": 863,
+   "height": 1200
+  }
+ },
+ {
+  "name": "fest-main-stage-1000x300-50-40",
+  "key": "fest-main-stage@1000x300@50,40",
+  "file": "fest-main-stage-1000x300-50-40.jpg",
+  "alt": "Hovedscenen lyser opp over publikum om kvelden",
+  "author": "Colin Lloyd",
+  "source": "https://unsplash.com/photos/8H72wMWxj90",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "fest-main-stage.jpg",
+   "x": 0,
+   "y": 264,
+   "width": 1800,
+   "height": 540
+  }
+ },
+ {
+  "name": "fest-singer-smoke-460x640-50-50",
+  "key": "fest-singer-smoke@460x640@50,50",
+  "file": "fest-singer-smoke-460x640-50-50.jpg",
+  "alt": "Vokalist i røyk og spotlys",
+  "author": "Mohd Zuber saifi",
+  "source": "https://unsplash.com/photos/pFwPM1_YI2M",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "fest-singer-smoke.jpg",
+   "x": 0,
+   "y": 16,
+   "width": 984,
+   "height": 1369
+  }
+ },
+ {
+  "name": "film-fire-silhouette-460x640-45-50",
+  "key": "film-fire-silhouette@460x640@45,50",
+  "file": "film-fire-silhouette-460x640-45-50.jpg",
+  "alt": "Silhuett av en person foran store flammer",
+  "author": "Christopher Bill",
+  "source": "https://unsplash.com/photos/6a9LCJW49hg",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "film-fire-silhouette.jpg",
+   "x": 422,
+   "y": 0,
+   "width": 863,
+   "height": 1200
+  }
+ },
+ {
+  "name": "film-night-car-460x640-60-50",
+  "key": "film-night-car@460x640@60,50",
+  "file": "film-night-car-460x640-60-50.jpg",
+  "alt": "Mann ved en bil med røde baklys i tett tåke om natten",
+  "author": "Donny Jiang",
+  "source": "https://unsplash.com/photos/41xHdTcuWq0",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "film-night-car.jpg",
+   "x": 562,
+   "y": 0,
+   "width": 863,
+   "height": 1200
+  }
+ },
+ {
+  "name": "film-rooftop-skyline-1000x300-60-40",
+  "key": "film-rooftop-skyline@1000x300@60,40",
+  "file": "film-rooftop-skyline-1000x300-60-40.jpg",
+  "alt": "Person sitter alene på et tak foran skyskrapere om natten",
+  "author": "Jabari Timothy",
+  "source": "https://unsplash.com/photos/rfjwtsgVhk0",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "film-rooftop-skyline.jpg",
+   "x": 0,
+   "y": 360,
+   "width": 1800,
+   "height": 540
+  }
+ },
+ {
+  "name": "folk-kvinne-kroller-320x640-36-30",
+  "key": "folk-kvinne-kroller@320x640@36,30",
+  "file": "folk-kvinne-kroller-320x640-36-30.jpg",
+  "alt": "Smilende kvinne med krøller",
+  "author": "Nolan Manning",
+  "source": "https://unsplash.com/photos/Ll9YOG20UFI",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "folk-kvinne-kroller.jpg",
+   "x": 108,
+   "y": 0,
+   "width": 500,
+   "height": 1000
+  }
+ },
+ {
+  "name": "folk-kvinne-smil-480x300-50-32",
+  "key": "folk-kvinne-smil@480x300@50,32",
+  "file": "folk-kvinne-smil-480x300-50-32.jpg",
+  "alt": "Kvinne med et bredt smil",
+  "author": "Michael Mims",
+  "source": "https://unsplash.com/photos/fWWiaDox0BU",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "folk-kvinne-smil.jpg",
+   "x": 0,
+   "y": 12,
+   "width": 1000,
+   "height": 625
+  }
+ },
+ {
+  "name": "folk-mann-fjell-460x300-50-35",
+  "key": "folk-mann-fjell@460x300@50,35",
+  "file": "folk-mann-fjell-460x300-50-35.jpg",
+  "alt": "Smilende mann på fjelltur",
+  "author": "Ali Kazal",
+  "source": "https://unsplash.com/photos/mpPfqvh04Fc",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "folk-mann-fjell.jpg",
+   "x": 0,
+   "y": 5,
+   "width": 1000,
+   "height": 652
+  }
+ },
+ {
+  "name": "folk-mann-skjorte-320x640-50-25",
+  "key": "folk-mann-skjorte@320x640@50,25",
+  "file": "folk-mann-skjorte-320x640-50-25.jpg",
+  "alt": "Ung mann i lys skjorte smiler",
+  "author": "AL Kaium",
+  "source": "https://unsplash.com/photos/tE_l_mh0KM8",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "folk-mann-skjorte.jpg",
+   "x": 84,
+   "y": 0,
+   "width": 500,
+   "height": 1000
+  }
+ },
+ {
+  "name": "headphones-black-dark-460x640-40-50",
+  "key": "headphones-black-dark@460x640@40,50",
+  "file": "headphones-black-dark-460x640-40-50.jpg",
+  "alt": "Svarte hodetelefoner mot mørk bakgrunn",
+  "author": "Totte Annerbrink",
+  "source": "https://unsplash.com/photos/NehdOHCXsjs",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "headphones-black-dark.jpg",
+   "x": 58,
+   "y": 0,
+   "width": 1294,
+   "height": 1800
+  }
+ },
+ {
+  "name": "headphones-black-detail-460x640-30-50",
+  "key": "headphones-black-detail@460x640@30,50",
+  "file": "headphones-black-detail-460x640-30-50.jpg",
+  "alt": "Nærbilde av svarte hodetelefoner",
+  "author": "Jason Leung",
+  "source": "https://unsplash.com/photos/EEsPPzyvA_o",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "headphones-black-detail.jpg",
+   "x": 281,
+   "y": 0,
+   "width": 863,
+   "height": 1201
+  }
+ },
+ {
+  "name": "headphones-cream-1000x300-50-50",
+  "key": "headphones-cream@1000x300@50,50",
+  "file": "headphones-cream-1000x300-50-50.jpg",
+  "alt": "Kremhvite trådløse hodetelefoner mot hvit bakgrunn",
+  "author": "VCOM",
+  "source": "https://unsplash.com/photos/C0k_JxvcilU",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "headphones-cream.jpg",
+   "x": 0,
+   "y": 330,
+   "width": 1800,
+   "height": 540
+  }
+ },
+ {
+  "name": "hiker-fjord-cliff-320x640-40-30",
+  "key": "hiker-fjord-cliff@320x640@40,30",
+  "file": "hiker-fjord-cliff-320x640-40-30.jpg",
+  "alt": "Turgåer på en fjellknaus høyt over fjorden",
+  "author": "Kjell-Jostein Sivertsen",
+  "source": "https://unsplash.com/photos/3oC6ClgVdgA",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "hiker-fjord-cliff.jpg",
+   "x": 120,
+   "y": 0,
+   "width": 900,
+   "height": 1800
+  }
+ },
+ {
+  "name": "home-charger-hand-460x640-70-50",
+  "key": "home-charger-hand@460x640@70,50",
+  "file": "home-charger-hand-460x640-70-50.jpg",
+  "alt": "Hånd setter laderen i en elbil hjemme",
+  "author": "Evnex Ltd",
+  "source": "https://unsplash.com/photos/QYyMOk2YfX8",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "home-charger-hand.jpg",
+   "x": 704,
+   "y": 0,
+   "width": 794,
+   "height": 1105
+  }
+ },
+ {
+  "name": "jobb-city-view-320x640-40-50",
+  "key": "jobb-city-view@320x640@40,50",
+  "file": "jobb-city-view-320x640-40-50.jpg",
+  "alt": "Utsikt over byen og åsene bak",
+  "author": "Katja Ano",
+  "source": "https://unsplash.com/photos/mzVNxP1PH3M",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "jobb-city-view.jpg",
+   "x": 480,
+   "y": 0,
+   "width": 600,
+   "height": 1200
+  }
+ },
+ {
+  "name": "jobb-office-green-320x640-60-50",
+  "key": "jobb-office-green@320x640@60,50",
+  "file": "jobb-office-green-320x640-60-50.jpg",
+  "alt": "Lyst kontorlandskap med planter og store vinduer",
+  "author": "PJ DC",
+  "source": "https://unsplash.com/photos/9plQScBF9Vw",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "jobb-office-green.jpg",
+   "x": 240,
+   "y": 0,
+   "width": 800,
+   "height": 1600
+  }
+ },
+ {
+  "name": "jobb-team-laptop-460x300-50-40",
+  "key": "jobb-team-laptop@460x300@50,40",
+  "file": "jobb-team-laptop-460x300-50-40.jpg",
+  "alt": "Kolleger samlet rundt en laptop",
+  "author": "Jud Mackrill",
+  "source": "https://unsplash.com/photos/Of_m3hMsoAA",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "jobb-team-laptop.jpg",
+   "x": 0,
+   "y": 10,
+   "width": 1600,
+   "height": 1043
+  }
+ },
+ {
+  "name": "lofoten-sunrise-460x640-70-50",
+  "key": "lofoten-sunrise@460x640@70,50",
+  "file": "lofoten-sunrise-460x640-70-50.jpg",
+  "alt": "Fiskevær i Lofoten i soloppgang",
+  "author": "Johny Goerend",
+  "source": "https://unsplash.com/photos/McSOHojERSI",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "lofoten-sunrise.jpg",
+   "x": 751,
+   "y": 0,
+   "width": 727,
+   "height": 1012
+  }
+ },
+ {
+  "name": "loft-after-320x640-40-50",
+  "key": "loft-after@320x640@40,50",
+  "file": "loft-after-320x640-40-50.jpg",
+  "alt": "Ferdig loftsleilighet med teglvegger og hems",
+  "author": "Aaron Huber",
+  "source": "https://unsplash.com/photos/s95oB2n9jng",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "loft-after.jpg",
+   "x": 481,
+   "y": 0,
+   "width": 597,
+   "height": 1193
+  }
+ },
+ {
+  "name": "loft-exterior-sunset-320x640-45-50",
+  "key": "loft-exterior-sunset@320x640@45,50",
+  "file": "loft-exterior-sunset-320x640-45-50.jpg",
+  "alt": "Gammel teglsteinsfabrikk med buede vinduer i kveldssol",
+  "author": "Henry Williams",
+  "source": "https://unsplash.com/photos/8Cd4v-UYMm0",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "loft-exterior-sunset.jpg",
+   "x": 251,
+   "y": 0,
+   "width": 900,
+   "height": 1800
+  }
+ },
+ {
+  "name": "loft-rooftop-480x300-50-60",
+  "key": "loft-rooftop@480x300@50,60",
+  "file": "loft-rooftop-480x300-50-60.jpg",
+  "alt": "Takterrasse med utsikt over byen i solnedgang",
+  "author": "garrett parker",
+  "source": "https://unsplash.com/photos/xQWLtlQb7L0",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "loft-rooftop.jpg",
+   "x": 0,
+   "y": 40,
+   "width": 1600,
+   "height": 1000
+  }
+ },
+ {
+  "name": "mat-apples-crates-320x640-50-50",
+  "key": "mat-apples-crates@320x640@50,50",
+  "file": "mat-apples-crates-320x640-50-50.jpg",
+  "alt": "Kasser med røde epler",
+  "author": "Terra Slaybaugh",
+  "source": "https://unsplash.com/photos/LCDYCLEJlEo",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "mat-apples-crates.jpg",
+   "x": 175,
+   "y": 0,
+   "width": 700,
+   "height": 1400
+  }
+ },
+ {
+  "name": "mat-salmon-tray-320x640-40-50",
+  "key": "mat-salmon-tray@320x640@40,50",
+  "file": "mat-salmon-tray-320x640-40-50.jpg",
+  "alt": "Ovnsbakt laks med brokkoli og grønnsaker på brett",
+  "author": "Ben Libby",
+  "source": "https://unsplash.com/photos/xJBeGxiSYBE",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "mat-salmon-tray.jpg",
+   "x": 450,
+   "y": 0,
+   "width": 675,
+   "height": 1350
+  }
+ },
+ {
+  "name": "oslo-new-apartments-320x640-30-50",
+  "key": "oslo-new-apartments@320x640@30,50",
+  "file": "oslo-new-apartments-320x640-30-50.jpg",
+  "alt": "Nye leilighetsbygg langs en kanal i Oslo",
+  "author": "Emmanuel Appiah",
+  "source": "https://unsplash.com/photos/GLnZNGNCqj4",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "oslo-new-apartments.jpg",
+   "x": 360,
+   "y": 0,
+   "width": 600,
+   "height": 1200
+  }
+ },
+ {
+  "name": "portrait-woman-coat-320x640-50-30",
+  "key": "portrait-woman-coat@320x640@50,30",
+  "file": "portrait-woman-coat-320x640-50-30.jpg",
+  "alt": "Kvinne i rød kåpe en vinterdag",
+  "author": "Jan Kopřiva",
+  "source": "https://unsplash.com/photos/iTeWbTWsSso",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "portrait-woman-coat.jpg",
+   "x": 166,
+   "y": 0,
+   "width": 1000,
+   "height": 2000
+  }
+ },
+ {
+  "name": "rib-sunset-1000x300-60-45",
+  "key": "rib-sunset@1000x300@60,45",
+  "file": "rib-sunset-1000x300-60-45.jpg",
+  "alt": "Ribbåt på havet i solnedgang",
+  "author": "Ming",
+  "source": "https://unsplash.com/photos/rUYWKj-1DwM",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "rib-sunset.jpg",
+   "x": 0,
+   "y": 330,
+   "width": 2000,
+   "height": 600
+  }
+ },
+ {
+  "name": "stove-fire-1000x300-60-55",
+  "key": "stove-fire@1000x300@60,55",
+  "file": "stove-fire-1000x300-60-55.jpg",
+  "alt": "Fyr i peisen i en hytte",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/DYMlVra-Tgw",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "stove-fire.jpg",
+   "x": 0,
+   "y": 362,
+   "width": 1800,
+   "height": 540
+  }
+ },
+ {
+  "name": "trollstigen-460x640-62-50",
+  "key": "trollstigen@460x640@62,50",
+  "file": "trollstigen-460x640-62-50.jpg",
+  "alt": "Hårnålssvingene i Trollstigen sett ovenfra",
+  "author": "Bruna Santos",
+  "source": "https://unsplash.com/photos/iMOBvfoKqWE",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "trollstigen.jpg",
+   "x": 581,
+   "y": 0,
+   "width": 863,
+   "height": 1200
+  }
+ },
+ {
+  "name": "vegetables-500x300-40-50",
+  "key": "vegetables@500x300@40,50",
+  "file": "vegetables-500x300-40-50.jpg",
+  "alt": "Grønnsaker og krydder på et skjærebrett",
+  "author": "Webvilla",
+  "source": "https://unsplash.com/photos/hv1MrBzGGNY",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "vegetables.jpg",
+   "x": 0,
+   "y": 60,
+   "width": 1800,
+   "height": 1080
+  }
+ },
+ {
+  "name": "village-night-460x640-35-50",
+  "key": "village-night@460x640@35,50",
+  "file": "village-night-460x640-35-50.jpg",
+  "alt": "Fiskevær med lys i blåtimen",
+  "author": "Joshua Kettle",
+  "source": "https://unsplash.com/photos/QbuxfHpGHlA",
+  "license": "Unsplash License",
+  "cut": {
+   "from": "village-night.jpg",
+   "x": 365,
+   "y": 0,
+   "width": 958,
+   "height": 1333
+  }
  }
 ]
