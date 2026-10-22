@@ -56,6 +56,21 @@
     return Object.keys(fams).map(function (fam) { return '<link rel="stylesheet" href="' + D.escapeHtml(Fonts.cssUrl(fam)) + '">'; }).join("");
   }
 
+  // A thumbnail is a poster of the page: screen-tall parts (hero, pinned
+  // stories, scenes) are capped at 640 px, so the opening and the sections
+  // after it show together, and the card can scroll through it on hover.
+  var POSTER_H = 640;
+  var THUMB_HEAD =
+    "<style>html,body{overflow:hidden!important}html{scroll-behavior:auto!important}body{pointer-events:none}" +
+    ".np-hero--h-full,.np-hero--h-tall{--np-hero-h:" + POSTER_H + "px!important}" +
+    ".np-minh-screen{min-height:" + POSTER_H + "px!important}.np-minh-half{min-height:" + Math.round(POSTER_H * 0.55) + "px!important}" +
+    ".np-hero__zoom{height:auto!important;--np-z:1!important}.np-hero__pin{position:relative!important;height:" + POSTER_H + "px!important;top:0!important}" +
+    ".np-hx,.np-hx__pin{height:auto!important;position:relative!important}" +
+    ".np-story__media{height:" + POSTER_H + "px!important}.np-story__cards{padding:160px 0 120px!important}.np-story__card{min-height:" + Math.round(POSTER_H * 0.7) + "px!important}" +
+    ".np-rank--scenes .np-rank__item{min-height:" + POSTER_H + "px!important}.np-rank--scenes .np-rank__img{height:" + POSTER_H + "px!important}" +
+    ".np-sticky,.np-chapnav--side,.np-progress,.np-hero__hint{display:none!important}" +
+    "</style><script>window.NP_EDITOR=true</script>";
+
   function documentFor(project, opts) {
     var o = opts || {};
     var settings = NP.settings || {};
@@ -70,9 +85,7 @@
       cssHref: "/native/runtime/np.css",
       runtimeSrc: "/native/runtime/np.js",
       fontLinks: fontLinks(project),
-      extraHead: o.thumb
-        ? "<style>html,body{overflow:hidden!important}body{pointer-events:none}</style><script>window.NP_EDITOR=true</script>"
-        : "",
+      extraHead: o.thumb ? THUMB_HEAD : "",
     };
     return R.renderDocument(ctx);
   }
@@ -97,6 +110,45 @@
         ].filter(Boolean),
       });
       frame.srcdoc = documentFor(project);
+    });
+  }
+
+  // Hovering a card scrolls its page slowly from top to bottom (the
+  // signature moments further down), and back when the pointer leaves.
+  var PEEK_SPEED = 900; // page px per second
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function peekOnHover(node, frame, view) {
+    if (reduceMotion) return;
+    var raf = 0;
+    function win() {
+      try { return frame.contentWindow && frame.contentWindow.document.documentElement ? frame.contentWindow : null; } catch (e) { return null; }
+    }
+    function run(to, speed) {
+      cancelAnimationFrame(raf);
+      var w = win();
+      if (!w || !view.classList.contains("is-ready")) return;
+      var from = w.scrollY;
+      var dist = to - from;
+      if (Math.abs(dist) < 2) return;
+      var dur = Math.abs(dist) / speed * 1000;
+      var t0 = null;
+      (function step(t) {
+        if (t0 === null) t0 = t;
+        var k = Math.min(1, (t - t0) / dur);
+        var e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        w.scrollTo(0, from + dist * e);
+        if (k < 1) raf = requestAnimationFrame(step);
+      })(performance.now());
+    }
+    node.addEventListener("mouseenter", function () {
+      var w = win();
+      if (w) run(Math.max(0, w.document.documentElement.scrollHeight - w.innerHeight), PEEK_SPEED);
+      node.classList.add("is-peek");
+    });
+    node.addEventListener("mouseleave", function () {
+      run(0, PEEK_SPEED * 6);
+      node.classList.remove("is-peek");
     });
   }
 
@@ -125,6 +177,7 @@
           preview(tpl, opts.useDemo ? opts.useDemo() : true, function (id) { select(id); if (opts.onUse) opts.onUse(id); });
         } })
       );
+      peekOnHover(node, frame, view);
       var io = new IntersectionObserver(function (entries) {
         if (!entries[0].isIntersecting) return;
         io.disconnect();

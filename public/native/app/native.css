@@ -732,3 +732,11 @@ pre.nx-code { max-height: 60vh; overflow: auto; margin: 0; padding: var(--space-
 /* ---- motion controls (Stil → Bevegelse): replay row --------------------- */
 .nx-motion-play { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); }
 .nx-motion-play .nx-muted { font-size: var(--text-sm); }
+
+/* ---- template gallery: poster thumbnails (block-quality pass) ----------
+   Taller cards show the opening and the sections after it; hovering scrolls
+   the page through (app/tplgallery.js). */
+.nx-tplgal__view { aspect-ratio: 4 / 5; }
+.nx-tplgal__frame { height: 1600px; }
+.nx-tplgal__shade { height: 18%; background: linear-gradient(transparent, rgba(255, 255, 255, 0.85)); transition: opacity var(--duration) var(--ease); }
+.nx-tplgal__card.is-peek .nx-tplgal__shade { opacity: 0; }

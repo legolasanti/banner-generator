@@ -121,7 +121,10 @@ test("every new hidden start state waits for the runtime (html.np-js)", () => {
 });
 
 test("reduced motion switches the new effects off", () => {
-  const reduce = CSS.slice(CSS.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+  // The motion system's own reduced-motion block (the last one before the
+  // block-quality pass that follows it in np.css).
+  const end = CSS.indexOf("Block quality pass");
+  const reduce = CSS.slice(CSS.lastIndexOf("@media (prefers-reduced-motion: reduce)", end > 0 ? end : CSS.length), end > 0 ? end : CSS.length);
   for (const sel of [".np-hwi", ".np-hc", ".np-hl", ".np-tr", ".np-tr-under", ".np-sfx-slide-x", ".np-sfx-layers .np-st", ".np-tr-gone"]) {
     assert.ok(reduce.includes(sel), sel);
   }

@@ -48,6 +48,23 @@
     link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
   };
 
+  // Line icons for cards (schema.ICONS), by id.
+  var LINE_ICONS = {};
+  (S.ICONS || []).forEach(function (i) { LINE_ICONS[i[0]] = i[2]; });
+
+  function lineIcon(id) {
+    var d = LINE_ICONS[id];
+    if (!d) return "";
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+  }
+
+  /** The icon a card shows: the chosen one, else the one an emoji stands for. */
+  function cardIcon(it) {
+    if (it.icon && LINE_ICONS[it.icon]) return it.icon;
+    var sym = String(it.symbol || "").trim();
+    return (S.EMOJI_ICONS && S.EMOJI_ICONS[sym]) || "";
+  }
+
   var RATIO = { "21:9": "21 / 9", "16:9": "16 / 9", "9:16": "9 / 16", "4:3": "4 / 3", "3:4": "3 / 4", "1:1": "1 / 1", "4:5": "4 / 5" };
 
   // ---- colour ---------------------------------------------------------------
@@ -81,6 +98,25 @@
 
   function isDark(bg) {
     return onColor(bg) === "#ffffff";
+  }
+
+  /** `a` moved `k` (0–1) of the way to `b`. */
+  function towards(a, b, k) {
+    var x = parseInt(String(a).slice(1), 16);
+    var y = parseInt(String(b).slice(1), 16);
+    var c = [16, 8, 0].map(function (sh) {
+      var u = (x >> sh) & 255;
+      return Math.round(u + (((y >> sh) & 255) - u) * k);
+    });
+    return "#" + c.map(function (v) { return (v < 16 ? "0" : "") + v.toString(16); }).join("");
+  }
+
+  /** The accent as text on `bg`: darkened (or lightened) until it reads (3:1). */
+  function readableOn(color, bg) {
+    var target = isDark(bg) ? "#ffffff" : "#111111";
+    var out = color;
+    for (var k = 0.2; contrast(out, bg) < 3 && k <= 1; k += 0.2) out = towards(color, target, k);
+    return out;
   }
 
   // ---- fonts ------------------------------------------------------------------
@@ -135,6 +171,9 @@
       "--np-soft-card:" + (isDark(c.soft) ? "rgba(0, 0, 0, 0.06)" : c.soft) + ";" +
       "--np-on-soft:" + (isDark(c.soft) ? "#f4f5f7" : c.text) + ";" +
       "--np-brand-accent:" + accentOnBrand + ";" +
+      // Accent-coloured words on the page itself (statement highlights):
+      // a pale accent on a pale page is pulled darker until it reads.
+      "--np-accent-text:" + readableOn(c.accent, page) + ";" +
       "--np-brand-on-accent:" + onColor(accentOnBrand) + ";" +
       "--np-btn-dark-bg:" + (paleBrand ? c.primary : "#ffffff") + ";" +
       "--np-btn-dark-fg:" + (paleBrand ? onColor(c.primary) : c.primary) + ";" +
@@ -426,6 +465,18 @@
     return "linear-gradient(" + (st.bgAngle || 0) + "deg, " + a + " 0%, " + b + " 100%)";
   }
 
+  // Sections the floating button must not sit on: things the reader acts on
+  // or reads closely (np.js hides the button while one is at the bottom).
+  var BUSY = { cta: 1, productCards: 1, quiz: 1, poll: 1, countdown: 1, compare: 1, hotspots: 1, tabs: 1, testimonials: 1, specTable: 1, flipCards: 1, accordion: 1, quote: 1, steps: 1, rankList: 1, stickyStory: 1, factBox: 1, embed: 1 };
+  // Sections that reach the right edge, where the side chapter dots sit.
+  var WIDE = { hScroll: 1, parallaxImage: 1, scrollVideo: 1, stickyStory: 1, gallery: 1, marquee: 1 };
+  function isWide(section) {
+    var p = section.props || {};
+    if (WIDE[section.type]) return true;
+    if ((section.type === "productCards" || section.type === "testimonials") && p.layout === "carousel") return true;
+    return (section.type === "image" || section.type === "hotspots" || section.type === "video") && p.size === "full";
+  }
+
   function wrapSection(ctx, section, inner, opts) {
     var o = opts || {};
     var st = section.style;
@@ -463,6 +514,8 @@
         "data-np-section": ctx.mode === "editor" ? section.id : null,
         "data-np-type": section.type,
         "data-np-chapter": st.chapter || null,
+        "data-np-busy": BUSY[section.type] ? true : null,
+        "data-np-wide": isWide(section) ? true : null,
         // Sections whose look follows the scroll: np.js feeds them progress.
         "data-np-motion": (st.transition && st.transition !== "none") || (st.scrollFx && st.scrollFx !== "none") ? true : null,
       }) +
@@ -840,7 +893,7 @@
         ? '<div class="np-gal--carousel np-prods-car" data-np-carousel><div class="np-gal__track np-prods np-prods--row" tabindex="0" role="region" aria-label="Produkter">' + cards.join("") + "</div>" +
           '<div class="np-gal__nav"><button type="button" data-np-prev aria-label="Forrige">' + ICONS.left + '</button><button type="button" data-np-next aria-label="Neste">' + ICONS.right + "</button></div></div>"
         : '<div class="np-prods" style="--np-cols:' + p.columns + '">' + cards.join("") + "</div>");
-    return wrapSection(ctx, s, wrap("wide", inner));
+    return wrapSection(ctx, s, wrap("wide", inner, "np-prods-fit--" + (p.imageFit === "contain" ? "contain" : "cover")));
   };
 
   R.gallery = function (ctx, s) {
@@ -1138,6 +1191,7 @@
     var items = p.items.map(function (it, i) {
       var path = "items." + it.id + ".";
       var hasImg = it.image && ctx.assets[it.image];
+      var iconId = cardIcon(it);
       var tag = it.url && (p.look === "tile" || p.look === "overlay") ? "a" : "div";
       var open = tag === "a" ? '<a class="np-card np-st"' + si(i) + linkAttrs(ctx, it.url, it.title) + ">" : '<div class="np-card np-st"' + si(i) + ">";
       var link = tag === "div" && it.linkLabel && (it.url || ctx.mode === "editor")
@@ -1147,7 +1201,9 @@
         open +
         (hasImg ? '<div class="np-card__img">' + img(ctx, it.image, { alt: p.look === "overlay" || p.look === "tile" ? "" : it.title, decorative: p.look === "overlay" || p.look === "tile", sizes: "(max-width: 599px) 100vw, 420px" }) + "</div>" : "") +
         '<div class="np-card__b">' +
-        (it.symbol ? '<span class="np-card__sym"' + ed(ctx, path + "symbol") + ">" + esc(it.symbol) + "</span>" : "") +
+        (iconId
+          ? '<span class="np-card__ico">' + lineIcon(iconId) + "</span>"
+          : it.symbol ? '<span class="np-card__sym' + (/\p{Extended_Pictographic}/u.test(it.symbol) ? " np-card__sym--emoji" : "") + '"' + ed(ctx, path + "symbol") + ">" + esc(it.symbol) + "</span>" : "") +
         (it.title ? '<h3 class="np-card__t"' + ed(ctx, path + "title") + ">" + esc(it.title) + "</h3>" : "") +
         (it.text && p.look !== "tile" ? '<p class="np-card__text"' + ed(ctx, path + "text") + ">" + textHtml(it.text) + "</p>" : "") +
         link +
@@ -1209,6 +1265,8 @@
     return wrapSection(ctx, s, wrap(p.size, title + picture + list));
   };
 
+  var FLIP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 0 1 14.6-5.9L20.5 8.5"/><path d="M20.5 3.5v5h-5"/><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3.5 15.5"/><path d="M3.5 20.5v-5h5"/></svg>';
+
   R.flipCards = function (ctx, s) {
     var p = s.props;
     var items = p.items.map(function (it, i) {
@@ -1218,7 +1276,9 @@
         '<button type="button" class="np-flip np-st"' + si(i) + ' aria-pressed="false" data-np-flip>' +
         '<span class="np-flip__in">' +
         '<span class="np-flip__f' + (hasImg ? " has-img" : "") + '">' + (hasImg ? img(ctx, it.image, { decorative: true, sizes: "(max-width: 599px) 50vw, 360px" }) : "") +
-        "<span" + ed(ctx, path + "front") + ">" + esc(it.front) + '</span><i aria-hidden="true">↻</i></span>' +
+        (hasImg ? "" : '<span class="np-flip__n" aria-hidden="true">' + (i < 9 ? "0" : "") + (i + 1) + "</span>") +
+        "<span" + ed(ctx, path + "front") + ">" + esc(it.front) + "</span>" +
+        '<i aria-hidden="true">' + FLIP_ICON + "<b>Snu</b></i></span>" +
         '<span class="np-flip__b"><strong' + ed(ctx, path + "backTitle") + ">" + esc(it.backTitle) + "</strong><span" + ed(ctx, path + "back") + ">" + textHtml(it.back) + "</span></span>" +
         "</span></button>"
       );
@@ -1296,9 +1356,10 @@
     var p = s.props;
     var items = p.items.map(function (it, i) {
       var path = "items." + it.id + ".";
+      var look = p.look || "round";
       var portrait = it.video && ctx.assets[it.video]
         ? '<div class="np-tm__media np-tm__media--v">' + videoTag(ctx, it.video, { ambient: true, decorative: true, poster: it.image || null }) + "</div>"
-        : it.image && ctx.assets[it.image] ? '<div class="np-tm__media">' + img(ctx, it.image, { decorative: true, sizes: "160px" }) + "</div>" : "";
+        : look !== "none" && it.image && ctx.assets[it.image] ? '<div class="np-tm__media">' + img(ctx, it.image, { decorative: true, sizes: look === "portrait" ? "(max-width: 599px) 100vw, 380px" : "200px" }) + "</div>" : "";
       return (
         '<figure class="np-tm np-st' + (it.video && ctx.assets[it.video] ? " np-tm--video" : "") + '"' + si(i) + ">" + portrait +
         '<blockquote class="np-tm__q"' + ed(ctx, path + "quote") + ">" + textHtml(it.quote) + "</blockquote>" +
@@ -1310,7 +1371,7 @@
       ? '<div class="np-gal--carousel" data-np-carousel><div class="np-gal__track np-tms np-tms--row" tabindex="0" role="region" aria-label="Sitater">' + items.join("") + "</div>" +
         '<div class="np-gal__nav"><button type="button" data-np-prev aria-label="Forrige">' + ICONS.left + '</button><button type="button" data-np-next aria-label="Neste">' + ICONS.right + "</button></div></div>"
       : '<div class="np-tms" style="--np-cols:' + Math.min(3, Math.max(1, p.items.length)) + '">' + items.join("") + "</div>";
-    return wrapSection(ctx, s, wrap("wide", heading(ctx, p.title, "title", "np-tms__title") + list));
+    return wrapSection(ctx, s, wrap("wide", heading(ctx, p.title, "title", "np-tms__title") + list, "np-tms-look--" + (p.look || "round")));
   };
 
   R.poll = function (ctx, s) {
@@ -1389,7 +1450,7 @@
     var pubHref = st.publisherUrl ? ' href="' + esc(st.publisherUrl) + '"' : "";
     var advHref = p.advertiser.url ? ' href="' + esc(outbound(ctx, p.advertiser.url)) + '" target="_blank" rel="sponsored noopener"' : "";
     return (
-      '<header class="np-disclosure" role="banner" id="np-top"><div class="np-disclosure__in">' +
+      '<header class="np-disclosure' + (ctx.assets[p.advertiser.logo || p.theme.logo] ? "" : " np-disclosure--advword") + '" role="banner" id="np-top"><div class="np-disclosure__in">' +
       "<a class=\"np-disclosure__pub\"" + pubHref + ' aria-label="' + esc(st.publisherName || "ABC Nyheter") + '">' +
       logoOrWord(ctx, st.publisherLogo, st.publisherName || "ABC Nyheter") + "</a>" +
       '<span class="np-disclosure__label">' + label(st, p) + "</span>" +
@@ -1474,7 +1535,7 @@
     var shipped = ctx.mode === "export" || ctx.mode === "publish";
     if (x.stickyCta && x.stickyLabel && (stickyUrl || !shipped)) {
       out +=
-        '<div class="np-sticky" data-np-sticky="' + Number(x.stickyAfter || 25) + '"' + (ctx.mode === "editor" ? ' data-np-shown="1"' : "") + ">" +
+        '<div class="np-sticky np-sticky--' + (x.stickyPlace === "center" ? "center" : "auto") + '" data-np-sticky="' + Number(x.stickyAfter || 40) + '"' + (ctx.mode === "editor" ? ' data-np-shown="1"' : "") + ">" +
         '<a class="' + btnClass(ctx) + '"' + linkAttrs(ctx, stickyUrl, x.stickyLabel) + "><span>" + esc(x.stickyLabel) + "</span>" + ICONS.arrow + "</a></div>";
     }
     return out;

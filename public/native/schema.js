@@ -101,6 +101,55 @@
   // Section edge shapes (the section's own colour bites into its neighbour).
   var SHAPES = [["none", "Rett"], ["wave", "Bølge"], ["slant", "Skrå"], ["curve", "Bue"], ["zigzag", "Sagtann"]];
 
+  // ---- line icons for cards (24 × 24, drawn with a 1.8 stroke) ----------------
+  // [id, Norwegian name, path]. render.js draws them inline; emoji typed in a
+  // card's symbol field map onto these where one fits (see EMOJI_ICONS).
+  var ICONS = [
+    ["check", "Hake", "M5 12.5l4.5 4.5L19 7.5"],
+    ["star", "Stjerne", "M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"],
+    ["heart", "Hjerte", "M12 20.5s-7.5-4.6-9.5-9.2C1.2 8 3.2 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.6 0 5.6 3.5 4.3 6.8-2 4.6-9.5 9.2-9.5 9.2z"],
+    ["leaf", "Blad", "M5 20c0-9 5.5-15 15-15 0 9.5-6 15-14.5 15M5 20c3-4.5 6.5-7.5 10.5-9.5"],
+    ["bolt", "Strøm", "M13 2.5 5 13.5h6l-1 8 8-11h-6z"],
+    ["shield", "Trygghet", "M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6zM8.8 12l2.3 2.3 4.3-4.6"],
+    ["clock", "Tid", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7.5V12l3 2"],
+    ["home", "Hjem", "M3.5 11 12 4l8.5 7M5.5 9.5V20h5v-5.5h3V20h5V9.5"],
+    ["car", "Bil", "M5 17v2M19 17v2M3.5 12.5l2-5.5h13l2 5.5V17h-17zM7.5 14.5h1M15.5 14.5h1"],
+    ["plug", "Lading", "M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0zM12 17v4"],
+    ["wallet", "Penger", "M4 7.5h14.5a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2h-13A1.5 1.5 0 0 1 4 18.5zM4 7.5 16 4v3.5M16 13.5h2"],
+    ["percent", "Prosent", "M19 5 5 19M7.5 9.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM16.5 18.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"],
+    ["chart", "Vekst", "M4 20h16M7 16.5V11M12 16.5V6.5M17 16.5v-4"],
+    ["users", "Mennesker", "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5M16 4.5a3.3 3.3 0 0 1 0 6.4M18 14.6c2 .7 3.3 2.6 3.5 5.4"],
+    ["chat", "Samtale", "M4 5.5h16v10.5H9.5L5 19.5V16H4z"],
+    ["gift", "Gave", "M4 10h16v10H4zM3 7h18v3H3zM12 7v13M12 7C10.5 3.5 7 3.5 7 6s5 1 5 1zm0 0c1.5-3.5 5-3.5 5-1s-5 1-5 1"],
+    ["truck", "Levering", "M2.5 6h11v10h-11zM13.5 9.5h4l3 3.5V16h-7M6.5 18.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM17 18.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z"],
+    ["cart", "Handlekurv", "M3 4h2.5l2.2 11h10.6l2-8H6.5M9.5 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"],
+    ["tag", "Pris", "M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.7 7.7a1 1 0 0 1-1.4 0zM8 8.5h.01"],
+    ["phone", "Mobil", "M7.5 2.5h9a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM10.5 18.5h3"],
+    ["sun", "Sol", "M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"],
+    ["wind", "Vind", "M3 8h10.5A2.5 2.5 0 1 0 11 5.5M3 12h15.5a2.5 2.5 0 1 1-2.5 2.5M3 16h8"],
+    ["drop", "Vann", "M12 3s6.5 7 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10 12 3 12 3z"],
+    ["globe", "Verden", "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"],
+    ["pin", "Sted", "M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"],
+    ["calendar", "Dato", "M4 6h16v14H4zM4 10h16M8.5 3.5V7M15.5 3.5V7"],
+    ["lock", "Sikkerhet", "M5.5 10.5h13v10h-13zM8 10.5v-3a4 4 0 0 1 8 0v3M12 14.5V17"],
+    ["spark", "Nyhet", "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"],
+    ["target", "Mål", "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 12.6a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2z"],
+    ["award", "Utmerkelse", "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14 7 21l5-2.5 5 2.5-1.5-7"],
+    ["food", "Mat", "M7 3v7.5a2 2 0 0 0 4 0V3M9 12.5V21M16.5 21V3c-2.2 1.3-3.5 3.8-3.5 7v3h3.5"],
+    ["fitness", "Trening", "M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"],
+    ["health", "Helse", "M9.5 3.5h5v6h6v5h-6v6h-5v-6h-6v-5h6z"],
+    ["book", "Kunnskap", "M4 5.5A2 2 0 0 1 6 3.5h13V19H6a2 2 0 0 0-2 2zM4 5.5V21M8 8h7"],
+  ];
+  var EMOJI_ICONS = {
+    "✅": "check", "✔": "check", "✔️": "check", "⭐": "star", "🌟": "star", "❤": "heart", "❤️": "heart", "💚": "heart", "🌱": "leaf", "🌿": "leaf", "🍃": "leaf",
+    "⚡": "bolt", "⚡️": "bolt", "🛡": "shield", "🛡️": "shield", "⏱": "clock", "⏱️": "clock", "⏰": "clock", "🕒": "clock", "🏠": "home", "🏡": "home", "🚗": "car", "🚙": "car",
+    "🔌": "plug", "💰": "wallet", "💳": "wallet", "💵": "wallet", "📈": "chart", "📊": "chart", "👥": "users", "👪": "users", "💬": "chat", "🎁": "gift", "🚚": "truck",
+    "🛒": "cart", "🏷": "tag", "🏷️": "tag", "📱": "phone", "☀": "sun", "☀️": "sun", "🌞": "sun", "💨": "wind", "💧": "drop", "🌍": "globe", "🌎": "globe", "📍": "pin",
+    "📅": "calendar", "🗓": "calendar", "🗓️": "calendar", "🔒": "lock", "✨": "spark", "🎯": "target", "🏆": "award", "🥇": "award", "🍽": "food", "🍽️": "food",
+    "💪": "fitness", "🏋": "fitness", "🏋️": "fitness", "➕": "health", "💊": "health", "📚": "book", "📖": "book", "%": "percent",
+  };
+  var ICON_OPTIONS = [["", "Ingen (bruk symbolet)"]].concat(ICONS.map(function (i) { return [i[0], i[1]]; }));
+
   // ---- style fields every section has -------------------------------------
   // `rs: true` → may differ per device (stored under section.rs[device].style).
   // `group` → heading in the Stil tab. `when` values may be arrays (any of).
@@ -299,11 +348,21 @@
     {
       key: "stickyAfter",
       type: "number",
-      label: "Vises etter (% av siden)",
+      label: "Tidligst etter (% av siden)",
       min: 5,
       max: 90,
       step: 5,
-      default: 25,
+      default: 40,
+      when: { stickyCta: true },
+      group: "Flytende knapp",
+      help: "Knappen kommer aldri før leseren er forbi åpningen, og den trekker seg unna mens en annen knapp, produkter, et sitat eller en avstemning er nederst på skjermen.",
+    },
+    {
+      key: "stickyPlace",
+      type: "select",
+      label: "Plassering",
+      options: [["auto", "Hjørnet på desktop, stripe nederst på mobil"], ["center", "Midt nederst"]],
+      default: "auto",
       when: { stickyCta: true },
       group: "Flytende knapp",
     },
@@ -662,6 +721,15 @@
         { key: "buttonLabel", type: "text", label: "Knappetekst", max: 24, default: "Se produktet" },
         { key: "columns", type: "select", label: "Kolonner (desktop)", options: [["2", "2"], ["3", "3"], ["4", "4"]], default: "3", ai: false },
         { key: "layout", type: "select", label: "Visning", options: [["grid", "Rutenett"], ["carousel", "Karusell"]], default: "grid", ai: false },
+        {
+          key: "imageFit",
+          type: "select",
+          label: "Produktbildene",
+          options: [["cover", "Fyller kortet (beskåret, 4:5)"], ["contain", "Hele produktet på farget flate"]],
+          default: "cover",
+          ai: false,
+          help: "«Hele produktet» passer for pakningsbilder og utklipp på hvit bakgrunn.",
+        },
       ],
     },
 
@@ -943,7 +1011,8 @@
           itemLabel: "Kort",
           item: [
             { key: "image", type: "image", label: "Bilde", ai: false },
-            { key: "symbol", type: "text", label: "Symbol eller tall (valgfritt)", max: 6, default: "", hint: "Kort tall eller tegn, f.eks. «01» eller «%». Tomt hvis bilde." },
+            { key: "icon", type: "select", label: "Ikon", options: ICON_OPTIONS, default: "", hint: "Strekikon i temafargen. Velg ett som passer argumentet, eller tomt." },
+            { key: "symbol", type: "text", label: "Symbol eller tall (valgfritt)", max: 6, default: "", hint: "Kort tall eller tegn, f.eks. «01» eller «%». Tomt hvis bilde eller ikon." },
             { key: "title", type: "text", label: "Tittel", max: 60, default: "" },
             { key: "text", type: "textarea", label: "Tekst", max: 320, default: "" },
             { key: "linkLabel", type: "text", label: "Lenketekst", max: 32, default: "" },
@@ -1150,6 +1219,14 @@
           default: [{ quote: "Ordrett sitat.", name: "Navn", role: "Rolle" }, { quote: "Ordrett sitat.", name: "Navn", role: "Rolle" }],
         },
         { key: "layout", type: "select", label: "Visning", options: [["grid", "Rutenett"], ["carousel", "Karusell"]], default: "grid", ai: false },
+        {
+          key: "look",
+          type: "select",
+          label: "Portretter",
+          options: [["round", "Runde, ved navnet"], ["portrait", "Store portretter (4:5) øverst"], ["none", "Uten bilde – bare sitatet"]],
+          default: "round",
+          ai: false,
+        },
       ],
     },
 
@@ -1308,6 +1385,8 @@
     EASINGS: EASINGS,
     TRANSITIONS: TRANSITIONS,
     HEADING_FX: HEADING_FX,
+    ICONS: ICONS,
+    EMOJI_ICONS: EMOJI_ICONS,
     STYLE_FIELDS: STYLE_FIELDS,
     EXTRA_FIELDS: EXTRA_FIELDS,
     SHAPES: SHAPES,

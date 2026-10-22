@@ -184,12 +184,23 @@
       pageHref: function () { return "#"; },
     };
     var R = window.NativeRender;
+    var theme = project.theme;
+    // The theme's own fonts and page classes, or every design looks like
+    // the browser's default serif on white.
+    var Fonts = window.WallpaperFonts;
+    var fams = {};
+    ["heading", "body"].forEach(function (k) {
+      var f = theme.fonts[k];
+      if (f.source === "google" && Fonts && Fonts.has(f.family)) fams[f.family] = true;
+    });
+    var links = Object.keys(fams).map(function (fam) { return '<link rel="stylesheet" href="' + D.escapeHtml(Fonts.cssUrl(fam)) + '">'; }).join("");
+    var bodyCls = "np" + (theme.headingCase === "upper" ? " np-upper" : "") + (R.isDark && R.isDark(theme.colors.page || "#ffffff") ? " np-dark-page" : "");
     return (
-      '<!doctype html><html class="np-html"><head><meta charset="utf-8">' +
+      '<!doctype html><html class="np-html"><head><meta charset="utf-8">' + links +
       '<style>' + R.themeCss(project.theme, {}) + "</style>" +
       '<link rel="stylesheet" href="/native/runtime/np.css">' +
       "<style>body{overflow:hidden;pointer-events:none}.np-sec{min-height:0!important}.np-hero--h-full,.np-minh-screen{--np-hero-h:640px;min-height:640px!important}.np-hero--h-tall{--np-hero-h:560px}.np-hx,.np-hero__zoom{height:auto!important}.np-hero__pin,.np-hx__pin{position:relative!important;height:640px!important}.np-story__cards{padding:120px 0 0!important}.np-story__card{min-height:420px!important}.np-rank--scenes .np-rank__item{min-height:640px!important}.np-tabs__list{display:flex!important}.np-tabs__panel+.np-tabs__panel{display:none!important}.np-flip__b{display:none!important}.np-poll{display:block!important}.np-gal__stage figure+figure{display:none}.np-gal__stage{aspect-ratio:3/2!important}.np-gal__stage figure{position:absolute!important;opacity:1!important}</style>" +
-      '</head><body class="np">' + R.renderSection(ctx, section, 1) + "</body></html>"
+      '</head><body class="' + bodyCls + '">' + R.renderSection(ctx, section, 1) + "</body></html>"
     );
   }
 

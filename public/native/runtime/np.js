@@ -562,8 +562,13 @@
           }
           window.requestAnimationFrame(step);
         },
-        { threshold: 0.6 }
+        // A low bar: a number half hidden behind a sticky bar or a clipped
+        // transition must still count up, never stay at 0.
+        { threshold: 0.2 }
       );
+      // Leaving the page before it was seen must not leave a 0 behind either
+      // (print, "save as", a screenshot of the whole page).
+      window.addEventListener("beforeprint", function () { el.textContent = original; });
     });
   }
 
@@ -1150,6 +1155,62 @@
     });
   }
 
+  // ---- headings that fit ----------------------------------------------------------
+  // A display title whose longest word is wider than its column ("STERKERE"
+  // in a narrow phone) is made smaller until the word fits, instead of being
+  // broken mid-word or cut off. Reads all, then writes all (one layout).
+  var FIT_SEL = ".np-h1, .np-h2, .np-statement, .np-card__t, .np-rank__t, .np-flip__f > span, .np-chap__t, .np-quote__text";
+  var MIN_FIT = 0.55;
+
+  function fitHeadings(scope) {
+    var els = $all(FIT_SEL, scope || doc).filter(function (el) { return !el.isContentEditable; });
+    els.forEach(function (el) {
+      if (el.hasAttribute("data-np-fit")) {
+        el.removeAttribute("data-np-fit");
+        el.style.removeProperty("--np-fit");
+      }
+    });
+    var writes = [];
+    els.forEach(function (el) {
+      var w = el.clientWidth;
+      if (!w || el.scrollWidth <= w + 1) return;
+      var size = parseFloat(window.getComputedStyle(el).fontSize);
+      var k = Math.max(MIN_FIT, (w / el.scrollWidth) * 0.97);
+      writes.push([el, Math.floor(size * k * 10) / 10]);
+    });
+    writes.forEach(function (x) {
+      x[0].style.setProperty("--np-fit", x[1] + "px");
+      x[0].setAttribute("data-np-fit", "");
+    });
+  }
+
+  // The framed opening: the picture gives way (down to MIN_FRAME) until the
+  // whole title is above the fold, however long the title is.
+  var MIN_FRAME = 220;
+
+  function fitFramedHero() {
+    var hero = doc.querySelector("#np-main > .np-hero--framed:first-child");
+    if (!hero || EDITOR) return;
+    var frame = hero.querySelector(".np-hero__frame");
+    var title = hero.querySelector(".np-h1");
+    if (!frame || !title) return;
+    frame.style.removeProperty("height");
+    var y = window.scrollY || window.pageYOffset;
+    var over = title.getBoundingClientRect().bottom + y - (window.innerHeight - 24);
+    if (over > 0) frame.style.height = Math.max(MIN_FRAME, frame.offsetHeight - over) + "px";
+  }
+
+  function bindFit() {
+    fitHeadings(doc);
+    fitFramedHero();
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { fitHeadings(doc); fitFramedHero(); });
+    var t = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(t);
+      t = setTimeout(function () { fitHeadings(doc); fitFramedHero(); }, 150);
+    });
+  }
+
   // ---- chapter menu, progress, floating button ------------------------------------------------
   function bindChrome() {
     var nav = doc.querySelector("[data-np-chapnav]");
@@ -1184,19 +1245,44 @@
         bar.style.setProperty("--np-p", h > 0 ? Math.min(1, (window.scrollY || window.pageYOffset) / h).toFixed(4) : "0");
       });
     }
+    // The floating button: never before the reader is past the opening (the
+    // hero and the section after it) nor before the page's "earliest" share;
+    // hidden while anything the reader acts on or reads closely – another
+    // button, products, a poll, a quote (sections marked data-np-busy) – is
+    // where the button sits, and from the last call to action to the end.
     var sticky = doc.querySelector("[data-np-sticky]");
     if (sticky && !EDITOR) {
       var after = Number(sticky.getAttribute("data-np-sticky")) / 100;
-      var foot = doc.querySelector(".np-footer");
+      var ends = $all(".np-footer, .np-fb, .np-credit-line", doc);
+      var sections = $all("#np-main > .np-sec", doc);
+      var opening = sections[Math.min(1, sections.length - 1)] || null;
+      var busy = $all("[data-np-busy]", doc);
       persistent.push(function (vh) {
+        var y = window.scrollY || window.pageYOffset;
         var h = doc.documentElement.scrollHeight - vh;
-        var p = h > 0 ? (window.scrollY || window.pageYOffset) / h : 0;
-        var footVisible = foot && foot.getBoundingClientRect().top < vh;
-        var ctaVisible = $all(".np-t-cta", doc).some(function (c) {
-          var r = c.getBoundingClientRect();
-          return r.top < vh && r.bottom > 0;
+        var p = h > 0 ? y / h : 0;
+        var past = !opening || opening.getBoundingClientRect().bottom < vh * 0.35;
+        var zone = vh - (sticky.offsetHeight || 60) - 48;
+        var hit = function (el) {
+          var r = el.getBoundingClientRect();
+          return r.top < vh && r.bottom > zone;
+        };
+        var blocked = ends.some(function (el) { return el.getBoundingClientRect().top < vh; }) || busy.some(hit);
+        sticky.classList.toggle("is-on", p >= after && past && !blocked);
+      });
+    }
+    // Side dots step aside while something wide (cards scrolling sideways, a
+    // carousel, a full-bleed picture with points) passes behind them.
+    var side = doc.querySelector(".np-chapnav--side");
+    if (side) {
+      var wide = $all("[data-np-wide]", doc);
+      persistent.push(function () {
+        var r = side.getBoundingClientRect();
+        var under = wide.some(function (el) {
+          var b = el.getBoundingClientRect();
+          return b.top < r.bottom && b.bottom > r.top;
         });
-        sticky.classList.toggle("is-on", p >= after && !footVisible && !ctaVisible);
+        side.classList.toggle("is-away", under);
       });
     }
   }
@@ -1260,6 +1346,7 @@
     bindLightbox(scope);
     bindPolls(scope);
     bindCountdowns(scope);
+    if (scope !== doc) fitHeadings(scope);
     requestFrame();
   }
 
@@ -1289,6 +1376,7 @@
     });
     API = body.getAttribute("data-np-api") || "";
     bind(doc);
+    bindFit();
     bindChrome();
     bindFeedback();
     bindTracking();

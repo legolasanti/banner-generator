@@ -234,7 +234,7 @@ test("chapter menu lists the sections that have a chapter name, in order", () =>
 
 test("the floating button falls back to the advertiser link and never ships without one", () => {
   const withSite = projectWith([{ type: "hero" }], { extras: { stickyCta: true, stickyLabel: "Book" } });
-  assert.match(R.renderDocument(ctxFor(withSite, "export")), /class="np-sticky"[^>]*><a[^>]*href="https:\/\/www\.ford\.no\/\?utm_source/);
+  assert.match(R.renderDocument(ctxFor(withSite, "export")), /class="np-sticky[^"]*"[^>]*><a[^>]*href="https:\/\/www\.ford\.no\/\?utm_source/);
   const noSite = D.normalizeProject(Object.assign({}, withSite, { advertiser: { name: "Ford" } }));
   assert.ok(R.renderDocument(ctxFor(noSite, "export")).indexOf("np-sticky") === -1);
   assert.ok(R.renderDocument(ctxFor(noSite, "editor")).indexOf("np-sticky") !== -1);

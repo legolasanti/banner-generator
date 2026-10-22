@@ -32,16 +32,19 @@ body.np {
 .np a { color: var(--np-link); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
 .np a:hover { text-decoration-thickness: 2px; }
 .np :focus-visible { outline: 3px solid var(--np-accent); outline-offset: 3px; }
+/* :where() keeps the reset at the weight of a bare element, so every block's
+   own spacing (.np-h2, .np-tms__title, .np-flips__hint …) applies. */
+:where(.np) h1, :where(.np) h2, :where(.np) h3 { margin: 0; }
 .np h1, .np h2, .np h3 {
   font-family: var(--np-font-h);
   font-weight: var(--np-weight-h);
   line-height: 1.14;
   letter-spacing: var(--np-track, -0.012em);
-  margin: 0;
   text-wrap: balance;
 }
 .np.np-upper h1, .np.np-upper h2, .np.np-upper h3 { text-transform: uppercase; letter-spacing: 0.01em; }
-.np p { margin: 0; text-wrap: pretty; }
+:where(.np) p { margin: 0; }
+.np p { text-wrap: pretty; }
 .np .np-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* --------------------------- disclosure -------------------------------- */
@@ -1376,3 +1379,216 @@ html.np-js .np-sec:not(.np-in) .np-hl { background-size: 0% 0.12em; }
   html.np-js .np-tr, html.np-js .np-tr-under, html.np-js .np-sfx-slide-x > .np-wrap, html.np-js .np-sfx-tilt-in > .np-wrap, html.np-js .np-sfx-layers .np-st { clip-path: none !important; transform: none !important; translate: none !important; rotate: none !important; scale: none !important; }
   html.np-js .np-tr-gone { visibility: visible !important; }
 }
+
+/* =======================================================================
+   Block quality pass — the page frame follows the theme, reading type,
+   the floating button, and the blocks that looked cheap. Applies to every
+   page, old ones included; nothing here needs a new setting.
+   ======================================================================= */
+
+/* ---- reading type: 20 px body on desktop, 17 px on phones ---- */
+body.np { font-size: clamp(17px, 15.5px + 0.32vw, 20px); line-height: 1.62; }
+@media (max-width: 599px) { body.np { font-size: 17px; } }
+.np-w-text { max-width: calc(720px + 48px); }
+/* Display type is never squeezed past −0.03 em, however tight the theme. */
+.np h1, .np h2, .np h3 { letter-spacing: max(-0.024em, var(--np-track, -0.012em)); overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.np .np-h1--xxl { letter-spacing: max(-0.032em, calc(var(--np-track, -0.012em) - 0.02em)); }
+.np .np-statement { letter-spacing: max(-0.03em, calc(var(--np-track, -0.012em) - 0.01em)); overflow-wrap: normal; hyphens: manual; }
+.np.np-upper h1, .np.np-upper h2, .np.np-upper h3 { letter-spacing: 0.01em; }
+/* A split word (title effects) never breaks between its letters; np.js
+   shrinks a heading whose longest word does not fit instead (--np-fit). */
+.np-wd, .np-hw { white-space: nowrap; }
+.np [data-np-fit] { font-size: var(--np-fit) !important; }
+.np-rank--cards .np-rank__t { overflow-wrap: normal; hyphens: manual; }
+.np .np-rich h2 { line-height: 1.18; }
+.np .np-rich h2 + p, .np .np-rich h3 + p { margin-top: 0.6em; }
+.np-rich figure { margin: 2em 0; }
+.np-rich figcaption { margin-top: 10px; font: 500 14px/1.45 var(--np-font-sys); opacity: 0.72; }
+
+/* ---- disclosure: the yellow label stays (it is the law), tinted by the
+   theme; on phones the advertiser's name lives in the label, so a bare
+   name on the right gives the publisher room. ---- */
+.np .np-disclosure__label { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--np-primary) 38%, #e2c64a); }
+.np-dark-page .np-disclosure { border-bottom-color: transparent; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+@media (max-width: 599px) {
+  .np-disclosure--advword .np-disclosure__in { grid-template-columns: minmax(0, 1fr) auto; }
+  .np-disclosure--advword .np-disclosure__adv { display: none; }
+  .np-disclosure__in { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .np .np-disclosure__label { letter-spacing: 0.04em; }
+}
+
+/* ---- footer, feedback and credit follow a dark page ---- */
+.np-dark-page .np-footer { background: color-mix(in srgb, var(--np-page) 86%, #ffffff); color: rgba(255, 255, 255, 0.86); }
+.np-dark-page .np-footer__top, .np-dark-page .np-footer__studio { color: #fff; }
+.np-dark-page .np-footer__text { color: rgba(255, 255, 255, 0.72); }
+.np-dark-page .np-footer__text a { color: #fff; }
+.np-dark-page .np-share a { background: transparent; border-color: rgba(255, 255, 255, 0.28); color: #fff; }
+.np-dark-page .np-share a:hover { border-color: #fff; }
+.np-footer__studio img { max-width: 180px; }
+.np-dark-page .np-fb, .np-dark-page .np-credit-line { border-top-color: rgba(255, 255, 255, 0.14); }
+
+/* ---- floating button: a corner on desktop, a bar on phones ---- */
+.np-sticky--auto { left: auto; right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); transform: translateY(160%); }
+.np-sticky--auto.is-on, .np-sticky--auto[data-np-shown] { transform: none; }
+.np-sticky .np-btn { box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.12); }
+@media (max-width: 599px) {
+  .np-sticky--auto { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+  .np-sticky--auto .np-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .np-sticky { transition: opacity 0.2s; } .np-sticky:not(.is-on):not([data-np-shown]) { opacity: 0; } }
+
+/* ---- side chapter dots: a quiet glass rail, out of the way of wide things ---- */
+.np-chapnav--side { right: 14px; transition: opacity 0.3s, transform 0.3s; }
+/* White dots with a dark hairline: readable on photos, dark bands and white. */
+.np-chapnav--side a::after { mix-blend-mode: normal; color: #fff; width: 9px; height: 9px; border-width: 1.5px; background: rgba(0, 0, 0, 0.12); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.18); opacity: 0.9; }
+.np-chapnav--side a.is-on::after { opacity: 1; background: var(--np-accent); border-color: #fff; }
+.np-chapnav--side.is-away { opacity: 0; transform: translate(12px, -50%); pointer-events: none; }
+@media (max-width: 1279px) { .np-chapnav--side { right: 8px; } }
+
+/* ---- hero: text colour from the real background ---- */
+.np-hero.np-on-dark:not(.np-hero--split) { color: #fff; }
+.np-hero--below.np-on-dark .np-kicker, .np-hero--framed.np-on-dark .np-kicker { color: inherit; opacity: 0.85; }
+.np-hero--below:not(.np-bg-none) { background: transparent; }
+.np-hero--below.np-bg-none.np-on-light-sec { background: var(--np-page, #fff); }
+.np-hero--below.np-bg-gradient, .np-hero--below.np-bg-custom { background: var(--np-sec-bg); }
+.np-hero--below.np-bg-soft { background: var(--np-soft); }
+.np-hero--below.np-bg-brand { background: var(--np-brand, var(--np-primary)); }
+.np-hero--below.np-bg-dark { background: var(--np-dark); }
+/* Over a photo the overlay grows towards the text, so a busy picture still
+   reads; at 0 % the photo is left alone. */
+.np-hero--overlay.np-hero--pos-center .np-hero__media::after { background: radial-gradient(120% 90% at 50% 55%, rgba(0, 0, 0, calc(var(--np-overlay) * 1.25)) 0%, rgba(0, 0, 0, calc(var(--np-overlay) * 0.7)) 70%); }
+.np-hero--overlay .np-hero__text { text-shadow: 0 1px 24px rgba(0, 0, 0, calc(var(--np-overlay) * 0.6)); }
+
+/* ---- framed hero: picture and title both above the fold ---- */
+.np-hero--framed > .np-wrap:first-of-type { padding-top: 24px; }
+.np-hero--framed > .np-wrap + .np-wrap { padding-top: 0; }
+.np-hero__frame { height: clamp(240px, calc(100svh - var(--np-head-h, 56px) - 390px), 600px); }
+.np-hero--framed .np-hero__text { padding: 28px 0 8px; }
+@media (max-width: 599px) {
+  .np-hero__frame { height: clamp(200px, calc(100svh - var(--np-head-h, 50px) - 420px), 46svh); }
+  .np-hero--framed .np-hero__text { padding-top: 22px; }
+}
+
+/* ---- cards: line icons in a tinted tile; emoji get the same tile ---- */
+.np-card__ico, .np-card__sym--emoji { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; flex: none; border-radius: calc(var(--np-radius) * 0.7 + 6px); background: color-mix(in srgb, var(--np-accent) 13%, transparent); color: var(--np-accent); margin-bottom: 10px; }
+.np-card__ico svg { width: 28px; height: 28px; }
+.np-card__sym--emoji { font-size: 1.7rem; line-height: 1; font-family: inherit; }
+.np-on-dark .np-card__ico, .np-on-dark .np-card__sym--emoji { background: rgba(255, 255, 255, 0.1); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.np-bg-brand.np-on-light-sec .np-card__ico { background: rgba(0, 0, 0, 0.08); color: var(--np-ink, #111); }
+.np-cards--plain .np-card__ico { margin-bottom: 16px; }
+.np-cards--boxed .np-card { border: 1px solid color-mix(in srgb, var(--np-text) 8%, transparent); }
+.np-cards--boxed .np-card__b:first-child { padding-top: 28px; }
+.np-on-dark .np-cards--boxed .np-card { background: rgba(255, 255, 255, 0.06); color: inherit; border-color: rgba(255, 255, 255, 0.14); box-shadow: none; }
+.np-on-dark .np-cards--boxed .np-card__link { color: inherit; }
+
+/* ---- flip cards: a designed front (gradient, numeral, flip chip) and a
+   clean answer card on the back ---- */
+.np-flip { min-height: 300px; }
+.np-flip__f:not(.has-img) {
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--np-accent) 55%, transparent) 0%, transparent 55%),
+    linear-gradient(160deg, var(--np-primary) 0%, color-mix(in srgb, var(--np-primary) 55%, var(--np-dark)) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 18px 40px -22px rgba(0, 0, 0, 0.55);
+}
+.np-flip__f { font-size: 1.42em; line-height: 1.18; padding: 26px 26px 28px; }
+.np-flip__n { position: absolute; top: 18px; left: 22px; font-family: var(--np-font-h); font-weight: var(--np-weight-h); font-size: 4.2rem; line-height: 1; -webkit-text-fill-color: transparent; -webkit-text-stroke: 1.5px currentColor; opacity: 0.42; letter-spacing: -0.02em; }
+.np-flip__f i { top: 18px; right: 18px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px 7px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font: 800 12px/1 var(--np-font-sys); letter-spacing: 0.08em; text-transform: uppercase; opacity: 1; }
+.np-flip__f i svg { width: 15px; height: 15px; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.np-flip__f i b { font-weight: 800; }
+.np-flip:hover .np-flip__f i svg { transform: rotate(180deg); }
+.np-flip__b { background: #fff; color: #1b1f27; border: 0; box-shadow: inset 0 5px 0 var(--np-accent), 0 18px 40px -22px rgba(0, 0, 0, 0.45); padding: 28px 26px; justify-content: center; text-align: left; }
+.np-flip__b strong { font-size: 1.3em; line-height: 1.2; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .np-flip:not([aria-pressed="true"]):hover .np-flip__in { transform: rotateY(-7deg) translateY(-3px); }
+}
+html.np-editor .np-flip:hover .np-flip__in { transform: none; }
+
+/* ---- people: bigger, face-first portraits ---- */
+.np-tm { gap: 18px; }
+.np-tms-look--round .np-tm:not(.np-tm--video) { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "q q" "m c"; column-gap: 16px; row-gap: 22px; align-items: center; }
+.np-tms-look--round .np-tm:not(.np-tm--video) .np-tm__q { grid-area: q; }
+.np-tms-look--round .np-tm:not(.np-tm--video) .np-tm__media { grid-area: m; width: 76px; height: 76px; box-shadow: 0 0 0 3px var(--np-card), 0 0 0 4.5px color-mix(in srgb, var(--np-accent) 60%, transparent); }
+.np-tms-look--round .np-tm:not(.np-tm--video) figcaption { grid-area: c; }
+.np-tms-look--round .np-tm:not(.np-tm--video):not(:has(.np-tm__media)) figcaption { grid-column: 1 / -1; }
+.np-tm__media img { object-position: 50% 28%; }
+.np-tms-look--portrait .np-tm:not(.np-tm--video) { padding: 0; overflow: hidden; }
+.np-tms-look--portrait .np-tm:not(.np-tm--video) .np-tm__media { width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 0; }
+.np-tms-look--portrait .np-tm:not(.np-tm--video) .np-tm__q, .np-tms-look--portrait .np-tm:not(.np-tm--video) figcaption { padding: 0 26px; }
+.np-tms-look--portrait .np-tm:not(.np-tm--video) figcaption { padding-bottom: 26px; }
+.np-tm__q { font-size: 1.24em; }
+.np-tm__q::before { content: open-quote; color: var(--np-accent); }
+.np-on-dark .np-tm__q::before { color: inherit; }
+.np-tm__name { font-size: 16px; }
+
+/* ---- products: one ratio per row, cover-cropped or on a theme flat ---- */
+.np-prods-fit--cover .np-prod__img, .np-prods-fit--contain .np-prod__img { aspect-ratio: 4 / 5; overflow: hidden; }
+.np-prods-fit--cover .np-prod__img { background: var(--np-soft-card, #f4f5f7); }
+.np-prods-fit--cover .np-prod__img img { object-fit: cover; padding: 0; }
+.np-prods-fit--contain .np-prod__img { background: color-mix(in srgb, var(--np-soft) 75%, #ffffff); }
+.np-prods-fit--contain .np-prod__img img { object-fit: contain; padding: 9%; }
+.np-prod { border-color: color-mix(in srgb, var(--np-text) 9%, transparent); }
+.np-prod__name { font-size: 20px; }
+.np-prod__text { font-size: 15.5px; }
+
+/* ---- charts: bigger, clearer, in the theme's colours ---- */
+.np-chart__row { grid-template-columns: minmax(120px, 28%) 1fr; gap: 18px; }
+.np-chart__row + .np-chart__row { margin-top: 14px; }
+.np-chart__lab { font-size: 16px; }
+.np-chart__bar { height: 46px; border-radius: 10px; background: color-mix(in srgb, currentColor 8%, transparent); }
+.np-chart__fill { border-radius: 10px; font-size: 15px; padding: 0 14px; background: linear-gradient(90deg, color-mix(in srgb, var(--np-primary) 72%, #ffffff), var(--np-primary)); clip-path: inset(0 0 0 0 round 10px); }
+html.np-js .np-sec:not(.np-in) .np-chart__fill { clip-path: inset(0 100% 0 0 round 10px); }
+.np-on-dark .np-chart__fill { background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), #fff); color: var(--np-dark); }
+.np-cols { height: 400px; }
+.np-col__v { font-family: var(--np-font-h); font-weight: var(--np-weight-h); font-size: 17px; }
+.np-col__fill { background: linear-gradient(180deg, color-mix(in srgb, var(--np-primary) 70%, #ffffff), var(--np-primary)); border-radius: 10px 10px 3px 3px; }
+.np-col__lab { font-size: 14.5px; }
+@media (max-width: 599px) { .np-cols { height: 280px; } .np-chart__row { grid-template-columns: 1fr; gap: 6px; } .np-chart__bar { height: 38px; } }
+
+/* ---- tabs: a panel without a picture is a card, not empty space ---- */
+.np-tabs__panel:not(.has-img) { background: var(--np-card); color: var(--np-card-fg); border-radius: calc(var(--np-radius) * 1.2 + 4px); padding: clamp(26px, 4vw, 52px); }
+.np-tabs__panel:not(.has-img) .np-h2 { font-size: calc(clamp(1.4rem, 1.1rem + 1.1vw, 2rem) * var(--np-hs, 1)); }
+.np-tabs__panel:not(.has-img) .np-rich { max-width: 680px; }
+.np-tabs__panel.has-img { gap: clamp(28px, 4vw, 56px); }
+.np-tabs__img img { aspect-ratio: 4 / 3; box-shadow: 0 24px 50px -28px rgba(0, 0, 0, 0.5); }
+.np-tabs--big .np-tabs__list button { font-size: 15px; letter-spacing: 0.06em; }
+
+/* ---- quote: a measured pause, not half a screen of air ---- */
+.np-t-quote.np-pad-xl { padding-block: clamp(72px, 8vw, 112px); }
+.np-quote::before { content: ""; display: block; width: 56px; height: 4px; border-radius: 2px; background: var(--np-accent); margin: 0 auto 30px; }
+.np-align-left .np-quote::before { margin-left: 0; }
+.np-on-dark .np-quote::before { background: currentColor; opacity: 0.6; }
+.np-quote__by img { width: 64px; height: 64px; object-position: 50% 28%; }
+.np-t-statement.np-pad-xl { padding-block: clamp(80px, 9vw, 128px); }
+
+/* ---- story cards: glass that stays readable over pale pictures ---- */
+.np-story--card-glass .np-story__box { background: rgba(14, 18, 26, 0.46); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25); }
+.np-story__box { max-width: 500px; }
+.np-story__box p { font-size: 1.02em; }
+
+/* ---- stat cards: a little depth and the brand in the number ---- */
+.np-stats--cards .np-stat { padding: 36px 22px 30px; border: 1px solid color-mix(in srgb, var(--np-text) 7%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--np-primary) 7%, var(--np-card)) 0%, var(--np-card) 70%); }
+.np-stat__l { font-size: 16px; line-height: 1.4; }
+.np-stats--plain .np-stat__l, .np-stats--lines .np-stat__l { max-width: 260px; margin-left: auto; margin-right: auto; }
+
+/* ---- ranked scenes: numerals with weight and colour; a scene without a
+   picture gets light and depth instead of a flat dark screen ---- */
+.np-rank--scenes .np-rank__num { -webkit-text-stroke: clamp(2px, 0.35vw, 4px) var(--np-accent); filter: drop-shadow(0 6px 30px rgba(0, 0, 0, 0.35)); }
+.np-rank--scenes .np-rank__item:not(:has(.np-rank__img)) { min-height: 92svh; background: radial-gradient(90% 70% at 85% 25%, color-mix(in srgb, var(--np-accent) 26%, var(--np-dark)) 0%, var(--np-dark) 70%); }
+.np-rank--scenes .np-rank__item:not(:has(.np-rank__img)):nth-child(even) { background: radial-gradient(90% 70% at 15% 75%, color-mix(in srgb, var(--np-primary) 34%, var(--np-dark)) 0%, var(--np-dark) 70%); }
+.np-rank--cards .np-rank__t { overflow-wrap: normal; hyphens: manual; }
+
+/* Flex and grid children may shrink below their longest word, so a long
+   word overflows its own column (and gets fitted by np.js) instead of
+   widening the whole layout past the screen. */
+.np-hero__text, .np-hero--type > .np-wrap > *, .np-card, .np-card__b, .np-stat, .np-prod, .np-prod__b, .np-flip, .np-rank__item, .np-rank__body, .np-tm, .np-step, .np-it__body, .np-story__box, .np-chap, .np-tabs__body { min-width: 0; }
+.np-h1, .np-h2, .np-statement { max-width: 100%; }
+/* Centred hero text sits on auto margins, which would size it to its
+   longest word; it takes the column's width instead (up to its max). */
+.np-hero__text { width: 100%; }
+.np-hero__frame { min-height: 200px; }
+
+/* Accent words in a statement are .np-sw.np-acc; the accordion's wrapper is
+   also .np-acc and keeps the text colour. On a light section a pale accent
+   is swapped for the readable one the theme computes (--np-accent-text). */
+div.np-acc { color: inherit; }
+.np-on-light-sec .np-sw.np-acc { color: var(--np-accent-text, var(--np-accent)); }
