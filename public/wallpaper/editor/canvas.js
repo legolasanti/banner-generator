@@ -37,7 +37,12 @@
   var h = WPE.util.h;
 
   var SVG_NS = "http://www.w3.org/2000/svg";
-  var PAD = 72;
+  // Room around the artboard: a little at the sides, the board names above
+  // and the overlay legend below (which may wrap to two lines).
+  var PAD_X = 28;
+  var PAD_TOP = 36;
+  var PAD_BOTTOM = 60;
+  var autoFit = true; // the zoom is "fit to window" until the user zooms
   var MIN_ZOOM = 0.05;
   var MAX_ZOOM = 4;
 
@@ -130,8 +135,11 @@
     WPE.fontload.onChange(function () {
       schedule(true);
     });
+    // Panels opening/closing fire a resize too: a board that was fitted
+    // stays fitted to the new space; a zoom the user chose is left alone.
     window.addEventListener("resize", function () {
-      schedule(false);
+      if (autoFit) requestAnimationFrame(fit);
+      else schedule(false);
     });
   }
 
@@ -235,14 +243,15 @@
     var hgt = spec.height * z;
     var sw = dom.stage.clientWidth;
     var sh = dom.stage.clientHeight;
-    var worldW = Math.max(sw, w + PAD * 2);
-    var worldH = Math.max(sh, hgt + PAD * 2);
+    var worldW = Math.max(sw, w + PAD_X * 2);
+    var worldH = Math.max(sh, hgt + PAD_TOP + PAD_BOTTOM);
     dom.world.style.width = worldW + "px";
     dom.world.style.height = worldH + "px";
     dom.wrap.style.width = w + "px";
     dom.wrap.style.height = hgt + "px";
     dom.wrap.style.left = Math.round((worldW - w) / 2) + "px";
-    dom.wrap.style.top = Math.round((worldH - hgt) / 2) + "px";
+    // Centred in the space between the labels' strip and the legend's.
+    dom.wrap.style.top = Math.round(PAD_TOP + (worldH - PAD_TOP - PAD_BOTTOM - hgt) / 2) + "px";
     dom.scaler.style.transform = "scale(" + z + ")";
     dom.scaler.style.width = spec.width + "px";
     dom.scaler.style.height = spec.height + "px";
@@ -263,6 +272,7 @@
   }
 
   function setZoom(z, anchor) {
+    autoFit = false;
     var next = WPE.util.clamp(z, MIN_ZOOM, MAX_ZOOM);
     var sr = dom.stage.getBoundingClientRect();
     var a = anchor || { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 };
@@ -282,9 +292,10 @@
   function fit() {
     if (!dom.stage) return;
     var spec = viewSpec();
-    var sw = dom.stage.clientWidth - PAD * 2;
-    var sh = dom.stage.clientHeight - PAD * 2;
+    var sw = dom.stage.clientWidth - PAD_X * 2;
+    var sh = dom.stage.clientHeight - PAD_TOP - PAD_BOTTOM;
     if (sw <= 0 || sh <= 0) return;
+    autoFit = true;
     store.setView({ zoom: WPE.util.clamp(Math.min(sw / spec.width, sh / spec.height, 1), MIN_ZOOM, 1) });
     layout();
     dom.stage.scrollLeft = (dom.world.offsetWidth - dom.stage.clientWidth) / 2;
@@ -298,10 +309,11 @@
     if (!dom.stage || !sel.length) return false;
     var u = geom.unionBounds(sel);
     var o = origin();
-    var sw = dom.stage.clientWidth - PAD * 2;
-    var sh = dom.stage.clientHeight - PAD * 2;
+    var sw = dom.stage.clientWidth - PAD_X * 2;
+    var sh = dom.stage.clientHeight - PAD_TOP - PAD_BOTTOM;
     if (sw <= 0 || sh <= 0) return false;
     var z = WPE.util.clamp(Math.min(sw / Math.max(u.w, 1), sh / Math.max(u.h, 1)), MIN_ZOOM, MAX_ZOOM);
+    autoFit = false;
     store.setView({ zoom: z });
     layout();
     var wr = dom.wrap.getBoundingClientRect();
