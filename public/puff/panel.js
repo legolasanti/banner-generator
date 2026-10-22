@@ -143,11 +143,25 @@
       poster.out.textContent = M.formatSeconds(v);
       app.setPosterTime(i, v);
     });
+    var posX = slider("Vannrett", { min: 0, max: 100, step: 1, value: 50 }, function (v) {
+      app.setCrop(i, { x: v });
+    });
+    var posY = slider("Loddrett", { min: 0, max: 100, step: 1, value: 50 }, function (v) {
+      app.setCrop(i, { y: v });
+    });
     var reset = h("button.btn-ghost.btn-sm", { type: "button" }, "Nullstill utsnitt");
     reset.addEventListener("click", function () {
-      app.setCrop(i, { zoom: 0, x: 50, y: 50 });
+      app.setCrop(i, Ad.DEFAULT_CROP);
     });
-    var controls = h("div.pu-slot__controls", null, zoom.node, poster.node, h("div.pu-slot__row", null, h("span.field__help", null, "Dra i forhåndsvisningen for å flytte utsnittet."), reset));
+    var controls = h(
+      "div.pu-slot__controls",
+      null,
+      zoom.node,
+      posX.node,
+      posY.node,
+      poster.node,
+      h("div.pu-slot__row", null, h("span.field__help", null, "Dra i forhåndsvisningen, bruk piltastene eller knip for å zoome."), reset)
+    );
 
     var node = h(
       "article.pu-slot",
@@ -206,6 +220,16 @@
       controls.hidden = empty;
       setValue(zoom.input, slot.crop.zoom);
       zoom.out.textContent = Math.round(slot.crop.zoom) + " %";
+      // A direction with no room to slide (zoom 0 on a photo the box's
+      // shape) is greyed out rather than a slider that does nothing.
+      var room = Ad.spare(slot.w, slot.h, spec.box.w, spec.box.h, slot.crop);
+      [[posX, slot.crop.x, room.x], [posY, slot.crop.y, room.y]].forEach(function (row) {
+        setValue(row[0].input, row[1]);
+        row[0].out.textContent = Math.round(row[1]) + " %";
+        row[0].input.disabled = empty || row[2] < 0.5;
+        row[0].node.classList.toggle("is-disabled", row[0].input.disabled);
+        row[0].node.title = row[0].input.disabled ? "Zoom inn litt for å kunne flytte bildet denne veien" : "";
+      });
       poster.node.hidden = slot.kind !== "video";
       if (slot.kind === "video") {
         poster.input.max = String(Math.max(0.1, Math.floor((slot.duration || 0.1) * 10) / 10));

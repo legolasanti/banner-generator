@@ -31,6 +31,9 @@
   var LABEL = "puff-980x600";
   var MIN_TEXT_SCALE = 0.7;
   var MAX_ZOOM = 100; // percent added on top of "cover"
+  // A new photo starts a little zoomed in, so it can always be slid a bit
+  // left, right, up and down – like the photo in the banner builder.
+  var DEFAULT_CROP = { zoom: 12, x: 50, y: 50 };
   var DEFAULT_LABEL = "Annonsørinnhold";
   var LOGO_HEIGHT = { min: 16, max: 56, def: 35 };
   var MAX_HEADLINE = 140;
@@ -178,6 +181,12 @@
     var width = Math.min(mediaW - left, Math.round(boxW * k));
     var height = Math.min(mediaH - top, Math.round(boxH * k));
     return { left: left, top: top, width: Math.max(1, width), height: Math.max(1, height) };
+  }
+
+  /** How far (px in the box) the media can slide each way at this crop. */
+  function spare(mediaW, mediaH, boxW, boxH, crop) {
+    var p = placement(mediaW, mediaH, boxW, boxH, crop);
+    return { x: Math.max(0, p.width - boxW), y: Math.max(0, p.height - boxH) };
   }
 
   /** The crop focus that puts a dragged position back in range. */
@@ -420,6 +429,7 @@
     LOGO_HEIGHT: LOGO_HEIGHT,
     MAX_HEADLINE: MAX_HEADLINE,
     MAX_ZOOM: MAX_ZOOM,
+    DEFAULT_CROP: DEFAULT_CROP,
     emptyDoc: emptyDoc,
     emptySlot: emptySlot,
     normalizeDoc: normalizeDoc,
@@ -427,6 +437,7 @@
     placement: placement,
     visibleRect: visibleRect,
     panBy: panBy,
+    spare: spare,
     assignSlots: assignSlots,
     render: render,
     fit: fit,

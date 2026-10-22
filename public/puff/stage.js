@@ -53,15 +53,18 @@
     var scale = 1;
     var drag = null;
     var hitNodes = [];
+    var NUDGE = 2; // px in the ad per arrow key press
+    var NUDGE_BIG = 10;
+    var ZOOM_STEP = 5;
 
     // ---- hit layer -----------------------------------------------------------
     Ad.SLOTS.forEach(function (spec, i) {
       var progress = h("span.pu-hit__bar");
       var node = h(
         "div.pu-hit",
-        { dataset: { slot: String(i) }, title: spec.name + " · " + spec.box.w + "×" + spec.box.h },
+        { dataset: { slot: String(i) }, tabindex: "0", title: spec.name + " · " + spec.box.w + "×" + spec.box.h },
         h("span.pu-hit__tag", null, i + 1 + " · " + spec.name + " · " + spec.box.w + "×" + spec.box.h),
-        h("span.pu-hit__hint", null, "Dra for å flytte · dobbeltklikk for å nullstille"),
+        h("span.pu-hit__hint", null, "Dra for å flytte · knip for å zoome · dobbeltklikk nullstiller"),
         h("span.pu-hit__empty", null, "Klikk eller slipp bilde/video her"),
         h("span.pu-hit__busy", null, h("span.pu-hit__label", null, "Laster opp …"), h("span.pu-hit__track", null, progress))
       );
@@ -108,6 +111,35 @@
       node.addEventListener("dblclick", function () {
         if (hasMedia(i)) cb.onReset(i);
       });
+      // Arrow keys nudge the photo (Shift: further); + and − zoom.
+      node.addEventListener("keydown", function (e) {
+        if (!hasMedia(i)) return;
+        var slot = doc.slots[i];
+        var step = e.shiftKey ? NUDGE_BIG : NUDGE;
+        // Same direction as dragging: the photo moves the way the arrow points.
+        var move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+        if (move) {
+          e.preventDefault();
+          var box = Ad.SLOTS[i].box;
+          cb.onPan(i, Ad.panBy(slot.w, slot.h, box.w, box.h, slot.crop, move[0], move[1]));
+          return;
+        }
+        var dz = e.key === "+" || e.key === "=" ? ZOOM_STEP : e.key === "-" ? -ZOOM_STEP : 0;
+        if (dz) {
+          e.preventDefault();
+          cb.onZoom(i, slot.crop.zoom + dz);
+        }
+      });
+      // Pinch on a trackpad (and Ctrl + wheel) zooms the photo.
+      node.addEventListener(
+        "wheel",
+        function (e) {
+          if (!e.ctrlKey || !hasMedia(i)) return;
+          e.preventDefault();
+          cb.onZoom(i, doc.slots[i].crop.zoom - e.deltaY * 0.5);
+        },
+        { passive: false }
+      );
       node.addEventListener("click", function () {
         if (!hasMedia(i)) cb.onPick(i);
       });

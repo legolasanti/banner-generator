@@ -98,6 +98,23 @@ test("crop placement", async (t) => {
     assert.equal(far.x, 100);
   });
 
+  await t.test("a new photo starts zoomed in a little, so it slides every way", () => {
+    const c = PuffAd.DEFAULT_CROP;
+    assert.ok(c.zoom > 0 && c.x === 50 && c.y === 50);
+    for (const [w, h] of [[1600, 900], [900, 1600], [620, 413]]) {
+      for (const slot of PuffAd.SLOTS) {
+        const room = PuffAd.spare(w, h, slot.box.w, slot.box.h, c);
+        assert.ok(room.x > 0 && room.y > 0, `${w}×${h} in ${slot.box.w}×${slot.box.h}`);
+        const moved = PuffAd.panBy(w, h, slot.box.w, slot.box.h, c, 10, 10);
+        assert.ok(moved.x < 50 && moved.y < 50);
+      }
+    }
+  });
+
+  await t.test("without zoom a photo the box's shape has no room to slide", () => {
+    assert.deepEqual(PuffAd.spare(620, 413, 620, 413, { zoom: 0, x: 50, y: 50 }), { x: 0, y: 0 });
+  });
+
   await t.test("a crop out of range is pulled back", () => {
     assert.deepEqual(PuffAd.normalizeCrop({ zoom: 500, x: -3, y: "abc" }), { zoom: 100, x: 0, y: 50 });
   });

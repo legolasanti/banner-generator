@@ -138,7 +138,7 @@
     })
       .then(function (up) {
         if (stale()) return;
-        var base = { name: file.name, bytes: up.bytes, crop: { zoom: 0, x: 50, y: 50 } };
+        var base = { name: file.name, bytes: up.bytes, crop: Object.assign({}, Ad.DEFAULT_CROP) };
         if (up.kind === "image") {
           return setSlot(i, Object.assign(base, { kind: "image", src: up.url, poster: "", w: up.w, h: up.h, duration: 0, posterTime: 0 }));
         }
@@ -379,7 +379,10 @@
         setSlot(i, { crop: crop });
       },
       onReset: function (i) {
-        setCrop(i, { zoom: 0, x: 50, y: 50 });
+        setCrop(i, Ad.DEFAULT_CROP);
+      },
+      onZoom: function (i, zoom) {
+        setCrop(i, { zoom: Math.round(zoom) });
       },
       onFiles: addFiles,
       onPick: function (i) {
