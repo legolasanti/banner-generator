@@ -57,6 +57,9 @@ const { createNative } = require("./lib/native");
 const { createLive } = require("./lib/live");
 const { createPuff } = require("./lib/puff");
 const { createAuth } = require("./lib/auth");
+// WARNING: the author credit is sealed. Removing or changing it (or this
+// line) shuts the whole program down — see lib/credit.js.
+const credit = require("./lib/credit");
 
 // --------------------------------------------------------------------------
 // Paths & constants
@@ -889,6 +892,10 @@ const native = createNative({
 });
 native.register(app);
 app.use(express.json({ limit: "1mb" }));
+
+// Every page of the tool carries the author credit (lib/credit.js), so the
+// .html files are served through it rather than by express.static.
+credit.install(app, { publicDir: PUBLIC_DIR });
 
 // Static: app frontend + history (read-only, for thumbnails / re-download)
 app.use(express.static(PUBLIC_DIR));
@@ -1728,7 +1735,7 @@ puff.register(app);
 // SPA-ish fallback to index for unknown non-API GETs
 app.get(/^(?!\/api\/).*/, (req, res, next) => {
   if (req.method !== "GET") return next();
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
+  credit.sendFile(res, path.join(PUBLIC_DIR, "index.html"), next);
 });
 
 // JSON error fallback
@@ -1742,6 +1749,8 @@ app.use((err, req, res, next) => {
 // Startup
 // --------------------------------------------------------------------------
 async function start() {
+  // Refuses to start when the author credit was tampered with.
+  if (!credit.verify({ publicDir: PUBLIC_DIR, licenseFile: path.join(ROOT, "LICENSE"), serverFile: __filename })) return;
   ensureDirsSync();
   await loadSettings(); // creates settings.json if missing
   if (!(await pathExists(HISTORY_JSON))) await writeHistory([]);

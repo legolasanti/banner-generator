@@ -30,14 +30,27 @@ body {
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 6px 18px -14px rgba(18, 22, 10, 0.35);
   position: relative;
   z-index: var(--z-topbar);
   flex: none;
 }
-.brand { display: flex; align-items: center; gap: var(--space-2); color: var(--color-primary); text-decoration: none; flex: none; border-radius: var(--radius-md); }
-.brand__mark { display: inline-flex; filter: drop-shadow(0 2px 4px rgba(26, 107, 26, 0.22)); }
-.brand__text { font-size: 17px; color: var(--color-text); letter-spacing: -0.02em; white-space: nowrap; }
-.brand__text strong { font-weight: var(--weight-heavy); }
+/* Signature: a hairline in the logo's green along the very top of the bar. */
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--gradient-brand);
+  opacity: 0.85;
+  pointer-events: none;
+}
+/* The ABC design logo (shared/brand): 35 px tall, set a little in from the
+   edge. The green mark alone stands in when the bar gets narrow. */
+.brand { display: flex; align-items: center; flex: none; margin-left: var(--space-2); text-decoration: none; border-radius: var(--radius-md); }
+.brand:focus-visible { box-shadow: var(--shadow-focus); }
+.brand__logo { display: block; height: 35px; width: auto; }
+.brand__mark { display: none; height: 35px; width: auto; }
 
 /* Annonser | Native Premium — the two work areas. */
 .areas {
@@ -61,7 +74,7 @@ body {
   transition: color var(--duration) var(--ease), background-color var(--duration) var(--ease);
 }
 .area:hover { color: var(--color-text); background: var(--color-surface-muted); }
-.area.is-active { color: var(--color-primary-strong); background: var(--color-primary-soft); }
+.area.is-active { color: var(--color-primary-strong); background: var(--color-primary-soft); box-shadow: inset 0 0 0 1px var(--color-primary-border); }
 
 /* Tool tabs: a pill track, grouped by thin separators. */
 .tabs {
@@ -95,41 +108,33 @@ body {
 .tab.is-active {
   background: var(--color-surface);
   color: var(--color-primary-strong);
-  box-shadow: 0 1px 2px rgba(18, 22, 10, 0.1), 0 0 0 1px rgba(18, 22, 10, 0.04);
+  box-shadow: var(--shadow-raised);
 }
 .tab:focus-visible { box-shadow: var(--shadow-focus); border-radius: var(--radius-full); }
 .tab--icon { width: 34px; padding: 0; justify-content: center; }
 .tabs__sep { flex: none; width: 1px; height: 18px; margin: 0 var(--space-1); background: var(--color-border-strong); }
 
-.topbar__right { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex: none; }
+.topbar__right { margin-left: auto; padding-left: var(--space-2); display: flex; align-items: center; gap: var(--space-2); flex: none; }
 #openSettings svg { transition: transform 0.5s var(--ease); }
 #openSettings:hover svg { transform: rotate(60deg); }
 
 /* A narrow window: tabs scroll sideways rather than wrapping the bar. */
-@media (max-width: 1240px) {
+@media (max-width: 1400px) {
+  .topbar { gap: var(--space-3); }
   .tab { padding: 0 var(--space-3); font-size: var(--text-md); }
   .tab--icon { padding: 0; }
-  .brand__text { display: none; }
+}
+/* Below this the full logo would push the tabs into scrolling. */
+@media (max-width: 1240px) {
+  .brand__logo { display: none; }
+  .brand__mark { display: block; }
 }
 
 /* ------------------------------- Main ----------------------------------- */
 .main { flex: 1 1 auto; min-height: 0; }
 
-/* -------------------------------- Footer -------------------------------- */
-.appfoot {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-1-5) var(--space-4);
-  border-top: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: saturate(140%) blur(8px);
-}
-.appfoot__text { font-size: var(--text-sm); color: var(--color-text-tertiary); text-align: center; line-height: var(--leading-snug); }
-.appfoot__text strong { color: var(--color-primary-strong); font-weight: var(--weight-bold); }
-.appfoot__link { color: var(--color-primary-strong); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--duration-fast) var(--ease); }
-.appfoot__link:hover { border-bottom-color: var(--color-primary); }
+/* The author credit footer lives in shared/credit/credit.css (added to every
+   page by the server). */
 
 .view { height: 100%; animation: ui-rise 0.35s var(--ease) both; }
 .view.is-hidden { display: none; }
@@ -160,9 +165,23 @@ body {
   box-shadow: var(--shadow-xs);
   color: inherit;
   text-decoration: none;
+  overflow: hidden;
   transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease), border-color var(--duration) var(--ease);
 }
+/* A strip in the logo's green slides in along the top on hover. */
+.tool::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--gradient-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+.tool:hover::after, .tool:focus-visible::after { transform: scaleX(1); }
 .tool:hover { border-color: var(--color-primary-border); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.tool:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
 .tool:focus-visible { box-shadow: var(--shadow-focus); border-radius: var(--radius-xl); }
 .tool__title { font-size: var(--text-lg); font-weight: var(--weight-heavy); letter-spacing: -0.01em; color: var(--color-text); }
 .tool__desc { font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-text-secondary); }
@@ -190,7 +209,9 @@ body {
   margin-bottom: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-subtle);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(60, 194, 90, 0.08), transparent 60%),
+    var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   overflow: hidden;
 }
@@ -221,10 +242,14 @@ body {
   display: grid;
   place-items: center;
   color: var(--color-primary);
-  background: var(--color-primary-soft);
+  background: linear-gradient(160deg, var(--color-surface) 0%, var(--color-primary-soft) 100%);
+  border: 1px solid var(--color-primary-border);
+  box-shadow: 0 6px 14px -8px rgba(26, 107, 26, 0.45);
+  transition: transform var(--duration) var(--ease);
 }
-.tool__icon--native { color: var(--color-text); background: var(--color-surface-muted); }
-.tool__icon--quiet { color: var(--color-text-secondary); background: var(--color-surface-muted); }
+.tool:hover .tool__icon { transform: scale(1.04) rotate(-2deg); }
+.tool__icon--native { color: var(--color-text); background: var(--color-surface-muted); border-color: var(--color-border); box-shadow: none; }
+.tool__icon--quiet { color: var(--color-text-secondary); background: var(--color-surface-muted); border-color: var(--color-border); box-shadow: none; }
 .tool__arrow { flex: none; align-self: center; color: var(--color-text-tertiary); transition: transform var(--duration) var(--ease), color var(--duration) var(--ease); }
 .tool--row:hover .tool__arrow { color: var(--color-primary); transform: translateX(3px); }
 
@@ -472,10 +497,11 @@ body {
   position: relative;
   width: 100%;
   height: var(--control-h-lg);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-primary-hover);
   border-radius: var(--radius-md);
-  background: var(--color-primary);
+  background: var(--color-primary) var(--gradient-primary);
   color: var(--color-text-inverse);
+  text-shadow: 0 1px 0 rgba(12, 74, 16, 0.25);
   font: var(--weight-bold) var(--text-base) / 1 var(--font-sans);
   letter-spacing: -0.005em;
   cursor: pointer;
@@ -483,11 +509,12 @@ body {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   transition: background-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), transform var(--duration-fast) var(--ease);
 }
-.btn-generate:hover:not(:disabled) { background: var(--color-primary-hover); border-color: var(--color-primary-hover); box-shadow: 0 8px 20px rgba(26, 107, 26, 0.28); }
+.btn-generate:hover:not(:disabled) { background: var(--color-primary-hover) var(--gradient-primary-hover); border-color: var(--color-primary-strong); box-shadow: var(--shadow-primary-hover); }
 .btn-generate:active:not(:disabled) { transform: translateY(1px); }
-.btn-generate:disabled { cursor: not-allowed; opacity: 0.55; box-shadow: none; }
-.btn-generate.is-loading { cursor: progress; opacity: 0.85; }
-.btn-generate:focus-visible { box-shadow: var(--shadow-focus); }
+/* Waiting for a photo: clearly not clickable yet, not a faded green. */
+.btn-generate:disabled { cursor: not-allowed; background: var(--color-surface-sunken); border-color: var(--color-border-strong); color: var(--color-text-disabled); text-shadow: none; box-shadow: none; }
+.btn-generate.is-loading { cursor: progress; background: var(--color-primary) var(--gradient-primary); border-color: var(--color-primary-hover); color: var(--color-text-inverse); opacity: 0.9; }
+.btn-generate:focus-visible { box-shadow: var(--shadow-primary), var(--shadow-focus); }
 .btn-generate__spinner {
   width: 16px; height: 16px; border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff;
@@ -525,7 +552,10 @@ body {
 
 /* The Pakke choice: an even grid (columns set in app.js). Long labels such
    as "Kun Nyhetsgrid 190×190" may take two lines inside their cell. */
-#downloadSet .seg { height: auto; min-height: var(--control-h-sm); padding: var(--space-1-5) var(--space-2); font-size: var(--text-sm); line-height: 1.2; white-space: normal; text-align: center; }
+#downloadSet .seg { height: auto; min-height: var(--control-h-sm); padding: var(--space-1-5) var(--space-2); font-size: var(--text-sm); line-height: 1.2; white-space: normal; text-align: center; flex-direction: column; gap: 2px; }
+#downloadSet .seg__main { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+#downloadSet .seg__sub { font: var(--weight-regular) var(--text-2xs) / 1 var(--font-mono); color: var(--color-text-tertiary); white-space: nowrap; }
+#downloadSet .seg.is-active .seg__sub { color: var(--color-primary); }
 #downloadSet.is-many .seg:first-child { grid-column: 1 / -1; }
 
 /* ----------------------------- Previews --------------------------------- */
@@ -621,11 +651,11 @@ body {
 .hcard__name { font-weight: var(--weight-bold); font-size: var(--text-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hcard__head { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-0-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hcard__time { display: block; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-text-tertiary); margin-top: var(--space-1-5); }
-/* All of a card's actions share one row in equal cells; four (Wallpaper:
-   Bilder, HTML5, Rediger, Slett) make a 2 × 2 grid rather than 3 + 1. */
-.hcard__actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1-5); margin-top: auto; padding-top: var(--space-3); }
-.hcard__actions:has(> :nth-child(4)) { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.hcard__actions > * { width: 100%; padding-left: var(--space-2); padding-right: var(--space-2); }
+/* One row per card: the actions share it in equal cells and delete is a
+   square icon at the end, so rows line up across the whole grid. */
+.hcard__actions { display: flex; gap: var(--space-1-5); margin-top: auto; padding-top: var(--space-3); }
+.hcard__actions > * { flex: 1 1 0; min-width: 0; padding-left: var(--space-2); padding-right: var(--space-2); }
+.hcard__actions > .hcard__del { flex: none; width: var(--control-h-sm); padding: 0; color: var(--color-text-tertiary); }
 
 /* Which product a history entry came from (tone from .badge--success). */
 .hcard__tag { height: 20px; margin-left: var(--space-1-5); font-size: var(--text-2xs); vertical-align: 1px; }
@@ -640,12 +670,14 @@ body {
 .drawer {
   position: fixed; top: 0; right: 0; height: 100%; width: min(480px, 92vw);
   background: var(--color-surface); z-index: var(--z-drawer);
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
   transform: translateX(100%);
-  transition: transform 0.34s var(--ease);
+  /* The shadow only while open: closed, it leaked a grey band onto the
+     right edge of every page. */
+  transition: transform 0.34s var(--ease), box-shadow 0.34s var(--ease);
   display: flex; flex-direction: column;
 }
-.drawer.is-open { transform: none; }
+.drawer.is-open { transform: none; box-shadow: var(--shadow-lg); }
 .drawer__head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
   padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);
