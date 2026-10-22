@@ -155,7 +155,29 @@
     search.addEventListener("input", ui.debounce(draw, 120));
 
     function card(p) {
-      var thumb = p.thumb ? h("img", { src: NP.api.assetUrl(p.thumb, 480), alt: "", loading: "lazy", on: { error: function (e) { e.target.src = NP.api.assetUrl(p.thumb, 0); } } }) : h("div.nx-card__ph", null, ui.icon("panel-top", 30));
+      var placeholder = function () {
+        return h("div.nx-card__ph", null, ui.icon("panel-top", 30));
+      };
+      // Small size first, then the original; when that is gone too (deleted
+      // upload) the card shows the placeholder instead of an empty grey box.
+      var thumb = p.thumb
+        ? h("img", {
+            src: NP.api.assetUrl(p.thumb, 480),
+            alt: "",
+            loading: "lazy",
+            on: {
+              error: function (e) {
+                var img = e.target;
+                if (!img.dataset.retried) {
+                  img.dataset.retried = "1";
+                  img.src = NP.api.assetUrl(p.thumb, 0);
+                } else if (img.parentNode) {
+                  img.parentNode.replaceChild(placeholder(), img);
+                }
+              },
+            },
+          })
+        : placeholder();
       var menuBtn = ui.button("", { icon: "ellipsis-vertical", kind: "ghost", small: true, title: "Flere valg for «" + p.name + "»", onClick: function (e) {
         e.stopPropagation();
         ui.popover(e.currentTarget, h("div.nx-menu", null,

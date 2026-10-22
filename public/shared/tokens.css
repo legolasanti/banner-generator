@@ -42,6 +42,14 @@
   --color-primary-soft: #e9f3e6;
   --color-primary-border: #cfe4c9;
   --color-focus-ring: rgba(26, 107, 26, 0.24);
+  /* The logo's green "A": bright leaf green into deep forest. Used where the
+     brand itself speaks (primary buttons, step numbers, icon tiles), never
+     for status. */
+  --color-brand-leaf: #3cc25a;
+  --color-brand-forest: #0c5a24;
+  --gradient-brand: linear-gradient(135deg, var(--color-brand-leaf) 0%, var(--color-primary-bright) 42%, var(--color-brand-forest) 100%);
+  --gradient-primary: linear-gradient(180deg, var(--color-primary-bright) 0%, var(--color-primary) 100%);
+  --gradient-primary-hover: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
 
   /* ------------------------------ Semantic ------------------------------ */
   --color-success: var(--color-primary);
@@ -132,12 +140,17 @@
   --control-px-lg: 20px;
 
   /* ------------------------------- Elevation ---------------------------- */
-  --shadow-xs: 0 1px 2px rgba(18, 22, 10, 0.06);
-  --shadow-sm: 0 2px 8px rgba(18, 22, 10, 0.06), 0 1px 2px rgba(18, 22, 10, 0.04);
-  --shadow-md: 0 10px 28px rgba(18, 22, 10, 0.1);
-  --shadow-lg: 0 24px 64px rgba(18, 22, 10, 0.22);
-  --shadow-primary: 0 4px 12px rgba(26, 107, 26, 0.22);
-  --shadow-focus: 0 0 0 3px var(--color-focus-ring);
+  /* Layered: a tight contact shadow plus a soft ambient one, so surfaces
+     read as lifted paper rather than smudged boxes. */
+  --shadow-xs: 0 1px 2px rgba(18, 22, 10, 0.05), 0 0 0 0.5px rgba(18, 22, 10, 0.02);
+  --shadow-sm: 0 1px 2px rgba(18, 22, 10, 0.04), 0 4px 14px -2px rgba(18, 22, 10, 0.06);
+  --shadow-md: 0 2px 6px rgba(18, 22, 10, 0.05), 0 16px 36px -8px rgba(18, 22, 10, 0.16);
+  --shadow-lg: 0 4px 12px rgba(18, 22, 10, 0.08), 0 32px 72px -12px rgba(18, 22, 10, 0.3);
+  --shadow-primary: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(12, 74, 16, 0.3), 0 6px 16px -6px rgba(26, 107, 26, 0.55);
+  --shadow-primary-hover: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(12, 74, 16, 0.3), 0 10px 22px -8px rgba(26, 107, 26, 0.6);
+  --shadow-raised: 0 1px 2px rgba(18, 22, 10, 0.1), 0 0 0 1px rgba(18, 22, 10, 0.05);
+  --shadow-focus: 0 0 0 2px var(--color-surface), 0 0 0 4px rgba(26, 107, 26, 0.5);
+  --shadow-focus-soft: 0 0 0 3px var(--color-focus-ring);
 
   /* -------------------------------- Layers ------------------------------ */
   --z-sticky: 10;
@@ -150,6 +163,7 @@
 
   /* -------------------------------- Motion ------------------------------ */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 120ms;
   --duration: 180ms;
   --duration-slow: 300ms;

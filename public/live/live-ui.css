@@ -142,7 +142,7 @@
   bottom: -1px;
   height: 2px;
   border-radius: 2px 2px 0 0;
-  background: var(--color-primary);
+  background: var(--color-primary) var(--gradient-brand);
   transform: scaleX(0);
   transition: transform var(--duration) var(--ease);
 }
@@ -675,7 +675,7 @@ input[type="range"].lv-range {
   animation: ui-rise var(--duration-slow) var(--ease);
 }
 .lv-result__head { display: flex; gap: var(--space-3); align-items: flex-start; }
-.lv-result__badge { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--color-text-inverse); background: var(--color-primary); box-shadow: var(--shadow-primary); }
+.lv-result__badge { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--color-text-inverse); background: var(--color-primary) var(--gradient-brand); box-shadow: var(--shadow-primary); }
 .lv-result__head h3 { font-size: var(--text-lg); font-weight: var(--weight-heavy); }
 .lv-result__head p { margin: var(--space-0-5) 0 0; font-size: var(--text-sm); color: var(--color-text-tertiary); line-height: var(--leading-snug); }
 .lv-files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }

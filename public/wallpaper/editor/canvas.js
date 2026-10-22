@@ -339,7 +339,8 @@
         label(g, cx, (tb.y + tb.height / 2) * z, "Toppbanner 1000×300 ligger her", "wp-g-label wp-g-center");
       }
       svgEl("rect", { x: ct.x * z, y: ct.y * z, width: ct.width * z, height: ct.height * z, fill: "url(#wpHatch)", class: "wp-g-content" }, g);
-      label(g, cx, (ct.y + 60) * z + 10, "Nettsidens innhold dekker dette området", "wp-g-label wp-g-center");
+      // Centred in the covered area, clear of the top banner's tag above it.
+      label(g, cx, (ct.y + ct.height / 2) * z, "Nettsidens innhold dekker dette området", "wp-g-label wp-g-center");
     }
 
     if (v.safe) {

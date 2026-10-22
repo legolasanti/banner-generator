@@ -558,7 +558,20 @@
       btn.type = "button";
       btn.className = "seg" + (set.id === active ? " is-active" : "");
       btn.dataset.val = set.id;
-      btn.textContent = set.label;
+      // Up to four choices: every cell gets the same two lines (what, and how
+      // many/which size), so «Kun Nyhetsgrid 190×190» never wraps on its own.
+      if (sets.length > 4) {
+        btn.textContent = set.label;
+      } else {
+        const m = /^(.*?)\s+(\d+×\d+)$/.exec(set.label);
+        const main = document.createElement("span");
+        main.className = "seg__main";
+        main.textContent = m ? m[1] : set.label;
+        const sub = document.createElement("span");
+        sub.className = "seg__sub";
+        sub.textContent = m ? m[2] : set.count;
+        btn.append(main, sub);
+      }
       btn.addEventListener("click", () => {
         $$(".seg", el.downloadSet).forEach((x) => x.classList.toggle("is-active", x === btn));
         state.downloadSets[state.product] = set.id;
@@ -1480,10 +1493,15 @@
         htmlDl.textContent = "HTML5";
         htmlDl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?set=all&type=html";
       }
+      // Delete is a square icon at the end of the row, so every card has one
+      // row of actions that lines up with its neighbours.
       const del = document.createElement("button");
-      del.className = "btn-ghost btn-sm is-danger";
+      del.className = "btn-ghost btn-sm is-danger hcard__del";
       del.type = "button";
-      del.textContent = "Slett";
+      del.title = "Slett";
+      del.setAttribute("aria-label", "Slett " + (entry.name || "pakken"));
+      del.innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
       del.addEventListener("click", () => deleteEntry(entry, card));
 
       actions.appendChild(dl);

@@ -121,16 +121,32 @@ code, kbd {
 .btn--primary,
 .btn-primary, .btn-download,
 .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-primary) var(--gradient-primary);
+  border-color: var(--color-primary-hover);
   color: var(--color-text-inverse);
   font-weight: var(--weight-bold);
   box-shadow: var(--shadow-primary);
+  text-shadow: 0 1px 0 rgba(12, 74, 16, 0.25);
 }
 :is(.btn--primary, .btn-primary, .btn-download, .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary):hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover) var(--gradient-primary-hover);
+  border-color: var(--color-primary-strong);
   color: var(--color-text-inverse);
+  box-shadow: var(--shadow-primary-hover);
+}
+:is(.btn--primary, .btn-primary, .btn-download, .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary):focus-visible {
+  box-shadow: var(--shadow-primary), var(--shadow-focus);
+}
+/* A primary that cannot be used yet reads as waiting, not as a faded
+   version of the real thing. */
+:is(.btn--primary, .btn-primary, .btn-download, .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary):disabled,
+:is(.btn--primary, .lv-btn--primary, .wp-btn--primary, .nx-btn--primary, .npr-btn--primary)[aria-disabled="true"] {
+  opacity: 1;
+  background: var(--color-surface-sunken);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-disabled);
+  box-shadow: none;
+  text-shadow: none;
 }
 
 /* Secondary — bordered, white. The default look of .btn and .nx-btn. */
@@ -186,7 +202,12 @@ code, kbd {
   color: var(--color-text-inverse);
   font-weight: var(--weight-bold);
 }
+:is(.btn--ai, .nx-btn--ai) {
+  background-image: linear-gradient(180deg, #7d55e6 0%, var(--color-ai) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 16px -6px rgba(106, 63, 214, 0.55);
+}
 :is(.btn--ai, .nx-btn--ai):hover:not(:disabled) {
+  background-image: none;
   background: var(--color-ai-hover);
   border-color: var(--color-ai-hover);
   color: var(--color-text-inverse);
@@ -311,7 +332,7 @@ code, kbd {
 :is(.input, .bk-input, .bk-select, .lv-input, .nx-input, .wp-select, .wp-textarea, .npr-input):focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus);
+  box-shadow: var(--shadow-focus-soft);
 }
 :where(input, textarea, select):disabled,
 :is(.input, .lv-input, .nx-input):disabled { background: var(--color-surface-muted); color: var(--color-text-tertiary); cursor: not-allowed; }
@@ -510,7 +531,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 :is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):is(.is-active, .is-on, [aria-pressed="true"], [aria-selected="true"]) {
   background: var(--color-surface);
   color: var(--color-primary-strong);
-  box-shadow: 0 1px 2px rgba(18, 22, 10, 0.1), 0 0 0 1px rgba(18, 22, 10, 0.04);
+  box-shadow: var(--shadow-raised);
 }
 :is(.segmented .seg, .lv-seg__btn, .nx-seg__btn, .wp-seg__b):focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 /* Small */
@@ -620,9 +641,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
+  background: var(--color-primary) var(--gradient-brand);
+  color: var(--color-text-inverse);
   font: var(--weight-heavy) 11px / 1 var(--font-sans);
+  box-shadow: 0 1px 2px rgba(12, 74, 16, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 /* ========================== 7. Cards and panels ========================== */
@@ -641,6 +663,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 }
 .card--interactive { transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease), border-color var(--duration) var(--ease); cursor: pointer; }
 .card--interactive:hover { box-shadow: var(--shadow-md); border-color: var(--color-border-strong); transform: translateY(-2px); }
+.card--interactive:active { transform: translateY(0); box-shadow: var(--shadow-sm); transition-duration: var(--duration-fast); }
 
 /* Card title row: title, one-line description, optional actions. */
 .card__head, .lv-card__head { display: flex; align-items: flex-start; gap: var(--space-3); }
@@ -760,7 +783,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-6); }
 .page-head__text { min-width: 0; max-width: 680px; }
 .page-head__eyebrow { margin: 0 0 var(--space-2); }
-.page-head__title { font-size: var(--text-3xl); font-weight: var(--weight-heavy); letter-spacing: -0.025em; line-height: 1.1; color: var(--color-text); }
+.page-head__title { font-size: var(--text-3xl); font-weight: var(--weight-heavy); letter-spacing: -0.03em; line-height: 1.1; color: var(--color-text); text-wrap: balance; }
 .page-head__desc { margin: var(--space-2) 0 0; font-size: var(--text-base); line-height: var(--leading-normal); color: var(--color-text-secondary); }
 .page-head__actions { display: flex; align-items: center; gap: var(--space-2); flex: none; }
 
@@ -783,7 +806,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   place-items: center;
   margin-bottom: var(--space-2);
   color: var(--color-primary);
-  background: var(--color-primary-soft);
+  background: linear-gradient(160deg, var(--color-surface) 0%, var(--color-primary-soft) 100%);
+  border: 1px solid var(--color-primary-border);
+  box-shadow: 0 6px 16px -8px rgba(26, 107, 26, 0.45);
 }
 .empty-state__title { margin: 0; font-size: var(--text-lg); font-weight: var(--weight-heavy); color: var(--color-text); }
 .empty-state__text { margin: 0; max-width: 420px; font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-text-tertiary); }
