@@ -481,7 +481,7 @@
 
   // Sections the floating button must not sit on: things the reader acts on
   // or reads closely (np.js hides the button while one is at the bottom).
-  var BUSY = { cta: 1, productCards: 1, quiz: 1, poll: 1, countdown: 1, compare: 1, hotspots: 1, tabs: 1, testimonials: 1, specTable: 1, flipCards: 1, accordion: 1, quote: 1, steps: 1, rankList: 1, stickyStory: 1, factBox: 1, embed: 1 };
+  var BUSY = { cards: 1, imageText: 1, timeline: 1, statement: 1, cta: 1, productCards: 1, quiz: 1, poll: 1, countdown: 1, compare: 1, hotspots: 1, tabs: 1, testimonials: 1, specTable: 1, flipCards: 1, accordion: 1, quote: 1, steps: 1, rankList: 1, stickyStory: 1, factBox: 1, embed: 1 };
   // Sections that reach the right edge, where the side chapter dots sit.
   var WIDE = { hScroll: 1, parallaxImage: 1, scrollVideo: 1, stickyStory: 1, gallery: 1, marquee: 1 };
   function isWide(section) {

@@ -1696,3 +1696,29 @@ div.np-acc { color: inherit; }
 /* The browser's default blockquote indent (40 px each side) never belonged
    here; it only showed once a quote stood left-aligned beside a portrait. */
 .np-quote__text { margin: 0; }
+
+/* ---- the floating button in the editor canvas ----
+   Shown where it sits on the published page (bottom corner, a bar on a
+   phone-width canvas), fixed to the canvas, below the locked disclosure
+   (z 60) and click-through, so it never hides the label, the chapter menu
+   or what is being edited. Overrides the old in-flow placement, which put
+   it at the top of the page. */
+html.np-editor .np-sticky { position: fixed; top: auto; bottom: 16px; right: 16px; left: auto; height: auto; overflow: visible; display: block; transform: none; z-index: 40; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+/* np.js shows it only where no content is under it, as on the page. */
+html.np-editor .np-sticky.is-on { opacity: 0.96; }
+html.np-editor .np-sticky--center { left: 50%; right: auto; transform: translateX(-50%); }
+@media (max-width: 599px) { html.np-editor .np-sticky--auto { left: 12px; right: 12px; bottom: 12px; } }
+
+/* ---- product cards follow a dark section or page ---- */
+.np-on-dark .np-prod { background: rgba(255, 255, 255, 0.06); color: inherit; border-color: rgba(255, 255, 255, 0.14); }
+.np-on-dark .np-prod__text { color: inherit; opacity: 0.78; }
+.np-on-dark .np-prod__old { color: rgba(255, 255, 255, 0.6); }
+.np-on-dark .np-prod__price { color: var(--np-accent-on-dark, var(--np-accent)); }
+.np-on-dark .np-prod__cta { color: inherit; }
+.np-on-dark .np-prods-fit--cover .np-prod__img { background: rgba(255, 255, 255, 0.05); }
+.np-on-dark .np-prods-fit--contain .np-prod__img { background: rgba(255, 255, 255, 0.92); }
+a.np-prod:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18); }
+
+/* ---- split hero: its text column may not grow with a long word (np.js
+   then shrinks the title to fit the column instead) ---- */
+.np-hero > .np-wrap, .np-hero__media, .np-hero__pin > .np-wrap { min-width: 0; }

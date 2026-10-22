@@ -408,3 +408,64 @@ test("a quote's portrait: small by the name (default), large and round, or 4:5 b
   // Without a picture every look falls back to the plain quote.
   assert.match(render([{ type: "quote", props: { text: "Sitat.", portrait: "side" } }]), /np-quote--p-small/);
 });
+
+// ---- final-critic fixes -------------------------------------------------------------
+test("cards, image+text, timeline and statements keep the floating button away on phones", () => {
+  const html = render([{ type: "cards" }, { type: "imageText" }, { type: "timeline" }, { type: "statement" }]);
+  for (const t of ["cards", "imageText", "timeline", "statement"]) assert.match(html, new RegExp('data-np-type="' + t + '" data-np-busy'), t);
+});
+
+test("in the editor the floating button sits fixed in its corner, under the locked label, never in the page flow", () => {
+  assert.match(CSS, /html\.np-editor \.np-sticky \{ position: fixed; top: auto; bottom: 16px; right: 16px;[^}]*z-index: 40; pointer-events: none; opacity: 0;/);
+  assert.match(CSS, /html\.np-editor \.np-sticky\.is-on \{ opacity: 0\.96; \}/);
+  // The disclosure stays above it (z 60, locked).
+  assert.match(CSS, /\.np \.np-disclosure \{[^}]*z-index: 60 !important/);
+});
+
+test("a dark section's product cards are dark too", () => {
+  assert.match(CSS, /\.np-on-dark \.np-prod \{ background: rgba\(255, 255, 255, 0\.06\); color: inherit;/);
+});
+
+test("the split hero shrinks a word too wide for its column", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const id = "d".repeat(64) + ".jpg";
+  const assets = { [id]: { id, name: "x.jpg", type: "image", w: 1600, h: 1000, variants: [] } };
+  for (const w of [1440, 1280]) {
+    const page = await open(render([{ type: "hero", props: { layout: "split", image: id, title: "Mørketiden starter i stua", titleSize: "xxl", titleFx: "lines", height: "tall" } }], { inline: true, assets }), w, 900);
+    await new Promise((r) => setTimeout(r, 300));
+    // With the "lines" effect each line box clips: check them, not just the heading.
+    const r = await page.$eval(".np-h1", (h) => ({ over: Math.max(h.scrollWidth - h.clientWidth, ...[...h.querySelectorAll(".np-ln")].map((l) => l.scrollWidth - l.clientWidth)), right: h.getBoundingClientRect().right, col: h.closest(".np-wrap").getBoundingClientRect().right }));
+    assert.ok(r.over <= 1, w + ": overflow " + r.over);
+    assert.ok(r.right <= r.col + 1 && r.right <= w, w + ": title ends at " + r.right);
+    await page.close();
+  }
+});
+
+test("the desktop corner button never covers text", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const cards = { type: "cards", props: { columns: "4", items: [1, 2, 3, 4].map((n) => ({ title: "Kort " + n, text: "Tekst som fyller kortet. ".repeat(4) })) } };
+  const text = { type: "richText", props: { html: "<p>" + "Tekst. ".repeat(260) + "</p>" } };
+  const page = await open(render([{ type: "hero", props: { layout: "type", title: "Åpning" } }, text, cards, text, cards, text], { inline: true, extras: { stickyCta: true, stickyLabel: "Se ledige stillinger", stickyAfter: 5 } }), 1440, 900);
+  await page.evaluate(() => (document.documentElement.style.scrollBehavior = "auto"));
+  const total = await page.evaluate(() => document.documentElement.scrollHeight);
+  let shown = 0;
+  for (let y = 0; y < total; y += 200) {
+    await page.evaluate((yy) => window.scrollTo(0, yy), y);
+    await new Promise((r) => setTimeout(r, 60));
+    const hits = await page.evaluate(() => {
+      const s = document.querySelector(".np-sticky");
+      if (!s.classList.contains("is-on")) return -1;
+      const right = innerWidth - 24, left = right - s.offsetWidth, bottom = innerHeight - 24, top = bottom - s.offsetHeight;
+      return [...document.querySelectorAll("#np-main :is(p, h2, h3)")].filter((el) => {
+        const b = el.getBoundingClientRect();
+        return b.left < right && b.right > left && b.top < bottom && b.bottom > top;
+      }).length;
+    });
+    if (hits >= 0) {
+      shown++;
+      assert.equal(hits, 0, "text under the button at " + y);
+    }
+  }
+  assert.ok(shown > 0, "it does show beside the text column");
+  await page.close();
+});

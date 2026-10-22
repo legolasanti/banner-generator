@@ -1184,9 +1184,15 @@
     var writes = [];
     els.forEach(function (el) {
       var w = el.clientWidth;
-      if (!w || el.scrollWidth <= w + 1) return;
+      if (!w) return;
+      // The "lines" title effect wraps each line in a box that clips
+      // (overflow: hidden), so a word too wide for the column is cut off
+      // inside it instead of widening the heading: measure those too.
+      var over = el.scrollWidth - w;
+      $all(".np-ln", el).forEach(function (ln) { over = Math.max(over, ln.scrollWidth - ln.clientWidth); });
+      if (over <= 1) return;
       var size = parseFloat(window.getComputedStyle(el).fontSize);
-      var k = Math.max(MIN_FIT, (w / el.scrollWidth) * 0.97);
+      var k = Math.max(MIN_FIT, (w / (w + over)) * 0.97);
       writes.push([el, Math.floor(size * k * 10) / 10]);
     });
     writes.forEach(function (x) {
@@ -1262,24 +1268,52 @@
     // button, products, a poll, a quote (sections marked data-np-busy) – is
     // where the button sits, and from the last call to action to the end.
     var sticky = doc.querySelector("[data-np-sticky]");
-    if (sticky && !EDITOR) {
+    if (sticky) {
       var after = Number(sticky.getAttribute("data-np-sticky")) / 100;
       var ends = $all(".np-footer, .np-fb, .np-credit-line", doc);
       var sections = $all("#np-main > .np-sec", doc);
       var opening = sections[Math.min(1, sections.length - 1)] || null;
       var busy = $all("[data-np-busy]", doc);
+      var corner = sticky.classList.contains("np-sticky--auto");
+      var CONTENT = "p, h1, h2, h3, li, dt, dd, blockquote, figcaption, a, button, input, label, th, td, .np-stat__v, .np-stat__l, .np-card__ico, .np-rank__num, .np-cd__u, .np-tm, .np-prod";
+      var ctas = $all(".np-t-cta", doc);
+      var GAP = 16;
       persistent.push(function (vh) {
         var y = window.scrollY || window.pageYOffset;
         var h = doc.documentElement.scrollHeight - vh;
         var p = h > 0 ? y / h : 0;
         var past = !opening || opening.getBoundingClientRect().bottom < vh * 0.35;
-        var zone = vh - (sticky.offsetHeight || 60) - 48;
+        var bh = sticky.offsetHeight || 60;
+        var zone = vh - bh - 48;
         var hit = function (el) {
           var r = el.getBoundingClientRect();
           return r.top < vh && r.bottom > zone;
         };
-        var blocked = ends.some(function (el) { return el.getBoundingClientRect().top < vh; }) || busy.some(hit);
-        sticky.classList.toggle("is-on", p >= after && past && !blocked);
+        var blocked = ends.some(function (el) { return el.getBoundingClientRect().top < vh; }) ||
+          // Never two calls to action on screen at once.
+          ctas.some(function (el) { var r = el.getBoundingClientRect(); return r.top < vh && r.bottom > 0; });
+        if (!blocked && corner && window.innerWidth >= 600) {
+          // Desktop corner: hidden only while something readable or clickable
+          // in the sections at the bottom of the screen is under the button.
+          var right = window.innerWidth - 24;
+          var left = right - (sticky.offsetWidth || 240);
+          var top = vh - 24 - bh;
+          blocked = $all("#np-main > .np-sec", doc).some(function (sec) {
+            var r = sec.getBoundingClientRect();
+            if (r.bottom < top - GAP || r.top > vh) return false;
+            return $all(CONTENT, sec).some(function (el) {
+              var b = el.getBoundingClientRect();
+              return b.width > 0 && b.left < right + GAP && b.right > left - GAP && b.top < vh && b.bottom > top - GAP;
+            });
+          });
+        } else if (!blocked) {
+          // Phones (a full-width bar) and the centred button: hidden while a
+          // busy section (cards, stories, quotes, products …) is at the bottom.
+          blocked = (EDITOR ? $all("[data-np-busy]", doc) : busy).some(hit);
+        }
+        // The editor shows it wherever it is free, so it can be seen and
+        // styled without scrolling to the right depth first.
+        sticky.classList.toggle("is-on", (EDITOR || (p >= after && past)) && !blocked);
       });
     }
     // Side dots step aside while something wide (cards scrolling sideways, a
