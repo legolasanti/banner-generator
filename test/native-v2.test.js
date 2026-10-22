@@ -136,7 +136,7 @@ test("templates are valid, use the demo kit and carry a theme of their own", () 
 test("template expansion swaps demo names for ids and drops unknown ones", () => {
   const t = T.find("bil-premium");
   const id = "a".repeat(64) + ".jpg";
-  const ex = T.expand(t, { "road-mountains": id });
+  const ex = T.expand(t, { "ev-snow-suv": id });
   assert.equal(ex.sections[0].props.image, id);
   assert.equal(ex.sections[4].props.image, "");
   assert.ok(/demo:/.test(JSON.stringify(t.sections)), "the original is untouched");
@@ -378,7 +378,7 @@ test("a premium template brings its look, extras and demo photos", async () => {
   const p = c.data.project;
   const tpl = T.find("reise");
   assert.equal(p.theme.fonts.heading.family, "Instrument Serif");
-  assert.equal(p.extras.chapterNav, "side");
+  assert.equal(p.extras.chapterNav, tpl.extras.chapterNav);
   assert.equal(Object.keys(p.assets).length, T.demoNames(tpl).length);
   assert.ok(p.assets[p.pages[0].sections[0].props.image], "hero photo is a real asset");
   assert.ok(Object.values(p.assets).every((a) => /^Demo – /.test(a.name) && a.alt));
