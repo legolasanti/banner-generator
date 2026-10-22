@@ -1,162 +1,10 @@
 [
  {
-  "name": "road-mountains",
-  "file": "road-mountains.jpg",
-  "alt": "Rett vei mot fjellene i morgenlys",
-  "author": "Bec Brown",
-  "source": "https://unsplash.com/photos/7RIm0GqvvkM",
-  "license": "Unsplash License"
- },
- {
-  "name": "road-desert",
-  "file": "road-desert.jpg",
-  "alt": "Vei gjennom sanddyner",
-  "author": "Fré Sonneveld",
-  "source": "https://unsplash.com/photos/1rZcfdsjoR4",
-  "license": "Unsplash License"
- },
- {
-  "name": "road-open",
-  "file": "road-open.jpg",
-  "alt": "Åpen landevei mellom fjellsider",
-  "author": "Kamil Lehmann",
-  "source": "https://unsplash.com/photos/2f5Ktwb8YXk",
-  "license": "Unsplash License"
- },
- {
-  "name": "road-sunset",
-  "file": "road-sunset.jpg",
-  "alt": "Svingete vei i solnedgang",
-  "author": "Joshua Sortino",
-  "source": "https://unsplash.com/photos/XMcoTHgNcQA",
-  "license": "Unsplash License"
- },
- {
-  "name": "van-blue",
-  "file": "van-blue.jpg",
-  "alt": "Blå folkevognbuss parkert i ørkenen",
-  "author": "Kyle Szegedi",
-  "source": "https://unsplash.com/photos/tRQfEwP5P_0",
-  "license": "Unsplash License"
- },
- {
-  "name": "car-classic",
-  "file": "car-classic.jpg",
-  "alt": "Klassisk bil parkert i en gate",
-  "author": "Tim Stief",
-  "source": "https://unsplash.com/photos/uzBiLWpjQEQ",
-  "license": "Unsplash License"
- },
- {
-  "name": "car-interior",
-  "file": "car-interior.jpg",
-  "alt": "Instrumentpanel og ratt i en veteranbil",
-  "author": "Sean Stratton",
-  "source": "https://unsplash.com/photos/3I5j50pIXvU",
-  "license": "Unsplash License"
- },
- {
-  "name": "car-dashboard",
-  "file": "car-dashboard.jpg",
-  "alt": "Førerplass sett fra baksetet",
-  "author": "David Marcu",
-  "source": "https://unsplash.com/photos/_iVG4MsY2N0",
-  "license": "Unsplash License"
- },
- {
-  "name": "cars-pair",
-  "file": "cars-pair.jpg",
-  "alt": "To klassiske biler foran gule garasjeporter",
-  "author": "Dietmar Becker",
-  "source": "https://unsplash.com/photos/8Zt0xOOK4nI",
-  "license": "Unsplash License"
- },
- {
-  "name": "fjord",
-  "file": "fjord.jpg",
-  "alt": "Fjord sett fra fjellet",
-  "author": "Alexey Topolyanskiy",
-  "source": "https://unsplash.com/photos/-oWyJoSqBRM",
-  "license": "Unsplash License"
- },
- {
-  "name": "mountain-lake",
-  "file": "mountain-lake.jpg",
-  "alt": "Fjellsjø med speilbilde av toppene",
-  "author": "Alberto Restifo",
-  "source": "https://unsplash.com/photos/Ni4NgA64TFQ",
-  "license": "Unsplash License"
- },
- {
-  "name": "waterfall",
-  "file": "waterfall.jpg",
-  "alt": "Person foran et stort fossefall",
-  "author": "Jared Erondu",
-  "source": "https://unsplash.com/photos/j4PaE7E2_Ws",
-  "license": "Unsplash License"
- },
- {
-  "name": "canoe",
-  "file": "canoe.jpg",
-  "alt": "Kano på en blank innsjø",
-  "author": "Roberto Nickson",
-  "source": "https://unsplash.com/photos/7BjmDICVloE",
-  "license": "Unsplash License"
- },
- {
-  "name": "mist-peak",
-  "file": "mist-peak.jpg",
-  "alt": "Fjelltopp over tåke",
-  "author": "Dustin Scarpitti",
-  "source": "https://unsplash.com/photos/26-lAP0XprM",
-  "license": "Unsplash License"
- },
- {
-  "name": "forest-mist",
-  "file": "forest-mist.jpg",
-  "alt": "Granskog i tåke",
-  "author": "Jay Mantri",
-  "source": "https://unsplash.com/photos/TFyi0QOx08c",
-  "license": "Unsplash License"
- },
- {
   "name": "aurora",
   "file": "aurora.jpg",
   "alt": "Nordlys over en grantopp",
   "author": "Vashishtha Jogi",
   "source": "https://unsplash.com/photos/bClr95glx6k",
-  "license": "Unsplash License"
- },
- {
-  "name": "stars",
-  "file": "stars.jpg",
-  "alt": "Stjernehimmel med melkeveien",
-  "author": "Juskteez Vu",
-  "source": "https://unsplash.com/photos/TIrXot28Znc",
-  "license": "Unsplash License"
- },
- {
-  "name": "strawberries",
-  "file": "strawberries.jpg",
-  "alt": "Jordbær tett i tett",
-  "author": "veeterzy",
-  "source": "https://unsplash.com/photos/OJJIaFZOeX4",
-  "license": "Unsplash License"
- },
- {
-  "name": "coffee-brew",
-  "file": "coffee-brew.jpg",
-  "alt": "Barista heller kaffe",
-  "author": "Karl Fredrickson",
-  "source": "https://unsplash.com/photos/TYIzeCiZ_60",
-  "license": "Unsplash License"
- },
- {
-  "name": "tea",
-  "file": "tea.jpg",
-  "alt": "Te i glasskanne med blomster",
-  "author": "Vee O",
-  "source": "https://unsplash.com/photos/hGO27G5tZJ8",
   "license": "Unsplash License"
  },
  {
@@ -173,190 +21,6 @@
   "alt": "Grønnsaker og krydder på et skjærebrett",
   "author": "Webvilla",
   "source": "https://unsplash.com/photos/hv1MrBzGGNY",
-  "license": "Unsplash License"
- },
- {
-  "name": "cafe",
-  "file": "cafe.jpg",
-  "alt": "Uteservering ved en kafé",
-  "author": "Linh Nguyen",
-  "source": "https://unsplash.com/photos/oFAVqfTSby8",
-  "license": "Unsplash License"
- },
- {
-  "name": "dining",
-  "file": "dining.jpg",
-  "alt": "Spisestue med lyst bord og stoler",
-  "author": "Breather",
-  "source": "https://unsplash.com/photos/DEdM9Vs6s8w",
-  "license": "Unsplash License"
- },
- {
-  "name": "sofa",
-  "file": "sofa.jpg",
-  "alt": "Sofa ved et vindu",
-  "author": "Benjamin Combs",
-  "source": "https://unsplash.com/photos/5L4XAgMSno0",
-  "license": "Unsplash License"
- },
- {
-  "name": "desk",
-  "file": "desk.jpg",
-  "alt": "Skrivebord med laptop og briller",
-  "author": "Craig Garner",
-  "source": "https://unsplash.com/photos/YoadQb46v6k",
-  "license": "Unsplash License"
- },
- {
-  "name": "laptop",
-  "file": "laptop.jpg",
-  "alt": "Laptop og telefon på et trebord",
-  "author": "Alejandro Escamilla",
-  "source": "https://unsplash.com/photos/yC-Yzbqy7PY",
-  "license": "Unsplash License"
- },
- {
-  "name": "city-park",
-  "file": "city-park.jpg",
-  "alt": "Storby med park sett ovenfra",
-  "author": "freddie marriage",
-  "source": "https://unsplash.com/photos/utwYoEu9SU8",
-  "license": "Unsplash License"
- },
- {
-  "name": "skyscraper",
-  "file": "skyscraper.jpg",
-  "alt": "Skyskraper sett nedenfra",
-  "author": "Mike Wilson",
-  "source": "https://unsplash.com/photos/rM7B4DheQc0",
-  "license": "Unsplash License"
- },
- {
-  "name": "towers",
-  "file": "towers.jpg",
-  "alt": "Høyhus mot himmelen",
-  "author": "Anthony DELANOIX",
-  "source": "https://unsplash.com/photos/b5POxb2aL9o",
-  "license": "Unsplash License"
- },
- {
-  "name": "city-sunset",
-  "file": "city-sunset.jpg",
-  "alt": "Storby i solnedgang",
-  "author": "Kevin Young",
-  "source": "https://unsplash.com/photos/-icmOdYWXuQ",
-  "license": "Unsplash License"
- },
- {
-  "name": "city-night",
-  "file": "city-night.jpg",
-  "alt": "Opplyst by om kvelden",
-  "author": "Sarah Holmes",
-  "source": "https://unsplash.com/photos/TlLgCqWEzUQ",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-woman",
-  "file": "portrait-woman.jpg",
-  "alt": "Portrett av en kvinne",
-  "author": "Roksolana Zasiadko",
-  "source": "https://unsplash.com/photos/LyeduBb2Auk",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-sun",
-  "file": "portrait-sun.jpg",
-  "alt": "Kvinne med solbriller i et blomsterfelt",
-  "author": "Alexander Shustov",
-  "source": "https://unsplash.com/photos/AHBiSKaENwc",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-man",
-  "file": "portrait-man.jpg",
-  "alt": "Mann med kamera",
-  "author": "Jennifer Trovato",
-  "source": "https://unsplash.com/photos/baRYCsjO6z4",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-hiker",
-  "file": "portrait-hiker.jpg",
-  "alt": "Person i gul jakke ser utover",
-  "author": "Luke Pamer",
-  "source": "https://unsplash.com/photos/oUhr-qMTJoc",
-  "license": "Unsplash License"
- },
- {
-  "name": "portrait-field",
-  "file": "portrait-field.jpg",
-  "alt": "Kvinne i motlys på en eng",
-  "author": "Morgan Sessions",
-  "source": "https://unsplash.com/photos/TS2UKluECVE",
-  "license": "Unsplash License"
- },
- {
-  "name": "concert",
-  "file": "concert.jpg",
-  "alt": "Konsert med lysshow",
-  "author": "Daniel Robert",
-  "source": "https://unsplash.com/photos/MRxD-J9-4ps",
-  "license": "Unsplash License"
- },
- {
-  "name": "star-trails",
-  "file": "star-trails.jpg",
-  "alt": "Stjernespor over et landskap",
-  "author": "Jeremy Thomas",
-  "source": "https://unsplash.com/photos/rMmibFe4czY",
-  "license": "Unsplash License"
- },
- {
-  "name": "fire-ring",
-  "file": "fire-ring.jpg",
-  "alt": "Ildring i mørket",
-  "author": "Kamesh Vedula",
-  "source": "https://unsplash.com/photos/ISL7czxIP-k",
-  "license": "Unsplash License"
- },
- {
-  "name": "sparkler",
-  "file": "sparkler.jpg",
-  "alt": "Stjerneskudd i mørket",
-  "author": "Kelley Bozarth",
-  "source": "https://unsplash.com/photos/n6vS3xlnsCc",
-  "license": "Unsplash License"
- },
- {
-  "name": "night-bokeh",
-  "file": "night-bokeh.jpg",
-  "alt": "Bylys i natt, uskarpt",
-  "author": "Israel Sundseth",
-  "source": "https://unsplash.com/photos/BYu8ITUWMfc",
-  "license": "Unsplash License"
- },
- {
-  "name": "light-trails",
-  "file": "light-trails.jpg",
-  "alt": "Lysstriper fra biler på motorvei",
-  "author": "Caleb George",
-  "source": "https://unsplash.com/photos/URmkfvtK3Qw",
-  "license": "Unsplash License"
- },
- {
-  "name": "pharmacist-shelf",
-  "file": "pharmacist-shelf.jpg",
-  "alt": "Farmasøyt i hvit frakk henter en eske fra hyllen",
-  "author": "National Cancer Institute",
-  "source": "https://unsplash.com/photos/byGTytEGjBo",
-  "license": "Unsplash License"
- },
- {
-  "name": "pharmacist-advice",
-  "file": "pharmacist-advice.jpg",
-  "alt": "Farmasøyt viser en kunde et produkt",
-  "author": "National Cancer Institute",
-  "source": "https://unsplash.com/photos/NNpo-liY5aU",
   "license": "Unsplash License"
  },
  {
@@ -381,22 +45,6 @@
   "alt": "Kvinne påfører serum på kinnet",
   "author": "Laura Jaeger",
   "source": "https://unsplash.com/photos/7LAbLSKbkaQ",
-  "license": "Unsplash License"
- },
- {
-  "name": "walk-forest",
-  "file": "walk-forest.jpg",
-  "alt": "Person går på en skogsvei i morgensol",
-  "author": "Emma Simpson",
-  "source": "https://unsplash.com/photos/mNGaaLeWEp0",
-  "license": "Unsplash License"
- },
- {
-  "name": "run-sunset",
-  "file": "run-sunset.jpg",
-  "alt": "Kvinne løper over en eng i solnedgang",
-  "author": "Joao Ferreira",
-  "source": "https://unsplash.com/photos/pvk6sp8fbdI",
   "license": "Unsplash License"
  },
  {
@@ -456,14 +104,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "honeycomb-plate",
-  "file": "honeycomb-plate.jpg",
-  "alt": "Vokstavle med honning på et fat",
-  "author": "Anita Austvika",
-  "source": "https://unsplash.com/photos/oTqQqfOccMs",
-  "license": "Unsplash License"
- },
- {
   "name": "meadow",
   "file": "meadow.jpg",
   "alt": "Blomstereng full av villblomster",
@@ -477,22 +117,6 @@
   "alt": "Blomstereng under kveldshimmel",
   "author": "Joel Holland",
   "source": "https://unsplash.com/photos/TRhGEGdw-YY",
-  "license": "Unsplash License"
- },
- {
-  "name": "couple-kitchen",
-  "file": "couple-kitchen.jpg",
-  "alt": "Par drikker kaffe i et lyst kjøkken",
-  "author": "Vitaly Gariev",
-  "source": "https://unsplash.com/photos/m2S72ik44kc",
-  "license": "Unsplash License"
- },
- {
-  "name": "couple-news",
-  "file": "couple-news.jpg",
-  "alt": "Par ser begeistret på et dokument",
-  "author": "Vitaly Gariev",
-  "source": "https://unsplash.com/photos/MvxFhD6L-qo",
   "license": "Unsplash License"
  },
  {
@@ -568,30 +192,6 @@
   "license": "Unsplash License"
  },
  {
-  "name": "produce-shelf",
-  "file": "produce-shelf.jpg",
-  "alt": "Hyller med frisk frukt i butikken",
-  "author": "Gemma C",
-  "source": "https://unsplash.com/photos/stpjHJGqZyw",
-  "license": "Unsplash License"
- },
- {
-  "name": "shopper",
-  "file": "shopper.jpg",
-  "alt": "Kvinne velger ananas i fruktdisken",
-  "author": "Anya Richter",
-  "source": "https://unsplash.com/photos/dT3KPJ2bg7M",
-  "license": "Unsplash License"
- },
- {
-  "name": "kitchen-modern",
-  "file": "kitchen-modern.jpg",
-  "alt": "Moderne kjøkken med spisebord",
-  "author": "Poojan Thanekar",
-  "source": "https://unsplash.com/photos/dGdrZCjQhTs",
-  "license": "Unsplash License"
- },
- {
   "name": "kitchen-bright",
   "file": "kitchen-bright.jpg",
   "alt": "Lyst kjøkken med spisebord og taklampe",
@@ -608,35 +208,2027 @@
   "license": "Unsplash License"
  },
  {
-  "name": "team-whiteboard",
-  "file": "team-whiteboard.jpg",
-  "alt": "Kolleger i møte ved en tavle",
-  "author": "Austin Distel",
-  "source": "https://unsplash.com/photos/wD1LRb9OeEo",
+  "name": "ebike-sea",
+  "file": "ebike-sea.jpg",
+  "alt": "Kvinne med elsykkel ved sjøen",
+  "author": "KBO Bike",
+  "source": "https://unsplash.com/photos/bPmQguvBMLs",
   "license": "Unsplash License"
  },
  {
-  "name": "team-laptop",
-  "file": "team-laptop.jpg",
-  "alt": "Fire kolleger smiler rundt en laptop",
+  "name": "ebike-rider-city",
+  "file": "ebike-rider-city.jpg",
+  "alt": "Syklist på elsykkel i bygata",
+  "author": "Beeline Navigation",
+  "source": "https://unsplash.com/photos/ObiyD_2SgsE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ebike-display",
+  "file": "ebike-display.jpg",
+  "alt": "Hånd på styret og skjermen på en elsykkel",
+  "author": "TruckRun",
+  "source": "https://unsplash.com/photos/QkZ9JbdXjl8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bike-rain-junction",
+  "file": "bike-rain-junction.jpg",
+  "alt": "Syklist i regnet i et lyskryss",
+  "author": "Semyon Borisov",
+  "source": "https://unsplash.com/photos/xwUP54AhCAY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bike-city-street",
+  "file": "bike-city-street.jpg",
+  "alt": "Syklist i en bygate mot en kirke",
+  "author": "Lorenzo Zunino",
+  "source": "https://unsplash.com/photos/BrSErzj70co",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "coast-road-hills",
+  "file": "coast-road-hills.jpg",
+  "alt": "Svingete kystvei langs fjorden",
+  "author": "Arvid Høidahl",
+  "source": "https://unsplash.com/photos/OJNRKMmwyo8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bike-street-corner",
+  "file": "bike-street-corner.jpg",
+  "alt": "Sykkelvei på et gatehjørne i byen",
+  "author": "Yohan Marion",
+  "source": "https://unsplash.com/photos/2k8x7C5liH0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ebike-traffic",
+  "file": "ebike-traffic.jpg",
+  "alt": "Syklist med hjelm i bytrafikken",
+  "author": "Gotrax",
+  "source": "https://unsplash.com/photos/QG8ZX5KZLng",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "portrait-man-smile",
+  "file": "portrait-man-smile.jpg",
+  "alt": "Smilende mann utendørs",
+  "author": "Irene Strong",
+  "source": "https://unsplash.com/photos/TMt3JGoVlng",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-sofa-warm",
+  "file": "lamp-sofa-warm.jpg",
+  "alt": "Sofa i varmt lys fra en vegglampe",
+  "author": "Josh Sorenson",
+  "source": "https://unsplash.com/photos/-OKa_k_tpwI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-wall-sofa",
+  "file": "lamp-wall-sofa.jpg",
+  "alt": "Vegglampe over en grå sofa",
+  "author": "Lisha Riabinina",
+  "source": "https://unsplash.com/photos/WrZ7wGXqCqw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "living-green-stove",
+  "file": "living-green-stove.jpg",
+  "alt": "Stue med grønne vegger, peis og lune lamper",
+  "author": "Annie Spratt",
+  "source": "https://unsplash.com/photos/UaWBQiB-vfI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-ceramic",
+  "file": "lamp-ceramic.jpg",
+  "alt": "Hvit bordlampe i keramikk",
+  "author": "Karolina Grabowska",
+  "source": "https://unsplash.com/photos/ulh3-dLSXjI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-brass",
+  "file": "lamp-brass.jpg",
+  "alt": "Bordlampe i messing",
+  "author": "Marina Podrez",
+  "source": "https://unsplash.com/photos/zi5Mo48L7Oc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-floor-arc",
+  "file": "lamp-floor-arc.jpg",
+  "alt": "Gulvlampe med buet arm",
+  "author": "Mary Skrynnikova 💛💙",
+  "source": "https://unsplash.com/photos/f9mpWX2a-QU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "pendant-rattan",
+  "file": "pendant-rattan.jpg",
+  "alt": "Taklampe i rotting over spisebordet",
+  "author": "Camila Camacho",
+  "source": "https://unsplash.com/photos/YlK2NfOAyL8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "dining-pendant",
+  "file": "dining-pendant.jpg",
+  "alt": "Spisebord under en messingpendel",
+  "author": "Franco Debartolo",
+  "source": "https://unsplash.com/photos/QmoJO47n3MY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lamp-orange-desk",
+  "file": "lamp-orange-desk.jpg",
+  "alt": "Oransje bordlampe i et mørkt rom",
+  "author": "Emilio Garcia",
+  "source": "https://unsplash.com/photos/1HcK5xQoUKQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "candles-autumn",
+  "file": "candles-autumn.jpg",
+  "alt": "Levende lys og høstløv i vinduskarmen",
+  "author": "Sixteen Miles Out",
+  "source": "https://unsplash.com/photos/bdVmIkx_gIs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabins-snow",
+  "file": "cabins-snow.jpg",
+  "alt": "Hytter på snødekt fjell",
+  "author": "Benjamin Vang",
+  "source": "https://unsplash.com/photos/j7h-GAvIOHo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabin-snow-forest",
+  "file": "cabin-snow-forest.jpg",
+  "alt": "Hytte med snø i skogen",
+  "author": "Solveig Smørdal Botn",
+  "source": "https://unsplash.com/photos/ctxoA5eBs4Y",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabin-roof-snow",
+  "file": "cabin-roof-snow.jpg",
+  "alt": "Tung snø på hyttetaket",
+  "author": "Alexander Sinn",
+  "source": "https://unsplash.com/photos/DvL-BM7WMEM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "stove-fire",
+  "file": "stove-fire.jpg",
+  "alt": "Fyr i peisen i en hytte",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/DYMlVra-Tgw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "firewood-stack",
+  "file": "firewood-stack.jpg",
+  "alt": "Stablet ved",
+  "author": "david lindahl",
+  "source": "https://unsplash.com/photos/9p9aiL1jqR8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "outdoor-tap",
+  "file": "outdoor-tap.jpg",
+  "alt": "Utekran med rødt håndtak",
+  "author": "Erik Mclean",
+  "source": "https://unsplash.com/photos/w2bzXCx7Y3g",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabin-window-night",
+  "file": "cabin-window-night.jpg",
+  "alt": "Rød hytte med lys i vinduet en vinterkveld",
+  "author": "Rich Jones",
+  "source": "https://unsplash.com/photos/LLkH4W3gB4o",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "portrait-woman-40",
+  "file": "portrait-woman-40.jpg",
+  "alt": "Smilende kvinne i førtiårene",
+  "author": "Michael Mims",
+  "source": "https://unsplash.com/photos/fWWiaDox0BU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "potter-studio",
+  "file": "potter-studio.jpg",
+  "alt": "Keramiker i verkstedet sitt",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/XbOismtoTXs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "potter-closeup",
+  "file": "potter-closeup.jpg",
+  "alt": "Portrett av en keramiker med hvitt skjegg",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/4YEgHofuV-Y",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "potter-wheel",
+  "file": "potter-wheel.jpg",
+  "alt": "Hender som former leire på dreieskiva",
+  "author": "Courtney Cook",
+  "source": "https://unsplash.com/photos/mJQzoKrHuJg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "potter-hands-warm",
+  "file": "potter-hands-warm.jpg",
+  "alt": "Hender som former en stor krukke",
+  "author": "Earl Wilcox",
+  "source": "https://unsplash.com/photos/y3W0CzO063w",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "pottery-shelves",
+  "file": "pottery-shelves.jpg",
+  "alt": "Hyller fulle av keramikk i et verksted",
+  "author": "Manki Kim",
+  "source": "https://unsplash.com/photos/ZOeyUJB6t_Y",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cups-shelf",
+  "file": "cups-shelf.jpg",
+  "alt": "Håndlagde kopper på en hylle",
+  "author": "Vladimir Gladkov",
+  "source": "https://unsplash.com/photos/NPPIq1XFdck",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "kiln-firing",
+  "file": "kiln-firing.jpg",
+  "alt": "Kopper som brennes i ovnen",
+  "author": "Viviane Okubo",
+  "source": "https://unsplash.com/photos/2ZnkIsutb4g",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cups-row",
+  "file": "cups-row.jpg",
+  "alt": "Rader med håndlagde krus",
+  "author": "Tom Crew",
+  "source": "https://unsplash.com/photos/oHrC8V_XRU4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lofoten-sunrise",
+  "file": "lofoten-sunrise.jpg",
+  "alt": "Fiskevær i Lofoten i soloppgang",
+  "author": "Johny Goerend",
+  "source": "https://unsplash.com/photos/McSOHojERSI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lofoten-peak",
+  "file": "lofoten-peak.jpg",
+  "alt": "Fjelltopp i morgenlys over et fiskevær",
+  "author": "Johny Goerend",
+  "source": "https://unsplash.com/photos/q913abUzFCI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fjord-mist-boat",
+  "file": "fjord-mist-boat.jpg",
+  "alt": "Båt i en tåkete fjord",
+  "author": "Wes Grant",
+  "source": "https://unsplash.com/photos/c4sHywSrPes",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "rorbu-snow",
+  "file": "rorbu-snow.jpg",
+  "alt": "Røde rorbuer i snø",
+  "author": "Marianne Gay",
+  "source": "https://unsplash.com/photos/7IqPh1sJU6U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "harbour-boats",
+  "file": "harbour-boats.jpg",
+  "alt": "Fiskebåter i havna om vinteren",
+  "author": "jordi",
+  "source": "https://unsplash.com/photos/GMpSO8O7ot4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "aurora-reflection",
+  "file": "aurora-reflection.jpg",
+  "alt": "Nordlys som speiler seg i havet",
+  "author": "Jon Anders Dalan",
+  "source": "https://unsplash.com/photos/DmA484UHAzw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "rib-sunset",
+  "file": "rib-sunset.jpg",
+  "alt": "Ribbåt på havet i solnedgang",
+  "author": "Ming",
+  "source": "https://unsplash.com/photos/rUYWKj-1DwM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "village-night",
+  "file": "village-night.jpg",
+  "alt": "Fiskevær med lys i blåtimen",
+  "author": "Joshua Kettle",
+  "source": "https://unsplash.com/photos/QbuxfHpGHlA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "deck-sunset",
+  "file": "deck-sunset.jpg",
+  "alt": "To reisende på dekk i solnedgang",
+  "author": "Jannik",
+  "source": "https://unsplash.com/photos/_v9Av027cDE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "coast-rocks-waves",
+  "file": "coast-rocks-waves.jpg",
+  "alt": "Bølger mot svaberg på kysten",
+  "author": "Federico Di Dio photography",
+  "source": "https://unsplash.com/photos/oP8OgMblN98",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "portrait-woman-jacket",
+  "file": "portrait-woman-jacket.jpg",
+  "alt": "Kvinne i jakke utendørs",
+  "author": "Christopher John",
+  "source": "https://unsplash.com/photos/rI66xRC2PSM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "portrait-woman-coat",
+  "file": "portrait-woman-coat.jpg",
+  "alt": "Kvinne i rød kåpe en vinterdag",
+  "author": "Jan Kopřiva",
+  "source": "https://unsplash.com/photos/iTeWbTWsSso",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "portrait-man-grey",
+  "file": "portrait-man-grey.jpg",
+  "alt": "Eldre mann med solbriller utendørs",
+  "author": "Vidak",
+  "source": "https://unsplash.com/photos/bMfk8zHXuW4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-snow-suv",
+  "file": "ev-snow-suv.jpg",
+  "alt": "Hvit SUV på snødekt vidde med rosa fjell i bakgrunnen",
+  "author": "M G",
+  "source": "https://unsplash.com/photos/KYSEbj4bjO8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "road-dovre-snow",
+  "file": "road-dovre-snow.jpg",
+  "alt": "Svingete vei gjennom snødekt fjelldal",
+  "author": "Shai Pal",
+  "source": "https://unsplash.com/photos/pndej6ZsgvQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "road-saltfjellet",
+  "file": "road-saltfjellet.jpg",
+  "alt": "Snødekt vei over en øde fjellvidde",
+  "author": "Barnabas Davoti",
+  "source": "https://unsplash.com/photos/5obiVOGkj7I",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trollstigen",
+  "file": "trollstigen.jpg",
+  "alt": "Hårnålssvingene i Trollstigen sett ovenfra",
+  "author": "Bruna Santos",
+  "source": "https://unsplash.com/photos/iMOBvfoKqWE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lofoten-peaks",
+  "file": "lofoten-peaks.jpg",
+  "alt": "Snødekte tinder over et fiskevær i skumringen",
+  "author": "Vidar Nordli-Mathisen",
+  "source": "https://unsplash.com/photos/3ND0SJDEWoc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-charging-night",
+  "file": "ev-charging-night.jpg",
+  "alt": "Elbil som lader på en opplyst ladestasjon om kvelden",
+  "author": "YRKA PICTURED",
+  "source": "https://unsplash.com/photos/VnO7esC-LjA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-interior-modern",
+  "file": "ev-interior-modern.jpg",
+  "alt": "Førerplass i en moderne bil med digitale skjermer",
+  "author": "Avenir Visuals",
+  "source": "https://unsplash.com/photos/LJPylI8jh1U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "road-forest-aerial",
+  "file": "road-forest-aerial.jpg",
+  "alt": "Vei gjennom snødekt granskog sett ovenfra",
+  "author": "Thanos Amoutzias",
+  "source": "https://unsplash.com/photos/QtNXq-g_mnU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-suv-road",
+  "file": "ev-suv-road.jpg",
+  "alt": "Lysegrønn elbil i fart på en svingete fjellvei",
+  "author": "Hyundai Motor Group",
+  "source": "https://unsplash.com/photos/WSqivhqBjeo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-rooftop-feet",
+  "file": "film-rooftop-feet.jpg",
+  "alt": "Føtter som dingler over takkanten høyt over en opplyst by",
+  "author": "Anthony Intraversato",
+  "source": "https://unsplash.com/photos/xr43RescWSA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-rooftop-skyline",
+  "file": "film-rooftop-skyline.jpg",
+  "alt": "Person sitter alene på et tak foran skyskrapere om natten",
+  "author": "Jabari Timothy",
+  "source": "https://unsplash.com/photos/rfjwtsgVhk0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-fire-silhouette",
+  "file": "film-fire-silhouette.jpg",
+  "alt": "Silhuett av en person foran store flammer",
+  "author": "Christopher Bill",
+  "source": "https://unsplash.com/photos/6a9LCJW49hg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-aurora-houses",
+  "file": "film-aurora-houses.jpg",
+  "alt": "Kvinne står i snøen under nordlyset ved røde hus",
+  "author": "Mike Swigunski",
+  "source": "https://unsplash.com/photos/xArWvGrQUG4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-night-car",
+  "file": "film-night-car.jpg",
+  "alt": "Mann ved en bil med røde baklys i tett tåke om natten",
+  "author": "Donny Jiang",
+  "source": "https://unsplash.com/photos/41xHdTcuWq0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-tunnel-couple",
+  "file": "film-tunnel-couple.jpg",
+  "alt": "Par under en bru om natten, opplyst av billys",
+  "author": "Santiago Vellini",
+  "source": "https://unsplash.com/photos/tdaaBeVMaDg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-crew-studio",
+  "file": "film-crew-studio.jpg",
+  "alt": "Filmteam rigger kamera og lys i et studio",
+  "author": "Jakob Owens",
+  "source": "https://unsplash.com/photos/xKfS7Hll0Ck",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-crew-beach",
+  "file": "film-crew-beach.jpg",
+  "alt": "Filmteam i silhuett med kamerautstyr på en strand",
+  "author": "Stephane YAICH",
+  "source": "https://unsplash.com/photos/wboXyUolcvI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "film-camera-operator",
+  "file": "film-camera-operator.jpg",
+  "alt": "Fotograf ser på skjermen til et filmkamera i rødt lys",
+  "author": "Kyle Loftus",
+  "source": "https://unsplash.com/photos/DqmXihYx5UE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cinema-audience",
+  "file": "cinema-audience.jpg",
+  "alt": "Publikum følger spent med i en kinosal",
+  "author": "Antenna",
+  "source": "https://unsplash.com/photos/FDV1BaKNKEo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "hotel-window-fjord",
+  "file": "hotel-window-fjord.jpg",
+  "alt": "Utsikt mot fjorden fra et vindu med to lenestoler",
+  "author": "the iop",
+  "source": "https://unsplash.com/photos/yJlpsJ3zb0M",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "turf-cabins-fjord",
+  "file": "turf-cabins-fjord.jpg",
+  "alt": "Hus med torvtak over en fjord i tåke",
+  "author": "Dominik Mattern",
+  "source": "https://unsplash.com/photos/0hHojC7u7qU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jetty-mirror-lake",
+  "file": "jetty-mirror-lake.jpg",
+  "alt": "Gammel brygge ut i et blankt vann mellom fjellene",
+  "author": "Bananna Wintour",
+  "source": "https://unsplash.com/photos/QuNpstTRjnI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "boathouse-red",
+  "file": "boathouse-red.jpg",
+  "alt": "Rødt naust og badstue ved en brygge i kveldssol",
+  "author": "Bernhard",
+  "source": "https://unsplash.com/photos/oLQAalW7ehg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "dish-fish-dark",
+  "file": "dish-fish-dark.jpg",
+  "alt": "Fiskerett servert på en mørk tallerken",
+  "author": "Trình Minh Thư",
+  "source": "https://unsplash.com/photos/a6kYPun9_ao",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "campfire-stars",
+  "file": "campfire-stars.jpg",
+  "alt": "Venner rundt et bål under stjernehimmelen",
+  "author": "Dana Andreea Gheorghe",
+  "source": "https://unsplash.com/photos/GO14AthgTOg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cabin-modern-dusk",
+  "file": "cabin-modern-dusk.jpg",
+  "alt": "Moderne hytte i svart tre på fjellet i skumringen",
+  "author": "Björn Grochla",
+  "source": "https://unsplash.com/photos/TPv34f6oT2A",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "breakfast-nook",
+  "file": "breakfast-nook.jpg",
+  "alt": "Rundt bord ved vinduet i en lun spisestue",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/WQhZgpA0ni0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "hiker-fjord-cliff",
+  "file": "hiker-fjord-cliff.jpg",
+  "alt": "Turgåer på en fjellknaus høyt over fjorden",
+  "author": "Kjell-Jostein Sivertsen",
+  "source": "https://unsplash.com/photos/3oC6ClgVdgA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-hat",
+  "file": "face-man-hat.jpg",
+  "alt": "Smilende mann med hatt i kveldssol",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/vKB2vf4uCww",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-beard",
+  "file": "face-man-beard.jpg",
+  "alt": "Smilende mann med skjegg på en kafé",
+  "author": "Vidak",
+  "source": "https://unsplash.com/photos/um5RkTks9w0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-silver",
+  "file": "face-woman-silver.jpg",
+  "alt": "Smilende kvinne med grått hår i vinden",
+  "author": "Ravi Patel",
+  "source": "https://unsplash.com/photos/VMGAbeeJTKo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-older",
+  "file": "face-woman-older.jpg",
+  "alt": "Eldre kvinne smiler varmt inn i kameraet",
+  "author": "Michael Thomson",
+  "source": "https://unsplash.com/photos/exSbVjfRXTo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-young",
+  "file": "face-man-young.jpg",
+  "alt": "Ung mann i hvit T-skjorte smiler utendørs",
+  "author": "Irene Strong",
+  "source": "https://unsplash.com/photos/TMt3JGoVlng",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-studio",
+  "file": "face-man-studio.jpg",
+  "alt": "Mann i svart T-skjorte med armene i kors",
+  "author": "Mostafa KordZangeneh",
+  "source": "https://unsplash.com/photos/_tcJW4nqVtw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "house-yellow-mist",
+  "file": "house-yellow-mist.jpg",
+  "alt": "Gult trehus ved fjorden under tunge skyer",
+  "author": "Hans M",
+  "source": "https://unsplash.com/photos/q4Gmk6X_z7o",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "living-divider-shelf",
+  "file": "living-divider-shelf.jpg",
+  "alt": "Lys stue med åpen hylle som romdeler",
+  "author": "Puscas Adryan",
+  "source": "https://unsplash.com/photos/2cfj0Y5ch00",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "living-bright-stove",
+  "file": "living-bright-stove.jpg",
+  "alt": "Lys stue med vedovn, sofaer og store vinduer",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/UTWRDWMMaag",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "storage-baskets",
+  "file": "storage-baskets.jpg",
+  "alt": "Flettede kurver med merkelapper i en hvit hylle",
+  "author": "Jaclyn Baxter",
+  "source": "https://unsplash.com/photos/K5ogQTtLb7s",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "shelves-books-wall",
+  "file": "shelves-books-wall.jpg",
+  "alt": "Vegghyller med bøker og planter",
+  "author": "Vladimir Mokry",
+  "source": "https://unsplash.com/photos/G-4wX5tZNuE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "hallway-wardrobe",
+  "file": "hallway-wardrobe.jpg",
+  "alt": "Innebygd garderobe med skohylle i gangen",
+  "author": "Pickawood",
+  "source": "https://unsplash.com/photos/O3ZeDMslEJw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "desk-window-nook",
+  "file": "desk-window-nook.jpg",
+  "alt": "Lite skrivebord ved vinduet i et soverom",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/QWaV-Wp_GkQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "small-living-bright",
+  "file": "small-living-bright.jpg",
+  "alt": "Liten, lys stue med sofa og sofabord",
+  "author": "MD SHAFAAT HOSSAIN",
+  "source": "https://unsplash.com/photos/Sy8uuOlRDQU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sideboard-oak",
+  "file": "sideboard-oak.jpg",
+  "alt": "Skjenk i lys eik med lampe og vase",
+  "author": "Imani Bahati",
+  "source": "https://unsplash.com/photos/UrQeWGobTnI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "floor-lamp-white",
+  "file": "floor-lamp-white.jpg",
+  "alt": "Hvit gulvlampe ved en grå vegg",
+  "author": "Darren Richardson",
+  "source": "https://unsplash.com/photos/9LnA4jbyim4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "lounge-chair-sheepskin",
+  "file": "lounge-chair-sheepskin.jpg",
+  "alt": "Lenestol i tre med saueskinn",
+  "author": "Clay Banks",
+  "source": "https://unsplash.com/photos/Y9iAaT2my2I",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "armchair-round-grey",
+  "file": "armchair-round-grey.jpg",
+  "alt": "Rund lenestol i lys grå stoff",
+  "author": "Costa Live",
+  "source": "https://unsplash.com/photos/qRlGiaxZ8SI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "oslo-rooftops-sunrise",
+  "file": "oslo-rooftops-sunrise.jpg",
+  "alt": "Hustak i Oslo sett ovenfra i soloppgang",
+  "author": "Daniel Charles Hextall",
+  "source": "https://unsplash.com/photos/dFW8NXJLN5U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "oslo-new-apartments",
+  "file": "oslo-new-apartments.jpg",
+  "alt": "Nye leilighetsbygg langs en kanal i Oslo",
+  "author": "Emmanuel Appiah",
+  "source": "https://unsplash.com/photos/GLnZNGNCqj4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "oslo-streets-aerial",
+  "file": "oslo-streets-aerial.jpg",
+  "alt": "Bygårder og gater i Oslo sett ovenfra",
+  "author": "Shubham Singh",
+  "source": "https://unsplash.com/photos/E1ph22SkZ8k",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trondheim-aerial",
+  "file": "trondheim-aerial.jpg",
+  "alt": "Trondheim og Nidelva sett ovenfra",
+  "author": "Joshua Kettle",
+  "source": "https://unsplash.com/photos/SNVuKxmg0qY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-rooftops-evening",
+  "file": "bergen-rooftops-evening.jpg",
+  "alt": "Hustak og gater i Bergen i kveldslys",
+  "author": "Christian Lunde",
+  "source": "https://unsplash.com/photos/QQLnaHDMsig",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "couple-moving-boxes",
+  "file": "couple-moving-boxes.jpg",
+  "alt": "Ungt par sitter blant flytteesker i ny bolig",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/pyMjFpH8USU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-cream",
+  "file": "headphones-cream.jpg",
+  "alt": "Kremhvite trådløse hodetelefoner mot hvit bakgrunn",
+  "author": "VCOM",
+  "source": "https://unsplash.com/photos/C0k_JxvcilU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-woman-plants",
+  "file": "headphones-woman-plants.jpg",
+  "alt": "Kvinne med lyse hodetelefoner blant grønne planter",
+  "author": "Phạm Trần Hoàn Thịnh",
+  "source": "https://unsplash.com/photos/es0h8aBUNQ8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-woman-street",
+  "file": "headphones-woman-street.jpg",
+  "alt": "Kvinne med hodetelefoner i en bygate",
+  "author": "Georgi Kalaydzhiev",
+  "source": "https://unsplash.com/photos/kwIYYoBAfDc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-woman-window",
+  "file": "headphones-woman-window.jpg",
+  "alt": "Kvinne med hvite hodetelefoner ser ut av vinduet",
+  "author": "Phạm Trần Hoàn Thịnh",
+  "source": "https://unsplash.com/photos/PJL513WGzJY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-black-dark",
+  "file": "headphones-black-dark.jpg",
+  "alt": "Svarte hodetelefoner mot mørk bakgrunn",
+  "author": "Totte Annerbrink",
+  "source": "https://unsplash.com/photos/NehdOHCXsjs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-black-detail",
+  "file": "headphones-black-detail.jpg",
+  "alt": "Nærbilde av svarte hodetelefoner",
+  "author": "Jason Leung",
+  "source": "https://unsplash.com/photos/EEsPPzyvA_o",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-black-cable",
+  "file": "headphones-black-cable.jpg",
+  "alt": "Svarte hodetelefoner med oransje kabel",
+  "author": "Marcin Kempa",
+  "source": "https://unsplash.com/photos/eu6-bNieP-4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-blue-hour",
+  "file": "bergen-blue-hour.jpg",
+  "alt": "Bergen i blåtimen med lysene tent",
+  "author": "Artem Shuba",
+  "source": "https://unsplash.com/photos/oA6vuJQ8PNw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bryggen-facades",
+  "file": "bryggen-facades.jpg",
+  "alt": "Fasadene på Bryggen i Bergen",
+  "author": "Millie Olsen",
+  "source": "https://unsplash.com/photos/mNRPJW7ylrI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bergen-view-floyen",
+  "file": "bergen-view-floyen.jpg",
+  "alt": "Utsikt over Bergen fra Fløyen",
+  "author": "Matt Palmer",
+  "source": "https://unsplash.com/photos/mS2QlkTEirI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "red-umbrella-rain",
+  "file": "red-umbrella-rain.jpg",
+  "alt": "Rød paraply i regnet i en bygate",
+  "author": "Lala Azizli",
+  "source": "https://unsplash.com/photos/cWhCjlLhhq8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "cinnamon-bun-coffee",
+  "file": "cinnamon-bun-coffee.jpg",
+  "alt": "Kanelbolle og kaffe på et kafébord",
+  "author": "Rob Sarmiento",
+  "source": "https://unsplash.com/photos/RbqgLewxyXo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "paraglider-bergen",
+  "file": "paraglider-bergen.jpg",
+  "alt": "Paraglider over Bergen og fjorden",
+  "author": "Chloé Bourhis",
+  "source": "https://unsplash.com/photos/8cKfUHCs0wk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bryggen-night",
+  "file": "bryggen-night.jpg",
+  "alt": "Bryggen speiler seg i vannet om kvelden",
+  "author": "Manuel Navarro",
+  "source": "https://unsplash.com/photos/reR1qazgsBM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "wind-turbines-fog",
+  "file": "wind-turbines-fog.jpg",
+  "alt": "Vindturbiner over et tåkehav",
+  "author": "Fabian Wiktor",
+  "source": "https://unsplash.com/photos/pPITJDEYR78",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "hydro-penstock",
+  "file": "hydro-penstock.jpg",
+  "alt": "Rørgate ned fjellsiden til et kraftverk",
+  "author": "Mark König",
+  "source": "https://unsplash.com/photos/eZuXKn1lULM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "dam-reservoir",
+  "file": "dam-reservoir.jpg",
+  "alt": "Steinfyllingsdam ved et høyfjellsvann",
+  "author": "Barnabas Davoti",
+  "source": "https://unsplash.com/photos/dN8hqVqfeSM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ferry-electric-fjord",
+  "file": "ferry-electric-fjord.jpg",
+  "alt": "Elektrisk ferje på en fjord",
+  "author": "Stock Birken",
+  "source": "https://unsplash.com/photos/PtCDMw1t5f4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "river-meander-aerial",
+  "file": "river-meander-aerial.jpg",
+  "alt": "Elv som slynger seg gjennom grønn skog, sett ovenfra",
+  "author": "vadim kaipov",
+  "source": "https://unsplash.com/photos/ulx6xbzDsc8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "pylon-snow-aerial",
+  "file": "pylon-snow-aerial.jpg",
+  "alt": "Høyspentmast i snødekt landskap sett ovenfra",
+  "author": "Ivan Bandura",
+  "source": "https://unsplash.com/photos/ujUty9TUP_U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "control-room-bright",
+  "file": "control-room-bright.jpg",
+  "alt": "Lyst kontrollrom med pulter og tavler",
+  "author": "Miha Meglic",
+  "source": "https://unsplash.com/photos/p7Bfwn_VKRQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "family-selfie-boot",
+  "file": "family-selfie-boot.jpg",
+  "alt": "Familie tar selfie i bagasjerommet på en bil",
+  "author": "Samsung Memory US",
+  "source": "https://unsplash.com/photos/6e3e_BluGoY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "kids-backseat-smiles",
+  "file": "kids-backseat-smiles.jpg",
+  "alt": "Tre jenter smiler i baksetet",
+  "author": "Jim Strasma",
+  "source": "https://unsplash.com/photos/78RRCeKx_HU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "dogs-boot-snow",
+  "file": "dogs-boot-snow.jpg",
+  "alt": "Hunder i bagasjerommet på en hvit bil i snøen",
+  "author": "LOGAN WEAVER",
+  "source": "https://unsplash.com/photos/2XU7g_OebKU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "home-charger-hand",
+  "file": "home-charger-hand.jpg",
+  "alt": "Hånd setter laderen i en elbil hjemme",
+  "author": "Evnex Ltd",
+  "source": "https://unsplash.com/photos/QYyMOk2YfX8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "house-car-garden",
+  "file": "house-car-garden.jpg",
+  "alt": "Trehus med elbil i hagen",
+  "author": "Polina Kuzovkova",
+  "source": "https://unsplash.com/photos/cXpa6NF0olI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "boot-shopping-plants",
+  "file": "boot-shopping-plants.jpg",
+  "alt": "Handleposer og planter i et bagasjerom",
+  "author": "Chelsea Dwarika",
+  "source": "https://unsplash.com/photos/6iEPJGhPAyA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "morning-school-bag",
+  "file": "morning-school-bag.jpg",
+  "alt": "Mor hjelper barnet med sekken før skolen",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/DKHPbzfU1Ts",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "child-carseat-asleep",
+  "file": "child-carseat-asleep.jpg",
+  "alt": "Barn sover i bilsetet",
+  "author": "Daisy D",
+  "source": "https://unsplash.com/photos/INvrDywsRmo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-blonde",
+  "file": "face-woman-blonde.jpg",
+  "alt": "Blond kvinne smiler i høstlys",
+  "author": "Sorin Basangeac",
+  "source": "https://unsplash.com/photos/HZk4Vxq8oT4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-scarf",
+  "file": "face-woman-scarf.jpg",
+  "alt": "Smilende kvinne med skjerf",
+  "author": "AIII YOOOO",
+  "source": "https://unsplash.com/photos/48P0Sg7pFwg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-wind",
+  "file": "face-woman-wind.jpg",
+  "alt": "Kvinne med håret i vinden",
+  "author": "Tim Mossholder",
+  "source": "https://unsplash.com/photos/eR6uGdfT0mc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-checked",
+  "file": "face-woman-checked.jpg",
+  "alt": "Kvinne i rutete skjorte smiler utendørs",
+  "author": "Davide Aracri",
+  "source": "https://unsplash.com/photos/0NDVW4wO1Ms",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-woman-red",
+  "file": "face-woman-red.jpg",
+  "alt": "Mørkhåret kvinne i rød genser smiler",
+  "author": "Rita Malçok",
+  "source": "https://unsplash.com/photos/oOhTXx5mJqI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-denim",
+  "file": "face-man-denim.jpg",
+  "alt": "Smilende mann i dongeriskjorte",
+  "author": "Daria Trofimova",
+  "source": "https://unsplash.com/photos/HIik8xvKkcI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-cap",
+  "file": "face-man-cap.jpg",
+  "alt": "Eldre mann med caps og briller smiler",
+  "author": "Centre for Ageing Better",
+  "source": "https://unsplash.com/photos/sdEnE_2n-gA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-man-glasses",
+  "file": "face-man-glasses.jpg",
+  "alt": "Mann med briller i en handlegate",
+  "author": "Centre for Ageing Better",
+  "source": "https://unsplash.com/photos/dusPCcKbrKM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "ev-interior-bright",
+  "file": "ev-interior-bright.jpg",
+  "alt": "Lys førerplass i en elbil med skjermer",
+  "author": "Vitali Adutskevich",
+  "source": "https://unsplash.com/photos/y42KNKdYuDI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "berries-colander-garden",
+  "file": "berries-colander-garden.jpg",
+  "alt": "Jordbær i et dørslag på en trekasse i hagen",
+  "author": "Lucinda Hershberger",
+  "source": "https://unsplash.com/photos/n6q7tVi-ocI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "berry-farm-valley",
+  "file": "berry-farm-valley.jpg",
+  "alt": "Bærgård med lange rader i en grønn dal",
+  "author": "Michal Chruscielski",
+  "source": "https://unsplash.com/photos/7f-1yXOA0Bk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "face-chef-woman",
+  "file": "face-chef-woman.jpg",
+  "alt": "Portrett av en kokk i hvit jakke",
+  "author": "Grant Sams",
+  "source": "https://unsplash.com/photos/26PcmKZQ1Gs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "strawberries-cream",
+  "file": "strawberries-cream.jpg",
+  "alt": "Jordbær med krem og mynte i en glassbolle",
+  "author": "Natalia Gusakova",
+  "source": "https://unsplash.com/photos/uzjs9GRK32c",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "berry-cake-cream",
+  "file": "berry-cake-cream.jpg",
+  "alt": "Kake med krem, jordbær og bjørnebær",
+  "author": "Daniel Álvasd",
+  "source": "https://unsplash.com/photos/a7RNETwN8Vw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jam-toast",
+  "file": "jam-toast.jpg",
+  "alt": "Hjemmelaget bærsyltetøy på brødskive",
+  "author": "Barbara Chowaniec",
+  "source": "https://unsplash.com/photos/zG_Mm1XS25I",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "blueberries-hand",
+  "file": "blueberries-hand.jpg",
+  "alt": "Håndfull blåbær plukket i skogen",
+  "author": "Marianna Lutkova",
+  "source": "https://unsplash.com/photos/mXCKd8iBOnM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "pavlova-mini",
+  "file": "pavlova-mini.jpg",
+  "alt": "Små pavlovaer med bær på et trefat",
+  "author": "Serghey Savchuk",
+  "source": "https://unsplash.com/photos/Mbz_syZ04B4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "summer-table-garden",
+  "file": "summer-table-garden.jpg",
+  "alt": "Dekket langbord i hagen en sommerkveld",
+  "author": "Bruno Ngarukiye",
+  "source": "https://unsplash.com/photos/dlr-DoLLUks",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "berry-drink-glass",
+  "file": "berry-drink-glass.jpg",
+  "alt": "Bærsaft med is og et jordbær i glasset",
+  "author": "Natalia Gusakova",
+  "source": "https://unsplash.com/photos/U82DAzkfX7c",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "strawberries-bowl-dark",
+  "file": "strawberries-bowl-dark.jpg",
+  "alt": "Jordbær i en hvit bolle mot mørk bakgrunn",
+  "author": "Michael Collett",
+  "source": "https://unsplash.com/photos/8zuqeD5KF8U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "blueberries-bowl",
+  "file": "blueberries-bowl.jpg",
+  "alt": "Blåbær i en liten hvit bolle",
+  "author": "Yulia Khlebnikova",
+  "source": "https://unsplash.com/photos/8l_Ux2WYpqM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jam-jar-lingon",
+  "file": "jam-jar-lingon.jpg",
+  "alt": "Tyttebærsyltetøy i glass med tyttebærlyng",
+  "author": "Elena Leya",
+  "source": "https://unsplash.com/photos/Gt7gr5oRG_U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "headphones-man-evening",
+  "file": "headphones-man-evening.jpg",
+  "alt": "Mann med svarte hodetelefoner i et rom med kveldslys",
+  "author": "Nubelson Fernandes",
+  "source": "https://unsplash.com/photos/sU_P_d-n_RA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "shrimp-plate-lemon",
+  "file": "shrimp-plate-lemon.jpg",
+  "alt": "Reker med sitron og grønnsaker på et hvitt fat",
+  "author": "Jesi Jnr",
+  "source": "https://unsplash.com/photos/GmFrIt05b6c",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-pharmacist-customer",
+  "file": "apotek-pharmacist-customer.jpg",
+  "alt": "Farmasøyt hjelper en kunde å finne riktig produkt",
+  "author": "Ninthgrid",
+  "source": "https://unsplash.com/photos/uNawp6qgpcE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-interior",
+  "file": "apotek-interior.jpg",
+  "alt": "Lyst og moderne apotek med fulle hyller",
+  "author": "Cheung Yin",
+  "source": "https://unsplash.com/photos/lile4HrTcvQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-winter-skin",
+  "file": "apotek-winter-skin.jpg",
+  "alt": "Kvinne med lue og skjerf i snøkledd skog",
+  "author": "Олег Мороз",
+  "source": "https://unsplash.com/photos/l12V-pHYtdg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-cream-hand",
+  "file": "apotek-cream-hand.jpg",
+  "alt": "Fuktkrem smøres inn på håndbaken",
+  "author": "Ana azuria",
+  "source": "https://unsplash.com/photos/LclE8PqL9qw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-cream-swatch",
+  "file": "apotek-cream-swatch.jpg",
+  "alt": "Klatt med fuktkrem på beige bakgrunn",
+  "author": "Kelsey Curtis",
+  "source": "https://unsplash.com/photos/kD9qprR6HBI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-cream-sink",
+  "file": "apotek-cream-sink.jpg",
+  "alt": "Krem tas fra en krukke ved vasken",
+  "author": "Poko Skincare",
+  "source": "https://unsplash.com/photos/eHE5l7cJVRY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "apotek-pharmacist-man",
+  "file": "apotek-pharmacist-man.jpg",
+  "alt": "Farmasøyt i hvit frakk på apoteket",
+  "author": "nasro azaizia",
+  "source": "https://unsplash.com/photos/xiJgrLN60A0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-phone-night",
+  "file": "sovn-phone-night.jpg",
+  "alt": "Kvinne ligger våken i mørket med mobilen i hånden",
+  "author": "Kajetan Sumila",
+  "source": "https://unsplash.com/photos/ygB6yVjb7a4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-awake",
+  "file": "sovn-awake.jpg",
+  "alt": "Kvinne ligger våken i sengen og ser opp",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/a4ignFkqk4Y",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-tea-window",
+  "file": "sovn-tea-window.jpg",
+  "alt": "Kopp med te i vinduskarmen",
+  "author": "Kateryna Hliznitsova",
+  "source": "https://unsplash.com/photos/XFdTPw_sMak",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-morning-stretch",
+  "file": "sovn-morning-stretch.jpg",
+  "alt": "Kvinne strekker seg i sengen om morgenen",
+  "author": "bruce mars",
+  "source": "https://unsplash.com/photos/wBuPCQiweuA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-bedroom-lamp",
+  "file": "sovn-bedroom-lamp.jpg",
+  "alt": "Soverom med dempet nattlampe",
+  "author": "Susan Q Yin",
+  "source": "https://unsplash.com/photos/D_6rzmdpebQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sovn-doctor",
+  "file": "sovn-doctor.jpg",
+  "alt": "Lege smiler ved skrivebordet sitt",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/_zbqco3m7dA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honning-comb-board",
+  "file": "honning-comb-board.jpg",
+  "alt": "Vokstavler med honning på et skjærebrett",
+  "author": "Gerardo Covarrubias",
+  "source": "https://unsplash.com/photos/tJiWEZjM7Eo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "honning-cheese",
+  "file": "honning-cheese.jpg",
+  "alt": "Ostefat med honning, nøtter og frukt",
+  "author": "Vlad Melnikov",
+  "source": "https://unsplash.com/photos/D9LRV-kkrQk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bank-keys-hall",
+  "file": "bank-keys-hall.jpg",
+  "alt": "Hånd holder husnøkler i gangen i en ny leilighet",
+  "author": "Jakub Żerdzicki",
+  "source": "https://unsplash.com/photos/3HfGnyPfWqQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bank-couple-boxes",
+  "file": "bank-couple-boxes.jpg",
+  "alt": "Par sitter blant flytteesker i den nye boligen",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/yxnzg8mn2O8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bank-couple-keys",
+  "file": "bank-couple-keys.jpg",
+  "alt": "Par tar imot nøklene ved inngangsdøren",
+  "author": "Hannah Bechtel",
+  "source": "https://unsplash.com/photos/1El98zbDWzA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bank-advisor",
+  "file": "bank-advisor.jpg",
+  "alt": "Rådgiver smiler i et møte med en kunde",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/M5k978V3qBc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bank-apartments",
+  "file": "bank-apartments.jpg",
+  "alt": "Leilighetsbygg med balkonger i kveldssol",
+  "author": "Marlene Céline Nordvik",
+  "source": "https://unsplash.com/photos/sfYWllRn9m4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "energi-heatpump",
+  "file": "energi-heatpump.jpg",
+  "alt": "Varmepumpe utenfor et moderne hus",
+  "author": "alpha innotec",
+  "source": "https://unsplash.com/photos/TDtycnfiDa8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "energi-pylon-frost",
+  "file": "energi-pylon-frost.jpg",
+  "alt": "Kraftmast mellom frostkledde trær",
+  "author": "Nadiia Ganzhyi",
+  "source": "https://unsplash.com/photos/B93tkF_Szc8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "energi-ev-home",
+  "file": "energi-ev-home.jpg",
+  "alt": "Kvinne setter elbilen til lading hjemme",
+  "author": "Zaptec",
+  "source": "https://unsplash.com/photos/DQQ2jvg-mjI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "energi-engineer",
+  "file": "energi-engineer.jpg",
+  "alt": "Energiingeniør med hjelm og vernebriller smiler",
+  "author": "ThisisEngineering",
+  "source": "https://unsplash.com/photos/cdSKgXv2Vz4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-living-warm",
+  "file": "bolig-living-warm.jpg",
+  "alt": "Lys stue med hyller og spiseplass",
+  "author": "Puscas Adryan",
+  "source": "https://unsplash.com/photos/2cfj0Y5ch00",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-open-kitchen",
+  "file": "bolig-open-kitchen.jpg",
+  "alt": "Åpen stue og kjøkken med utgang til balkong",
+  "author": "Irena Oze",
+  "source": "https://unsplash.com/photos/8TuQa6evtog",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-attic-bedroom",
+  "file": "bolig-attic-bedroom.jpg",
+  "alt": "Soverom under skråtak med lyst treverk",
+  "author": "Prydumano Design",
+  "source": "https://unsplash.com/photos/qPHpk6G9nik",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-balcony-view",
+  "file": "bolig-balcony-view.jpg",
+  "alt": "Balkong med utsikt mot fjellene",
+  "author": "Ken Oyama",
+  "source": "https://unsplash.com/photos/umXl7PPw_lM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-ski-track",
+  "file": "bolig-ski-track.jpg",
+  "alt": "Skiløper i nyoppkjørt løype i solskinn",
+  "author": "Solveig Smørdal Botn",
+  "source": "https://unsplash.com/photos/GE8hxr2SCGE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-playground-snow",
+  "file": "bolig-playground-snow.jpg",
+  "alt": "Lekeplass dekket av nysnø",
+  "author": "Nadiia Ganzhyi",
+  "source": "https://unsplash.com/photos/2Hp91sTD830",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "bolig-waterfront",
+  "file": "bolig-waterfront.jpg",
+  "alt": "Nye leilighetsbygg ved vannet i høstlys",
+  "author": "Eirik Skarstein",
+  "source": "https://unsplash.com/photos/yc09JRo9yaI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-salmon-tray",
+  "file": "mat-salmon-tray.jpg",
+  "alt": "Ovnsbakt laks med brokkoli og grønnsaker på brett",
+  "author": "Ben Libby",
+  "source": "https://unsplash.com/photos/xJBeGxiSYBE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-salmon-raw",
+  "file": "mat-salmon-raw.jpg",
+  "alt": "Laksefileter og asparges klare for ovnen",
+  "author": "Christine Siracusa",
+  "source": "https://unsplash.com/photos/065eGbVSNOE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-pasta",
+  "file": "mat-pasta.jpg",
+  "alt": "Tallerken med pasta i tomatsaus",
+  "author": "Rodrigo Lezcano",
+  "source": "https://unsplash.com/photos/iZQPLaerwos",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-taco",
+  "file": "mat-taco.jpg",
+  "alt": "Myke tacolefser med kylling og salsa",
+  "author": "montatip lilitsanong",
+  "source": "https://unsplash.com/photos/iU26ZSJh9yw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-soup-bread",
+  "file": "mat-soup-bread.jpg",
+  "alt": "Grønnsakssuppe med grovt brød",
+  "author": "shibani Mishra",
+  "source": "https://unsplash.com/photos/T8KjDfBqK6o",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-pizza-board",
+  "file": "mat-pizza-board.jpg",
+  "alt": "Hjemmelaget pizza på skjærebrett",
+  "author": "Chad Montano",
+  "source": "https://unsplash.com/photos/MqT0asuoIcU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-dough",
+  "file": "mat-dough.jpg",
+  "alt": "Hender elter deig på en melet benk",
+  "author": "Theme Photos",
+  "source": "https://unsplash.com/photos/Hx7xdwhj2AY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-family-dinner",
+  "file": "mat-family-dinner.jpg",
+  "alt": "Far og datter spiser middag ved kjøkkenbordet",
+  "author": "Tyson",
+  "source": "https://unsplash.com/photos/GkE1i7Q4Xgc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-chef",
+  "file": "mat-chef.jpg",
+  "alt": "Smilende kokk med briller",
+  "author": "Christian Buehner",
+  "source": "https://unsplash.com/photos/hIbh3VlZgwU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-apples-crates",
+  "file": "mat-apples-crates.jpg",
+  "alt": "Kasser med røde epler",
+  "author": "Terra Slaybaugh",
+  "source": "https://unsplash.com/photos/LCDYCLEJlEo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "mat-grocery-cart",
+  "file": "mat-grocery-cart.jpg",
+  "alt": "Handlekurv i butikken",
+  "author": "Eduardo Soares",
+  "source": "https://unsplash.com/photos/QsYXYSwV3NU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jobb-office-green",
+  "file": "jobb-office-green.jpg",
+  "alt": "Lyst kontorlandskap med planter og store vinduer",
+  "author": "PJ DC",
+  "source": "https://unsplash.com/photos/9plQScBF9Vw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jobb-city-view",
+  "file": "jobb-city-view.jpg",
+  "alt": "Utsikt over byen og åsene bak",
+  "author": "Katja Ano",
+  "source": "https://unsplash.com/photos/mzVNxP1PH3M",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jobb-whiteboard",
+  "file": "jobb-whiteboard.jpg",
+  "alt": "Kolleger diskuterer ved en tavle",
+  "author": "Sable Flow",
+  "source": "https://unsplash.com/photos/T74mVg__F_k",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jobb-team-laptop",
+  "file": "jobb-team-laptop.jpg",
+  "alt": "Kolleger samlet rundt en laptop",
   "author": "Jud Mackrill",
   "source": "https://unsplash.com/photos/Of_m3hMsoAA",
   "license": "Unsplash License"
  },
  {
-  "name": "gym-trainer",
-  "file": "gym-trainer.jpg",
-  "alt": "Kvinne løfter vekter med en trener",
+  "name": "jobb-dev-smile",
+  "file": "jobb-dev-smile.jpg",
+  "alt": "Utvikler med briller smiler på kontoret",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/APjRQ59peUg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "jobb-designer-laugh",
+  "file": "jobb-designer-laugh.jpg",
+  "alt": "Designer ler mot kamera",
+  "author": "Gabriel Ogulu",
+  "source": "https://unsplash.com/photos/n45Wbm8gpm0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-kettlebell-hero",
+  "file": "trening-kettlebell-hero.jpg",
+  "alt": "Mann løfter kettlebell i et treningslokale",
+  "author": "Alonso Reyes",
+  "source": "https://unsplash.com/photos/0HlI76m4jxU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-kettlebell-chalk",
+  "file": "trening-kettlebell-chalk.jpg",
+  "alt": "Kalket hånd griper en kettlebell",
+  "author": "Jan Gunnar Nygård",
+  "source": "https://unsplash.com/photos/10FlDY7YBWo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-squat",
+  "file": "trening-squat.jpg",
+  "alt": "Kvinne tar knebøy med stang",
+  "author": "Land O'Lakes Inc.",
+  "source": "https://unsplash.com/photos/IYLLF511aOY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-deadlift",
+  "file": "trening-deadlift.jpg",
+  "alt": "To personer trener markløft",
   "author": "Vitaly Gariev",
   "source": "https://unsplash.com/photos/rD0poLlu57M",
   "license": "Unsplash License"
  },
  {
-  "name": "gym-pair",
-  "file": "gym-pair.jpg",
-  "alt": "Mann og kvinne trener på et treningssenter",
-  "author": "Sergio Kian",
-  "source": "https://unsplash.com/photos/G6svDyPVRrc",
+  "name": "trening-pushup",
+  "file": "trening-pushup.jpg",
+  "alt": "Mann tar armhevninger",
+  "author": "Fortune Vieyra",
+  "source": "https://unsplash.com/photos/jD4MtXnsJ6w",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-plank",
+  "file": "trening-plank.jpg",
+  "alt": "Kvinne holder planken",
+  "author": "Anes Hamzic",
+  "source": "https://unsplash.com/photos/xSu67DzS0rs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "trening-kettlebell-swing",
+  "file": "trening-kettlebell-swing.jpg",
+  "alt": "Hender griper to kettlebeller",
+  "author": "Mads Eneqvist",
+  "source": "https://unsplash.com/photos/c-iX42QHg3w",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-factory-before",
+  "file": "loft-factory-before.jpg",
+  "alt": "Tom fabrikkhall med store vinduer før ombyggingen",
+  "author": "Michał Franczak",
+  "source": "https://unsplash.com/photos/OvEZZaeIxaI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-after",
+  "file": "loft-after.jpg",
+  "alt": "Ferdig loftsleilighet med teglvegger og hems",
+  "author": "Aaron Huber",
+  "source": "https://unsplash.com/photos/s95oB2n9jng",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-exterior-sunset",
+  "file": "loft-exterior-sunset.jpg",
+  "alt": "Gammel teglsteinsfabrikk med buede vinduer i kveldssol",
+  "author": "Henry Williams",
+  "source": "https://unsplash.com/photos/8Cd4v-UYMm0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-exterior-tall",
+  "file": "loft-exterior-tall.jpg",
+  "alt": "Restaurert fabrikkbygning i rød tegl",
+  "author": "Sylwester Krawczyk",
+  "source": "https://unsplash.com/photos/jqVWVAlNSJw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-library",
+  "file": "loft-library.jpg",
+  "alt": "Loftsleilighet med takbjelker og bokvegg",
+  "author": "Tim Wildsmith",
+  "source": "https://unsplash.com/photos/vSfKVKPMvLw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-attic-brick",
+  "file": "loft-attic-brick.jpg",
+  "alt": "Sofa under bjelker og teglvegg",
+  "author": "Julia",
+  "source": "https://unsplash.com/photos/vlEvtZnlQJc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-industrial",
+  "file": "loft-industrial.jpg",
+  "alt": "Industriell stue med tegl og stålbjelker",
+  "author": "Yurii Kosyakevich",
+  "source": "https://unsplash.com/photos/IpNjAjRkddk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-floorplan",
+  "file": "loft-floorplan.jpg",
+  "alt": "Planløsning sett ovenfra med møbler",
+  "author": "Brian Zajac",
+  "source": "https://unsplash.com/photos/9lB0cUTt9IQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-rooftop",
+  "file": "loft-rooftop.jpg",
+  "alt": "Takterrasse med utsikt over byen i solnedgang",
+  "author": "garrett parker",
+  "source": "https://unsplash.com/photos/xQWLtlQb7L0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "loft-architect",
+  "file": "loft-architect.jpg",
+  "alt": "Arkitekt med briller smiler",
+  "author": "Liang Huang",
+  "source": "https://unsplash.com/photos/1Y2MqZi1ujs",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-team-walk",
+  "file": "sykehus-team-walk.jpg",
+  "alt": "Sykehusansatte går sammen i en lys korridor",
+  "author": "Luis Melendez",
+  "source": "https://unsplash.com/photos/Pd4lRfKo16U",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-nurse-laugh",
+  "file": "sykehus-nurse-laugh.jpg",
+  "alt": "Erfaren sykepleier ler",
+  "author": "TUTO PATIÑO ALVAREZ",
+  "source": "https://unsplash.com/photos/Z0MkM1a4wfg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-nurse-man",
+  "file": "sykehus-nurse-man.jpg",
+  "alt": "Mannlig sykepleier smiler med armene i kors",
+  "author": "Bruno Rodrigues",
+  "source": "https://unsplash.com/photos/279xIHymPYY",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-nurse-arms",
+  "file": "sykehus-nurse-arms.jpg",
+  "alt": "Sykepleier i mørkeblå uniform smiler",
+  "author": "Beatriz Mendez",
+  "source": "https://unsplash.com/photos/_4xStiTXY1o",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-doctor-smile",
+  "file": "sykehus-doctor-smile.jpg",
+  "alt": "Lege smiler i et lyst rom",
+  "author": "Othman El Marzak",
+  "source": "https://unsplash.com/photos/P4VXFXKyOQM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-lab",
+  "file": "sykehus-lab.jpg",
+  "alt": "Bioingeniør ser i mikroskop på laboratoriet",
+  "author": "National Cancer Institute",
+  "source": "https://unsplash.com/photos/uVnRa6mOLOM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-incubator",
+  "file": "sykehus-incubator.jpg",
+  "alt": "Sykepleier triller en kuvøse gjennom korridoren",
+  "author": "Hush Naidoo Jade Photography",
+  "source": "https://unsplash.com/photos/ZCO_5Y29s8k",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-ambulance",
+  "file": "sykehus-ambulance.jpg",
+  "alt": "Ambulanse i utrykning",
+  "author": "Ian Taylor",
+  "source": "https://unsplash.com/photos/4hWvAJP8ofM",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "sykehus-xray",
+  "file": "sykehus-xray.jpg",
+  "alt": "Leger studerer røntgenbilder sammen",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/AB0r9z7eRYg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-hands-sunset",
+  "file": "fest-hands-sunset.jpg",
+  "alt": "Publikum med hendene i været i solnedgang ved vannet",
+  "author": "Daniela Becerra",
+  "source": "https://unsplash.com/photos/SvwmxHVO9ko",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-dance-sun",
+  "file": "fest-dance-sun.jpg",
+  "alt": "Festivalpublikum danser i motlys",
+  "author": "Philipp",
+  "source": "https://unsplash.com/photos/KPkIpGg-GFE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-main-stage",
+  "file": "fest-main-stage.jpg",
+  "alt": "Hovedscenen lyser opp over publikum om kvelden",
+  "author": "Colin Lloyd",
+  "source": "https://unsplash.com/photos/8H72wMWxj90",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-band-blue",
+  "file": "fest-band-blue.jpg",
+  "alt": "Band på scenen i blått lys",
+  "author": "Matthew Kalapuch",
+  "source": "https://unsplash.com/photos/sqJ4tLBiurw",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-singer-smoke",
+  "file": "fest-singer-smoke.jpg",
+  "alt": "Vokalist i røyk og spotlys",
+  "author": "Mohd Zuber saifi",
+  "source": "https://unsplash.com/photos/pFwPM1_YI2M",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-rapper",
+  "file": "fest-rapper.jpg",
+  "alt": "Artist i grønt og gult scenelys",
+  "author": "Kamil Feczko",
+  "source": "https://unsplash.com/photos/r1UCyK3dIfI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-crowd-sing",
+  "file": "fest-crowd-sing.jpg",
+  "alt": "Publikum synger med foran scenen",
+  "author": "Iago Yoshimi Seo",
+  "source": "https://unsplash.com/photos/Ky28rl77re0",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-food-truck",
+  "file": "fest-food-truck.jpg",
+  "alt": "Matbil med lyslenker på festivalområdet",
+  "author": "Should Wang",
+  "source": "https://unsplash.com/photos/ye5T5R0G-GA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-camping",
+  "file": "fest-camping.jpg",
+  "alt": "Telt og festivalgjester i skogkanten",
+  "author": "Malcolm Broström",
+  "source": "https://unsplash.com/photos/xscbHg6b6FQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fest-lake-lights",
+  "file": "fest-lake-lights.jpg",
+  "alt": "Lys speiler seg i vannet om kvelden",
+  "author": "Emanuel Haas",
+  "source": "https://unsplash.com/photos/LV4k2-DNztA",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-family-sofa",
+  "file": "fors-family-sofa.jpg",
+  "alt": "Familie slapper av sammen i sofaen",
+  "author": "Vitaly Gariev",
+  "source": "https://unsplash.com/photos/tSwr_HGh0kQ",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-water-damage",
+  "file": "fors-water-damage.jpg",
+  "alt": "Vannskade i taket og veggen",
+  "author": "Vero Eve",
+  "source": "https://unsplash.com/photos/aRUdvi4lFC4",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-bike-city",
+  "file": "fors-bike-city.jpg",
+  "alt": "Kvinne sykler gjennom byen",
+  "author": "Nhi D",
+  "source": "https://unsplash.com/photos/hfhra5dsnXg",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-airport",
+  "file": "fors-airport.jpg",
+  "alt": "Reisende venter på flyplassen",
+  "author": "JESHOOTS.COM",
+  "source": "https://unsplash.com/photos/mSESwdMZr-A",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-car-winter",
+  "file": "fors-car-winter.jpg",
+  "alt": "Bil på vinterføre gjennom snødekt skog",
+  "author": "Aneta Voborilova",
+  "source": "https://unsplash.com/photos/mHSJv8qOCSo",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-dog-sofa",
+  "file": "fors-dog-sofa.jpg",
+  "alt": "Hund ligger på sofaen",
+  "author": "Kyle Mackie",
+  "source": "https://unsplash.com/photos/WEtBlBOTGoE",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "fors-advisor",
+  "file": "fors-advisor.jpg",
+  "alt": "Kundebehandler med hodesett smiler",
+  "author": "Hanna Morris",
+  "source": "https://unsplash.com/photos/iZNfw5IZ9jc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-kvinne-kroller",
+  "file": "folk-kvinne-kroller.jpg",
+  "alt": "Smilende kvinne med krøller",
+  "author": "Nolan Manning",
+  "source": "https://unsplash.com/photos/Ll9YOG20UFI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-kvinne-bluse",
+  "file": "folk-kvinne-bluse.jpg",
+  "alt": "Kvinne ler i en trapp",
+  "author": "Brooke Cagle",
+  "source": "https://unsplash.com/photos/nNj_e121IbI",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-kvinne-rodt-har",
+  "file": "folk-kvinne-rodt-har.jpg",
+  "alt": "Kvinne med rødt hår i sollys",
+  "author": "Meg Wagener",
+  "source": "https://unsplash.com/photos/M7fbJyBuAag",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-kvinne-smil",
+  "file": "folk-kvinne-smil.jpg",
+  "alt": "Kvinne med et bredt smil",
+  "author": "Michael Mims",
+  "source": "https://unsplash.com/photos/fWWiaDox0BU",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-mann-fjell",
+  "file": "folk-mann-fjell.jpg",
+  "alt": "Smilende mann på fjelltur",
+  "author": "Ali Kazal",
+  "source": "https://unsplash.com/photos/mpPfqvh04Fc",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-mann-skjorte",
+  "file": "folk-mann-skjorte.jpg",
+  "alt": "Ung mann i lys skjorte smiler",
+  "author": "AL Kaium",
+  "source": "https://unsplash.com/photos/tE_l_mh0KM8",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-mann-gra-skjorte",
+  "file": "folk-mann-gra-skjorte.jpg",
+  "alt": "Mann i grå skjorte smiler",
+  "author": "Ludovic Migneault",
+  "source": "https://unsplash.com/photos/EZ4TYgXPNWk",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-mann-t-skjorte",
+  "file": "folk-mann-t-skjorte.jpg",
+  "alt": "Mann i lyseblå t-skjorte smiler",
+  "author": "Vicky Hladynets",
+  "source": "https://unsplash.com/photos/_gDoyVv5F4c",
+  "license": "Unsplash License"
+ },
+ {
+  "name": "folk-eldre-kvinne-briller",
+  "file": "folk-eldre-kvinne-briller.jpg",
+  "alt": "Eldre kvinne med briller ved sjøen",
+  "author": "Age Cymru",
+  "source": "https://unsplash.com/photos/KBRytaQYDGA",
   "license": "Unsplash License"
  }
 ]

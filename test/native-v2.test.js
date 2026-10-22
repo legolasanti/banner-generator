@@ -394,7 +394,7 @@ test("the demo kit is listed with stored assets", async () => {
   const r = await call("GET", "/api/native/demo");
   assert.equal(r.status, 200);
   assert.equal(Object.keys(r.data.demo).length, DEMO.length);
-  assert.match(r.data.demo.fjord.id, D.ASSET_RE);
+  assert.match(r.data.demo[DEMO[0]].id, D.ASSET_RE);
 });
 
 test("published pages take votes from any origin and return the counts", async () => {
