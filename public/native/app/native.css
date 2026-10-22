@@ -154,6 +154,9 @@ textarea.nx-code { font-family: var(--font-mono); font-size: var(--text-sm); }
    draws its own stepper and footer edge to edge, opts out. */
 .nx-modal--full .nx-modal__body { padding: var(--space-5) var(--space-6); }
 .nx-modal--full .nx-modal__body:has(> .nx-wiz__wrap) { padding: 0; display: flex; }
+/* The template preview fills the dialog: the page frame gets every pixel
+   between the description row and the buttons. */
+.nx-modal--full .nx-modal__body:has(> .nx-tplprev) { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
 .nx-modal__head .nx-btn { flex: none; }
 
 /* ------------------------------ list pages ------------------------------ */
@@ -692,8 +695,12 @@ pre.nx-code { max-height: 60vh; overflow: auto; margin: 0; padding: var(--space-
 .nx-tplgal__prev { position: absolute; top: var(--space-3); right: var(--space-3); background: rgba(255, 255, 255, 0.94) !important; box-shadow: var(--shadow-sm); opacity: 0; transition: opacity var(--duration) var(--ease); }
 .nx-tplgal__card:hover .nx-tplgal__prev, .nx-tplgal__prev:focus-visible { opacity: 1; }
 .nx-tplprev { flex: 1; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-5); min-height: 0; }
-.nx-tplprev__stage { flex: 1; min-height: 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface-sunken); display: flex; justify-content: center; }
-.nx-tplprev__frame { width: 100%; height: 100%; border: 0; background: var(--color-surface); transition: width var(--duration-slow) var(--ease); }
+.nx-tplprev__stage { flex: 1 1 auto; min-height: 420px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface-sunken); display: flex; justify-content: center; }
+.nx-tplprev__frame { width: 100%; height: auto; align-self: stretch; border: 0; background: var(--color-surface); transition: width var(--duration-slow) var(--ease); }
+.nx-tplprev__stage { position: relative; }
+.nx-tplprev__loading { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--text-md); background: var(--color-surface-sunken); }
+.nx-tplprev__stage.is-loading .nx-tplprev__loading { display: flex; }
+.nx-tplprev__loading .spinner { display: inline-block; }
 .nx-tplprev__stage.is-mobile .nx-tplprev__frame { width: 390px; box-shadow: 0 0 0 1px var(--color-border), var(--shadow-lg); }
 
 /* ------------------------------- shortcuts -------------------------------- */

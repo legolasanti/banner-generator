@@ -91,11 +91,13 @@
   }
 
   function preview(tpl, useDemo, onUse) {
-    demo().then(function (d) {
-      var project = projectFrom(tpl, d, useDemo);
+    // The dialog opens at once; the page fills in when the demo photos are
+    // ready (the first time, the server has to store the whole kit).
+    (function () {
       var frame = h("iframe.nx-tplprev__frame", { title: "Forhåndsvisning av " + tpl.name, sandbox: "allow-same-origin allow-scripts" });
       var device = "desktop";
-      var wrap = h("div.nx-tplprev__stage", null, frame);
+      var loading = h("div.nx-tplprev__loading", { role: "status" }, h("span.spinner", { "aria-hidden": "true" }), "Laster forhåndsvisning …");
+      var wrap = h("div.nx-tplprev__stage.is-loading", null, frame, loading);
       var seg = ui.segmented([["desktop", "", "monitor", "Desktop"], ["mobile", "", "smartphone", "Mobil"]], device, function (v) {
         device = v;
         wrap.classList.toggle("is-mobile", v === "mobile");
@@ -109,8 +111,14 @@
           onUse ? ui.button("Bruk denne malen", { kind: "primary", icon: "check", onClick: function () { m.close(); onUse(tpl.id); } }) : null,
         ].filter(Boolean),
       });
-      frame.srcdoc = documentFor(project);
-    });
+      // An empty iframe fires "load" for about:blank first; only the page counts.
+      frame.addEventListener("load", function () {
+        if (frame.srcdoc) wrap.classList.remove("is-loading");
+      });
+      demo().then(function (d) {
+        frame.srcdoc = documentFor(projectFrom(tpl, d, useDemo));
+      });
+    })();
   }
 
   // Hovering a card scrolls its page slowly from top to bottom (the
