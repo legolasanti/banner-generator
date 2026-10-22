@@ -111,6 +111,14 @@
     return "#" + c.map(function (v) { return (v < 16 ? "0" : "") + v.toString(16); }).join("");
   }
 
+  /** A colour as text on the page's light surfaces (the page, or white when
+   *  the page is dark, and the soft band when it is light): readable on both. */
+  function inkOn(color, page, soft) {
+    var light = isDark(page) ? "#ffffff" : page;
+    var out = readableOn(color, light);
+    return soft && !isDark(soft) ? readableOn(out, soft) : out;
+  }
+
   /** The accent as text on `bg`: darkened (or lightened) until it reads (3:1). */
   function readableOn(color, bg) {
     var target = isDark(bg) ? "#ffffff" : "#111111";
@@ -173,7 +181,13 @@
       "--np-brand-accent:" + accentOnBrand + ";" +
       // Accent-coloured words on the page itself (statement highlights):
       // a pale accent on a pale page is pulled darker until it reads.
-      "--np-accent-text:" + readableOn(c.accent, page) + ";" +
+      "--np-accent-text:" + inkOn(c.accent, page, c.soft) + ";" +
+      "--np-primary-text:" + inkOn(c.primary, page, c.soft) + ";" +
+      // On white cards (products, flip-card backs, the variant bar) and on
+      // the theme's dark colour.
+      "--np-accent-white:" + readableOn(c.accent, "#ffffff") + ";" +
+      "--np-primary-white:" + readableOn(c.primary, "#ffffff") + ";" +
+      "--np-accent-on-dark:" + readableOn(c.accent, isDark(c.dark) ? c.dark : "#111111") + ";" +
       "--np-brand-on-accent:" + onColor(accentOnBrand) + ";" +
       "--np-btn-dark-bg:" + (paleBrand ? c.primary : "#ffffff") + ";" +
       "--np-btn-dark-fg:" + (paleBrand ? onColor(c.primary) : c.primary) + ";" +

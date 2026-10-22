@@ -204,14 +204,51 @@
     );
   }
 
+  /**
+   * A ready-made design as a section, dressed in the demo photos it names
+   * (like a template): the photos are already stored by /api/native/demo,
+   * so they are added to the project's assets and the section points at
+   * them. Without the demo kit (offline) the design comes in without photos.
+   */
+  function withDemoPhotos(preset) {
+    var P = window.NativePresets;
+    var names = {};
+    JSON.stringify(preset.section).replace(/"demo:([a-z0-9-]+)"/g, function (_, n) {
+      names[n] = true;
+      return _;
+    });
+    var plain = function () {
+      var sec = P.sectionOf(preset, null);
+      return D.createSection(sec.type, sec);
+    };
+    if (!Object.keys(names).length) return Promise.resolve(plain());
+    return NP.tplGallery.demo().then(function (demo) {
+      var ids = {};
+      var used = [];
+      Object.keys(names).forEach(function (n) {
+        if (!demo[n]) return;
+        ids[n] = demo[n].id;
+        used.push(demo[n]);
+      });
+      if (!used.length) return plain();
+      NP.store.addAssets(used);
+      var assets = NP.store.get().project.assets;
+      var sec = P.sectionOf(preset, ids);
+      return D.createSection(sec.type, Object.assign({}, sec, { ctx: { assets: assets } }));
+    }, plain);
+  }
+
   function presetCard(preset, onPick) {
     var P = window.NativePresets;
     var frame = h("iframe.nx-preset-card__frame", { title: preset.name, tabindex: "-1", loading: "lazy", sandbox: "allow-same-origin", "aria-hidden": "true" });
     var card = h(
       "button.nx-preset-card",
       { type: "button", dataset: { q: (preset.name + " " + preset.group + " " + S.BLOCKS[preset.section.type].label).toLowerCase() }, on: { click: function () {
-        var sec = P.sectionOf(preset, null);
-        onPick(D.createSection(sec.type, sec));
+        if (card.disabled) return;
+        card.disabled = true;
+        withDemoPhotos(preset).then(onPick, function () {
+          card.disabled = false;
+        });
       } } },
       h("span.nx-preset-card__view", null, frame),
       h("span.nx-preset-card__name", null, preset.name),

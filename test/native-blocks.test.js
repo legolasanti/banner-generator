@@ -238,3 +238,34 @@ test("the framed opening shrinks its picture until a long title is above the fol
   assert.ok(bottom <= 900, "title bottom " + bottom);
   await page.close();
 });
+
+// ---- fonts ------------------------------------------------------------------------
+// A Google family that is not in public/wallpaper/fonts.js is never loaded:
+// the page silently falls back to a system font. Every font a template,
+// the default theme or a curated look names must be in the catalogue.
+test("every font the templates and looks name is in the font catalogue", () => {
+  const Fonts = require("../public/wallpaper/fonts.js");
+  const T = require("../public/native/templates.js");
+  const missing = [];
+  const check = (where, f) => {
+    if (f && f.family && (f.source || "google") === "google" && !Fonts.has(f.family)) missing.push(where + ": " + f.family);
+  };
+  check("DEFAULT_THEME heading", S.DEFAULT_THEME.fonts.heading);
+  check("DEFAULT_THEME body", S.DEFAULT_THEME.fonts.body);
+  for (const t of T.TEMPLATES) {
+    const th = T.themeOf(t);
+    check(t.id + " heading", th.fonts.heading);
+    check(t.id + " body", th.fonts.body);
+  }
+  const looks = fs.readFileSync(path.join(__dirname, "../public/native/app/theme.js"), "utf8");
+  for (const m of looks.matchAll(/name: "([^"]+)", colors: \{[^}]*\}, heading: "([^"]+)", body: "([^"]+)"/g)) {
+    check("look «" + m[1] + "» heading", { family: m[2] });
+    check("look «" + m[1] + "» body", { family: m[3] });
+  }
+  assert.deepEqual(missing, [], "fonts not in public/wallpaper/fonts.js");
+});
+
+test("the Tema panel warns about a font that is not in the catalogue", () => {
+  const src = fs.readFileSync(path.join(__dirname, "../public/native/app/theme.js"), "utf8");
+  assert.match(src, /font\.source === "google" && !Fonts\.has\(font\.family\)[\s\S]{0,200}nx-note--warn/);
+});

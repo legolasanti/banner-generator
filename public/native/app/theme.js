@@ -73,6 +73,12 @@
     );
 
     var body = h("div.nx-stack.nx-stack--sm");
+    // A family that is not in the catalogue (an old project, a hand-edited
+    // template) is never loaded: the page falls back to a system font.
+    if (font.source === "google" && !Fonts.has(font.family)) {
+      body.appendChild(h("p.nx-note.nx-note--warn", null, ui.icon("circle-alert", 15),
+        h("span", null, h("strong", null, "«" + font.family + "» finnes ikke i skriftlisten. "), "Siden vises med en standardskrift til du velger en skrift fra listen under, eller laster opp skriften som egen skrift.")));
+    }
     if (font.source === "google") {
       var sel = h("select.nx-input.nx-select");
       Fonts.CATEGORIES.forEach(function (cat) {

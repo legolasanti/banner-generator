@@ -1592,3 +1592,33 @@ html.np-js .np-sec:not(.np-in) .np-chart__fill { clip-path: inset(0 100% 0 0 rou
    is swapped for the readable one the theme computes (--np-accent-text). */
 div.np-acc { color: inherit; }
 .np-on-light-sec .np-sw.np-acc { color: var(--np-accent-text, var(--np-accent)); }
+
+/* ---- theme colours used as text are always readable ----
+   render.js computes --np-*-text (on the page and soft band), --np-*-white
+   (on white cards) and --np-accent-on-dark: the theme colour itself when it
+   reads (≥ 3:1), else pulled towards black or white until it does. A lime
+   accent on white becomes an olive; on a dark band it stays lime. */
+.np-on-light-sec:not(.np-bg-brand) { --np-acc-ink: var(--np-accent-text, var(--np-accent)); --np-pri-ink: var(--np-primary-text, var(--np-primary)); }
+.np-on-dark { --np-acc-ink: var(--np-accent-on-dark, var(--np-accent)); }
+.np-chap--number .np-chap__label, .np-rank--list .np-rank__num, .np-rank--cards .np-rank__item:not(:has(.np-rank__img)) .np-rank__num,
+.np-rank__fact strong, .np-card__sym, .np-tl__label, .np-hx__l, .np-tm__q::before, .np-card__ico { color: var(--np-acc-ink, var(--np-accent)); }
+.np-on-dark .np-tm__q::before, .np-on-dark .np-card__ico, .np-on-dark .np-card__sym--emoji { color: inherit; }
+.np-on-light-sec:not(.np-bg-brand) :is(.np-kicker, .np-stat__v, .np-rich li) { --np-primary: var(--np-pri-ink); }
+.np-hero--zoom.is-zoomed .np-kicker { color: #fff; }
+.np-prod__price, .np-flip__b strong { color: var(--np-primary-white, var(--np-primary)); }
+.np-variants a[aria-current="page"] { color: var(--np-primary-white, var(--np-primary)); border-bottom-color: var(--np-primary-white, var(--np-primary)); }
+.np-chapnav__n { color: var(--np-accent-text, var(--np-accent)); }
+.np-dark-page .np-chapnav__n { color: var(--np-accent-on-dark, var(--np-accent)); }
+.np-on-light-sec:not(.np-bg-brand) .np-acc summary::after { color: var(--np-pri-ink); }
+
+/* Flip-card front photos: the front is its own stacking context, so the
+   photo (z-index −1) paints above the front's colour, not behind it. */
+.np-flip__f.has-img { isolation: isolate; background: var(--np-dark); }
+
+/* ---- blend never covers content ----
+   A "blend" section reaches up over the one above by --np-blend. That one
+   gets an empty band of the same height (a transparent border its own
+   background shows through, its photo layer stretched into it), so the
+   fade only ever runs over background. */
+.np-sec:is(:has(+ .np-tr-blend:not(.np-shape-t)), :has(+ #np-after-hero + .np-tr-blend:not(.np-shape-t))) { --np-blend: clamp(64px, 11vw, 150px); border-bottom: var(--np-blend) solid transparent; }
+.np-sec:is(:has(+ .np-tr-blend:not(.np-shape-t)), :has(+ #np-after-hero + .np-tr-blend:not(.np-shape-t))) > .np-bgimg { bottom: calc(var(--np-blend) * -1); }
