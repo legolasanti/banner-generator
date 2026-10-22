@@ -36,6 +36,8 @@
     // Which product tab is open. Decides the formats, the visible fields and
     // the furniture drawn on the banner itself.
     product: F.DEFAULT_PRODUCT,
+    // Houseads: "bannere" (the six formats) or "puff" (the 980×600 Artikkelpuff).
+    houseMode: "bannere",
     settings: JSON.parse(JSON.stringify(DEFAULTS)),
     imageDataUrl: null,
     imageBlob: null,
@@ -187,6 +189,7 @@
     viewWallpaper: $("#view-wallpaper"),
     viewBulk: $("#view-bulk"),
     viewLive: $("#view-live"),
+    viewPuff: $("#view-puff"),
     historyCount: $("#historyCount"),
 
     dropzone: $("#dropzone"),
@@ -600,7 +603,7 @@
   const PRODUCT_INTRO = {
     norsktipping: "Spillbannere i 4 formater. Vinnersjanse, 18+-merke og «Annonse» legges på automatisk.",
     readpeak: "Native-annonser for alle annonsører, i ReadPeak 308×380 og Nyhetsgrid 190×190.",
-    houseads: "ABC Nyheters egne annonser for abc shopping, i 6 formater.",
+    houseads: "Egne annonser for abc shopping i 6 formater.",
   };
 
   /** Switch the whole builder over to another product. */
@@ -1421,7 +1424,7 @@
       thumb.loading = "lazy";
       thumb.alt = entry.filename;
       thumb.src = "/" + entry.thumbnailPath;
-      if (entry.kind === "wallpaper" || entry.kind === "bulk") thumb.classList.add("hcard__thumb--wide");
+      if (entry.kind === "wallpaper" || entry.kind === "bulk" || entry.kind === "puff") thumb.classList.add("hcard__thumb--wide");
       thumb.onerror = () => { thumb.src = "assets/placeholder.svg"; };
 
       const body = document.createElement("div");
@@ -1433,7 +1436,7 @@
       const tag = document.createElement("span");
       tag.className = "hcard__tag";
       tag.textContent =
-        entry.kind === "wallpaper" ? "Wallpaper" : entry.kind === "bulk" ? "Bulk" : entry.kind === "live" ? "NT Live" : F.getProduct(entry.product).label;
+        entry.kind === "wallpaper" ? "Wallpaper" : entry.kind === "bulk" ? "Bulk" : entry.kind === "live" ? "NT Live" : entry.kind === "puff" ? "Artikkelpuff" : F.getProduct(entry.product).label;
       name.appendChild(tag);
       const head = document.createElement("div");
       head.className = "hcard__head";
@@ -1463,6 +1466,14 @@
           htmlDl.textContent = "HTML5";
           htmlDl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?layout=format&type=html";
         }
+      } else if (entry.kind === "puff") {
+        dl.textContent = "Bilde";
+        if (entry.htmlFiles) {
+          htmlDl = document.createElement("a");
+          htmlDl.className = "btn-ghost btn-sm";
+          htmlDl.textContent = "HTML5";
+          htmlDl.href = "/api/history/" + encodeURIComponent(entry.id) + "/download?type=html";
+        }
       } else if (entry.htmlFiles) {
         htmlDl = document.createElement("a");
         htmlDl.className = "btn-ghost btn-sm";
@@ -1487,6 +1498,18 @@
         edit.addEventListener("click", () => {
           switchTab("live");
           window.NTLIVE.main.openProject("/" + entry.folderPath + entry.project);
+        });
+        actions.appendChild(edit);
+      }
+      // An Artikkelpuff keeps its document (project.json): reopen, change, export again.
+      if (entry.kind === "puff" && entry.project) {
+        const edit = document.createElement("button");
+        edit.className = "btn-ghost btn-sm";
+        edit.type = "button";
+        edit.textContent = "Åpne";
+        edit.addEventListener("click", () => {
+          setHouseMode("puff");
+          window.PUFF.main.openProject("/" + entry.folderPath + entry.project);
         });
         actions.appendChild(edit);
       }
@@ -1543,15 +1566,32 @@
     return m && TAB_IDS().includes(m[1]) ? m[1] : null;
   }
 
+  /** Houseads has two parts: the banners and the Artikkelpuff ("#/houseads/puff"). */
+  function houseModeFromHash() {
+    return /^#\/houseads\/puff\b/.test(location.hash || "") ? "puff" : "bannere";
+  }
+
+  /** Switch Houseads between its banners and the Artikkelpuff. */
+  function setHouseMode(mode) {
+    state.houseMode = mode === "puff" ? "puff" : "bannere";
+    $$("[data-house-mode]").forEach((b) => {
+      const on = b.dataset.houseMode === state.houseMode;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    switchTab("houseads");
+  }
+
   function switchTab(tab, focusTab) {
-    const hash = tab === "home" ? "#/" : "#/" + tab;
+    const isPuff = tab === "houseads" && state.houseMode === "puff";
+    const hash = tab === "home" ? "#/" : isPuff ? "#/houseads/puff" : "#/" + tab;
     if (location.hash !== hash) history.replaceState(null, "", hash);
     const isHome = tab === "home";
     const isHistory = tab === "history";
     const isWallpaper = tab === "wallpaper";
     const isBulk = tab === "bulk";
     const isLive = tab === "live";
-    const isBuilder = !isHome && !isHistory && !isWallpaper && !isBulk && !isLive;
+    const isBuilder = !isHome && !isHistory && !isWallpaper && !isBulk && !isLive && !isPuff;
     el.tabs.forEach((b) => {
       const active = b.dataset.tab === tab;
       b.classList.toggle("is-active", active);
@@ -1566,11 +1606,18 @@
     el.viewWallpaper.classList.toggle("is-hidden", !isWallpaper);
     el.viewBulk.classList.toggle("is-hidden", !isBulk);
     el.viewLive.classList.toggle("is-hidden", !isLive);
+    el.viewPuff.classList.toggle("is-hidden", !isPuff);
+    el.viewPuff.tabIndex = isPuff ? 0 : -1;
     el.viewNew.tabIndex = isBuilder ? 0 : -1;
     el.viewHistory.tabIndex = isHistory ? 0 : -1;
     if (isHome) return;
     if (isHistory) {
       loadHistory();
+      return;
+    }
+    // The Artikkelpuff is its own workspace inside Houseads, built on first use.
+    if (isPuff) {
+      if (window.PUFF && window.PUFF.main) window.PUFF.main.activate();
       return;
     }
     // NT Live is its own workspace, built on first use.
@@ -1619,8 +1666,15 @@
     $$("[data-goto]").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.goto)));
     window.addEventListener("hashchange", () => {
       const tab = tabFromHash();
+      if (tab === "houseads") state.houseMode = houseModeFromHash();
       if (tab) switchTab(tab);
     });
+    // The Bannere | Artikkelpuff switch appears in both Houseads views.
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest && e.target.closest("[data-house-mode]");
+      if (btn) setHouseMode(btn.dataset.houseMode);
+    });
+    window.ABC = Object.assign(window.ABC || {}, { setHouseMode });
   }
 
   // -------- settings --------------------------------------------------------
@@ -1938,12 +1992,15 @@
     // Builds the previews, the size sliders and the packages for the product
     // whose tab is open, then renders everything.
     applyProduct(state.product);
+    state.houseMode = houseModeFromHash();
+    $$("[data-house-mode]").forEach((b) => b.classList.toggle("is-active", b.dataset.houseMode === state.houseMode));
     switchTab(tabFromHash() || "home");
     loadHistory();
     // Wallpaper exports land in the same history.
     window.addEventListener("wallpaper:exported", loadHistory);
     window.addEventListener("bulk:exported", loadHistory);
     window.addEventListener("live:exported", loadHistory);
+    window.addEventListener("puff:exported", loadHistory);
     // Text-size rules saved from the Bulk tab apply here at once.
     window.addEventListener("autofit:rules", (e) => {
       state.settings.autoFit = e.detail || {};

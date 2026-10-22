@@ -1,0 +1,256 @@
+/* =========================================================================
+   puff-ui.css — the Artikkelpuff workspace (layout only; components come
+   from shared/ui.css and the builder's form/preview classes in style.css).
+   The ad itself is styled by assets/puff.css.
+   ========================================================================= */
+
+/* The Bannere | Artikkelpuff switch at the top of both Houseads forms. */
+.house-mode { margin-top: var(--space-4); }
+
+/* ---- Media: the shared drop zone and one card per story ---------------- */
+.pu-drop .dropzone__empty { padding: var(--space-5) var(--space-4); }
+
+.pu-slots { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.pu-slot {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-3);
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+.pu-slot.is-drop { border-color: var(--color-primary); background: var(--color-primary-soft); box-shadow: 0 0 0 3px var(--color-focus-ring); }
+.pu-slot.is-empty { border-style: dashed; background: var(--color-surface-subtle); }
+
+.pu-slot__top { display: flex; gap: var(--space-3); align-items: flex-start; }
+.pu-slot__thumb {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: repeating-linear-gradient(-45deg, var(--color-surface-muted) 0 8px, var(--color-surface-sunken) 8px 16px);
+}
+.pu-slot__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pu-slot__kind {
+  position: absolute;
+  left: var(--space-1);
+  bottom: var(--space-1);
+  padding: 1px var(--space-1-5);
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.5;
+}
+.pu-slot__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.pu-slot__title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); font-weight: var(--weight-bold); color: var(--color-text); }
+.pu-slot__num {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-heavy);
+}
+.pu-slot__size { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: var(--weight-medium); color: var(--color-text-tertiary); }
+.pu-slot__file { font-size: var(--text-xs); color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pu-slot.is-busy .pu-slot__file { color: var(--color-primary-strong); }
+.pu-slot__actions { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin-top: var(--space-1); }
+.pu-slot__move { min-width: 32px; padding-inline: 0; }
+
+.pu-slot__controls { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+.pu-slot__controls[hidden] { display: none; }
+.pu-slot__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.pu-slot__warn { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-warning-text); }
+.pu-slot__warn[hidden] { display: none; }
+
+.pu-slider { display: grid; grid-template-columns: 76px 1fr 52px; align-items: center; gap: var(--space-3); }
+.pu-slider[hidden] { display: none; }
+.pu-slider__name { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-secondary); }
+.pu-slider__out { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-text-tertiary); text-align: right; }
+
+/* ---- Text and links ------------------------------------------------------ */
+.pu-text .field__label { gap: var(--space-2); }
+.pu-text .textarea { min-height: 0; font-family: "Noto Serif", Georgia, serif; font-weight: 700; }
+.pu-fit { font-size: var(--text-xs); color: var(--color-text-tertiary); }
+.pu-fit:empty { display: none; }
+.pu-fit.is-ok { color: var(--color-success-text); }
+.pu-fit.is-warn { color: var(--color-warning-text); }
+.pu-fit.is-bad { color: var(--color-danger-text); font-weight: var(--weight-medium); }
+
+/* ---- Advertiser logo ----------------------------------------------------- */
+.pu-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+.pu-logo.has-logo { border-style: solid; border-color: var(--color-border); background: var(--color-surface); }
+.pu-logo.is-drop { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.pu-logo__swatch {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 56px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: #f5f5f5; /* the ad's own background, so the logo is judged on it */
+}
+.pu-logo__img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.pu-logo__img[hidden] { display: none; }
+.pu-logo__none { font-size: var(--text-xs); color: var(--color-text-tertiary); }
+.pu-logo.has-logo .pu-logo__none { display: none; }
+.pu-logo__side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.pu-logo + .pu-slider { margin-top: var(--space-3); }
+
+.pu-filename { font-family: var(--font-mono); color: var(--color-primary-strong); }
+.pu-result__warn { margin: 0; font-size: var(--text-xs); }
+
+/* ---- Stage ----------------------------------------------------------------- */
+.pu-preview__body { align-items: center; }
+.pu-stage {
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+.pu-stage.is-drop { background: var(--color-primary-soft); box-shadow: inset 0 0 0 2px var(--color-primary); }
+
+.pu-stage__frame {
+  position: relative;
+  flex: none;
+  border-radius: 2px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.pu-stage__ad,
+.pu-stage__hits {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 980px;
+  height: 600px;
+  transform-origin: 0 0;
+}
+.pu-stage__ad { pointer-events: none; }
+
+/* The empty photo areas say their size on the hit layer instead. */
+.pu-stage__ad .pf__empty { color: transparent; }
+
+/* One hit box per photo area. Labels are drawn at screen size by dividing
+   by the stage scale, so they stay readable however small the ad is shown. */
+.pu-hit {
+  position: absolute;
+  cursor: grab;
+  outline: 0 solid transparent;
+  transition: outline-color var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
+}
+.pu-hit:hover { outline: calc(2px / var(--pu-scale, 1)) solid var(--color-primary-bright); }
+.pu-hit.is-dragging { cursor: grabbing; outline: calc(2px / var(--pu-scale, 1)) solid var(--color-primary); }
+.pu-hit.is-drop { outline: calc(3px / var(--pu-scale, 1)) solid var(--color-primary); background: rgba(26, 107, 26, 0.18); }
+.pu-hit.is-empty { cursor: pointer; }
+
+/* The logo spot (top right): a dashed "+ Logo" until one is uploaded. */
+.pu-hit--logo { cursor: pointer; border-radius: calc(4px / var(--pu-scale, 1)); }
+.pu-hit--logo.is-empty { outline: calc(1.5px / var(--pu-scale, 1)) dashed #b9b9b9; }
+.pu-hit--logo.is-empty:hover { outline-color: var(--color-primary); }
+.pu-hit--logo .pu-hit__empty { padding-top: 0; color: #8a8a8a; }
+.pu-hit--logo.is-empty .pu-hit__empty { display: flex; }
+
+.pu-hit__tag,
+.pu-hit__hint,
+.pu-hit__empty,
+.pu-hit__busy {
+  position: absolute;
+  font-family: var(--font-sans);
+  font-size: calc(12px / var(--pu-scale, 1));
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.pu-hit__tag {
+  left: calc(8px / var(--pu-scale, 1));
+  top: calc(8px / var(--pu-scale, 1));
+  padding: calc(2px / var(--pu-scale, 1)) calc(8px / var(--pu-scale, 1));
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.66);
+  color: #fff;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.pu-hit__hint {
+  left: 50%;
+  bottom: calc(8px / var(--pu-scale, 1));
+  transform: translateX(-50%);
+  padding: calc(3px / var(--pu-scale, 1)) calc(10px / var(--pu-scale, 1));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f2a1f;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.pu-hit:hover .pu-hit__tag,
+.pu-hit.is-empty .pu-hit__tag,
+.pu-hit.is-dragging .pu-hit__tag { opacity: 1; }
+.pu-hit:hover:not(.is-empty):not(.is-busy) .pu-hit__hint { opacity: 1; }
+
+.pu-hit__empty {
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding-top: calc(18px / var(--pu-scale, 1));
+  color: #6b6b6b;
+  font-weight: 600;
+}
+.pu-hit.is-empty:not(.is-busy) .pu-hit__empty { display: flex; }
+
+.pu-hit__busy {
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(8px / var(--pu-scale, 1));
+  background: rgba(245, 245, 245, 0.82);
+  color: #1f2a1f;
+  font-weight: 600;
+}
+.pu-hit.is-busy .pu-hit__busy { display: flex; }
+.pu-hit__track {
+  width: 50%;
+  height: calc(4px / var(--pu-scale, 1));
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.pu-hit__bar { display: block; height: 100%; width: 4%; background: var(--color-primary); transition: width 160ms linear; }
+
+/* ---- Measurements under the stage -------------------------------------------- */
+.pu-spec {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+.pu-spec > div { display: flex; gap: var(--space-1-5); }
+.pu-spec dt { color: var(--color-text-tertiary); }
+.pu-spec dd { margin: 0; font-family: var(--font-mono); font-size: var(--text-2xs); line-height: 1.6; color: var(--color-text-secondary); }

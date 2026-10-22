@@ -55,6 +55,7 @@ const bulkLinks = require("./lib/bulk/links");
 const { registerBulkRoutes } = require("./lib/bulk/routes");
 const { createNative } = require("./lib/native");
 const { createLive } = require("./lib/live");
+const { createPuff } = require("./lib/puff");
 const { createAuth } = require("./lib/auth");
 
 // --------------------------------------------------------------------------
@@ -1289,6 +1290,13 @@ app.get("/api/history/:id/download", async (req, res) => {
     });
   }
 
+  if (entry.kind === "puff") {
+    return puff.sendDownload(res, entry, req.query.type).catch((err) => {
+      console.error("[puff:download] " + err.message);
+      if (!res.headersSent) res.status(500).json({ error: "Kunne ikke laste ned" });
+    });
+  }
+
   if (entry.kind === "bulk") {
     const send =
       req.query.row != null
@@ -1690,6 +1698,32 @@ const live = createLive({
     }),
 });
 live.register(app);
+
+// Artikkelpuff — the Houseads 980×600 with three stories (photo or video
+// each). Shares the browser, the render queue, the settings and the history.
+const puff = createPuff({
+  historyDir: HISTORY_DIR,
+  uploadsDir: UPLOADS_DIR,
+  publicDir: PUBLIC_DIR,
+  templatesDir: TEMPLATES_DIR,
+  imageTools,
+  html5,
+  getBrowser,
+  enqueue,
+  loadSettings,
+  budgetFor,
+  normalizeClickUrl,
+  sanitizeFilename,
+  fileStamp,
+  saveEntry: (entry) =>
+    withHistoryLock(async () => {
+      let history = await loadHistory();
+      history.unshift(entry);
+      history = await trimHistory(history);
+      await writeHistory(history);
+    }),
+});
+puff.register(app);
 
 // SPA-ish fallback to index for unknown non-API GETs
 app.get(/^(?!\/api\/).*/, (req, res, next) => {

@@ -1,0 +1,129 @@
+/* =========================================================================
+   puff.css — the Artikkelpuff 980×600 creative (see puff.js for the
+   geometry). Everything is absolutely positioned from the measured layout, so
+   the preview, the backup image and the HTML5 package are the same picture.
+
+   The font URLs are relative to this file: public/assets/fonts/ for the app
+   and the Puppeteer template, and fonts/ next to index.html in the package,
+   where this stylesheet is inlined.
+   ========================================================================= */
+
+@font-face {
+  font-family: "Noto Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("fonts/noto-sans-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("fonts/noto-serif-latin-700-normal.woff2") format("woff2");
+}
+
+.pf {
+  position: relative;
+  width: 980px;
+  height: 600px;
+  overflow: hidden;
+  background: #f5f5f5;
+  color: #333333;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.pf a,
+a.pf__head,
+a.pf__item {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pf__head {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 62px;
+  display: block;
+}
+
+.pf__label {
+  position: absolute;
+  white-space: nowrap;
+  font-family: "Noto Sans", Arial, sans-serif;
+  font-weight: 700;
+  color: #333333;
+}
+
+.pf__logo {
+  position: absolute;
+  display: block;
+  object-fit: contain;
+  object-position: right center;
+}
+
+.pf__item {
+  display: block;
+}
+
+.pf__media {
+  position: absolute;
+  overflow: hidden;
+  background: #e4e4e4;
+}
+
+.pf__img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.pf__img--baked {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pf__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 14px/1 "Noto Sans", Arial, sans-serif;
+  letter-spacing: 0.02em;
+  color: #9a9a9a;
+  background: repeating-linear-gradient(-45deg, #ececec 0 12px, #e6e6e6 12px 24px);
+}
+
+.pf__headline {
+  position: absolute;
+  margin: 0;
+  font-family: "Noto Serif", Georgia, serif;
+  font-weight: 700;
+  color: #333333;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+  text-decoration: underline transparent;
+  text-decoration-thickness: 0.096em;
+  text-underline-offset: 0.1em;
+}
+
+/* Hover: the story under the pointer underlines its headline, the way a
+   front-page title does on abcnyheter.no. Each story is its own link in the
+   HTML5 creative, so only that one reacts. Screenshots never carry it. */
+.pf__item:hover .pf__headline,
+.pf__item:focus-visible .pf__headline {
+  text-decoration-color: currentColor;
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <title>Artikkelpuff</title>
+    <link rel="stylesheet" href="../public/assets/puff.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #f5f5f5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="banner-root"></div>
+    <script src="../public/assets/puff.js"></script>
+    <script>
+      /* The backup image of an Artikkelpuff (video slots show their poster
+         frame), and afterwards the markup of the HTML5 package. The server
+         injects window.__DATA__ = { doc } (sources already as file:// URLs)
+         and waits for __BANNER_READY__; then it calls __packageMarkup(names)
+         for the package's own file names. */
+      (function () {
+        window.__BANNER_READY__ = false;
+        window.__BANNER_ERROR__ = null;
+        var root = document.getElementById("banner-root");
+
+        function whenImagesLoaded(cb) {
+          var imgs = Array.prototype.slice.call(document.images);
+          var pending = imgs.length;
+          if (!pending) return cb();
+          var done = function () {
+            if (--pending === 0) cb();
+          };
+          imgs.forEach(function (img) {
+            if (img.complete) done();
+            else {
+              img.addEventListener("load", done);
+              img.addEventListener("error", done);
+            }
+          });
+        }
+
+        // names: { image: [..], video: [..], poster: [..], logo: "" } per slot index
+        window.__packageMarkup = function (names) {
+          var doc = (window.__DATA__ || {}).doc || {};
+          var holder = document.createElement("div");
+          holder.style.cssText = "position:absolute;left:-5000px;top:0";
+          document.body.appendChild(holder);
+          PuffAd.render(holder, doc, {
+            mode: "package",
+            exits: true,
+            resolve: function (kind, slot, i) {
+              if (kind === "logo") return names.logo || "";
+              return (names[kind] && names[kind][i]) || "";
+            },
+          });
+          PuffAd.fit(holder);
+          holder.removeAttribute("style");
+          holder.id = "banner-root";
+          var html = holder.outerHTML;
+          holder.parentNode.removeChild(holder);
+          return html;
+        };
+
+        function start() {
+          try {
+            var data = window.__DATA__ || {};
+            PuffAd.render(root, data.doc || {}, { mode: "still" });
+            var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+            fontsReady
+              .catch(function () {})
+              .then(function () {
+                window.__FIT__ = PuffAd.fit(root);
+                whenImagesLoaded(function () {
+                  requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                      window.__BANNER_READY__ = true;
+                    });
+                  });
+                });
+              });
+          } catch (err) {
+            window.__BANNER_ERROR__ = String((err && err.stack) || err);
+            window.__BANNER_READY__ = true;
+          }
+        }
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+        else start();
+      })();
+    </script>
+  </body>
+</html>

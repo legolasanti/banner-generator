@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="bulk/bulk.css" />
     <link rel="stylesheet" href="assets/live.css" />
     <link rel="stylesheet" href="live/live-ui.css" />
+    <link rel="stylesheet" href="assets/puff.css" />
+    <link rel="stylesheet" href="puff/puff-ui.css" />
   </head>
   <body>
     <!-- ============================ TOP BAR ============================ -->
@@ -52,7 +54,7 @@
         <span class="tabs__sep" aria-hidden="true"></span>
         <button class="tab" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="Norsk Tipping-bannere i 4 formater, med vinnersjanse og 18+-merke">Norsk Tipping</button>
         <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ReadPeak-annonser for alle annonsører: merkevare, ingress og «Les mer»">ReadPeak</button>
-        <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ABC Nyheters egne annonser (abc shopping) i 6 formater">Houseads</button>
+        <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ABC Nyheters egne annonser i 6 formater, og Artikkelpuff 980×600 med tre saker">Houseads</button>
         <span class="tabs__sep" aria-hidden="true"></span>
         <button class="tab" data-tab="live" id="tab-live" role="tab" aria-selected="false" aria-controls="view-live" tabindex="-1" title="Dynamiske HTML5-annonser for Norsk Tipping: dagens kamper fra et regneark">NT Live</button>
         <button class="tab" data-tab="bulk" id="tab-bulk" role="tab" aria-selected="false" aria-controls="view-bulk" tabindex="-1" title="Mange bannere på én gang fra ett regneark – én rad per banner">Bulk</button>
@@ -118,8 +120,8 @@
                   <i style="--w:320;--h:400"></i><i style="--w:980;--h:300"></i><i style="--w:980;--h:500"></i><i style="--w:580;--h:500"></i><i style="--w:300;--h:600"></i><i style="--w:300;--h:250"></i>
                 </span>
                 <span class="tool__title">Houseads</span>
-                <span class="tool__desc">ABC Nyheters egne annonser for abc shopping, med Noto Serif-overskrift.</span>
-                <span class="tool__meta"><span class="badge">6 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__desc">Egne annonser i 6 formater – og Artikkelpuff 980×600: tre saker med bilde eller video, lastet opp på én gang.</span>
+                <span class="tool__meta"><span class="badge">6 formater</span><span class="badge">Artikkelpuff</span><span class="badge">Bilde · HTML5</span></span>
                 <span class="tool__go">Lag Houseads <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
               </a>
             </div>
@@ -212,6 +214,12 @@
               <header class="form__intro">
                 <h2 class="form__title" id="productTitle">Norsk Tipping</h2>
                 <p class="form__desc" id="productDesc"></p>
+                <!-- Houseads only: the six banner formats here, or the
+                     980×600 Artikkelpuff (its own workspace, #view-puff). -->
+                <div class="segmented segmented--block house-mode" data-when="houseads" role="group" aria-label="Houseads-type">
+                  <button type="button" class="seg is-active" data-house-mode="bannere" aria-pressed="true">Bannere · 6 formater</button>
+                  <button type="button" class="seg" data-house-mode="puff" aria-pressed="false">Artikkelpuff · 980×600</button>
+                </div>
               </header>
 
               <!-- 1 · Bilde ------------------------------------------------ -->
@@ -504,6 +512,10 @@
            time the tab is opened. -->
       <section class="view is-hidden" id="view-bulk" role="tabpanel" aria-labelledby="tab-bulk" tabindex="-1"></section>
 
+      <!-- Artikkelpuff 980×600 (Houseads): three stories, photo or video each.
+           Built by puff/main.js the first time it is opened. -->
+      <section class="view is-hidden" id="view-puff" role="tabpanel" aria-labelledby="tab-houseads" tabindex="-1"></section>
+
       <!-- NT Live: dynamic Norsk Tipping creatives. Built by live/main.js the
            first time the tab is opened. -->
       <section class="view is-hidden" id="view-live" role="tabpanel" aria-labelledby="tab-live" tabindex="-1"></section>
@@ -714,6 +726,11 @@
     <script src="live/code-editor.js"></script>
     <script src="live/preview.js"></script>
     <script src="live/main.js"></script>
+    <script src="assets/puff.js"></script>
+    <script src="puff/media.js"></script>
+    <script src="puff/stage.js"></script>
+    <script src="puff/panel.js"></script>
+    <script src="puff/main.js"></script>
     <script src="app.js"></script>
     <script src="/shared/session.js"></script>
   </body>
