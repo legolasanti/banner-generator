@@ -131,7 +131,7 @@
   var SYS = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
   function fontStack(font) {
-    var generic = /serif|garamond|baskerville|lora|merriweather|playfair|prata|fraunces|bitter|slab/i.test(font.family) &&
+    var generic = /serif|garamond|baskerville|caslon|newsreader|crimson|lora|merriweather|playfair|prata|fraunces|bitter|slab/i.test(font.family) &&
       !/sans/i.test(font.family) ? "Georgia, serif" : SYS;
     if (font.source === "system") return generic;
     return '"' + String(font.family).replace(/["\\]/g, "") + '", ' + generic;
@@ -769,16 +769,25 @@
 
   R.quote = function (ctx, s) {
     var p = s.props;
+    var hasImg = !!(p.image && ctx.assets[p.image]);
+    // "small" (default) keeps the avatar by the name; "round" puts a large
+    // round portrait over the quote; "side" a tall 4:5 portrait beside it.
+    var look = hasImg && (p.portrait === "round" || p.portrait === "side") ? p.portrait : "small";
+    var big = look !== "small"
+      ? '<div class="np-quote__portrait">' + img(ctx, p.image, { alt: p.name || "", sizes: look === "side" ? "(max-width: 699px) 70vw, 440px" : "180px", field: "image" }) + "</div>"
+      : "";
     var who = p.name || p.role
       ? '<figcaption class="np-quote__by">' +
-        (p.image && ctx.assets[p.image] ? img(ctx, p.image, { decorative: true, sizes: "56px" }) : "") +
+        (look === "small" && hasImg ? img(ctx, p.image, { decorative: true, sizes: "64px" }) : "") +
         "<span>" +
         (p.name ? '<span class="np-quote__name"' + ed(ctx, "name") + ">" + esc(p.name) + "</span>" : "") +
         (p.role ? '<span class="np-quote__role"' + ed(ctx, "role") + ">" + esc(p.role) + "</span>" : "") +
         "</span></figcaption>"
       : "";
-    var inner = '<figure class="np-quote np-quote--' + p.size + '"><blockquote class="np-quote__text"' + ed(ctx, "text") + ">" + textHtml(p.text) + "</blockquote>" + who + "</figure>";
-    return wrapSection(ctx, s, wrap("text", inner));
+    var quote = '<blockquote class="np-quote__text"' + ed(ctx, "text") + ">" + textHtml(p.text) + "</blockquote>" + who;
+    var cls = "np-quote np-quote--" + p.size + " np-quote--p-" + look;
+    if (look === "side") return wrapSection(ctx, s, wrap("wide", '<figure class="' + cls + '">' + big + '<div class="np-quote__body">' + quote + "</div></figure>"));
+    return wrapSection(ctx, s, wrap("text", '<figure class="' + cls + '">' + big + quote + "</figure>"));
   };
 
   R.video = function (ctx, s) {

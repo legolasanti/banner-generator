@@ -552,6 +552,15 @@
         { key: "role", type: "text", label: "Tittel / rolle", max: 80, default: "" },
         { key: "image", type: "image", label: "Portrett (valgfritt)", ai: false },
         { key: "size", type: "select", label: "Størrelse", options: [["large", "Stor"], ["medium", "Middels"]], default: "large", ai: false },
+        {
+          key: "portrait",
+          type: "select",
+          label: "Portrettet",
+          options: [["small", "Lite, rundt ved navnet"], ["round", "Stort og rundt over sitatet"], ["side", "Stort portrett (4:5) ved siden av sitatet"]],
+          default: "small",
+          ai: false,
+          help: "Gjelder når sitatet har et portrett.",
+        },
       ],
     },
 

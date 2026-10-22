@@ -336,3 +336,75 @@ test("twelve columns stay legible on a phone: no overlapping names or values, no
   assert.deepEqual(r, { labels: 0, values: 0, wide: false, cut: 0, base: 1 });
   await page.close();
 });
+
+// ---- no sideways page on phones ---------------------------------------------------
+test("entrances that start wide never make the page scroll sideways, and sticky still pins", async (t) => {
+  if (!browser) return t.skip("no browser");
+  const filler = { type: "richText", props: { html: "<p>" + "Tekst. ".repeat(400) + "</p>" } };
+  const html = render(
+    [
+      { type: "hero", props: { layout: "type", title: "Åpning" } },
+      filler,
+      { type: "quote", props: { text: "Et sitat som starter skalert og uskarpt." }, style: { bg: "dark", anim: "blur" } },
+      { type: "cards", style: { anim: "settle" } },
+      { type: "statement", props: { text: "Stor tekst" }, style: { bg: "dark", transition: "curtain" } },
+      { type: "stats", style: { anim: "zoom" } },
+      { type: "marquee" },
+      { type: "stickyStory", props: { slides: [{ title: "En", text: "Tekst." }, { title: "To", text: "Tekst." }] } },
+      filler,
+    ],
+    { inline: true }
+  );
+  const page = await open(html, 390, 844);
+  const sw = () => page.evaluate(() => document.documentElement.scrollWidth);
+  assert.equal(await sw(), 390, "before scrolling");
+  await page.evaluate(() => (document.documentElement.style.scrollBehavior = "auto"));
+  const total = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < total; y += 500) {
+    await page.evaluate((yy) => window.scrollTo(0, yy), y);
+    await new Promise((r) => setTimeout(r, 40));
+    assert.equal(await sw(), 390, "at " + y);
+  }
+  // The story's picture is sticky: halfway through the story it is pinned
+  // under the bar, not scrolled away (overflow on <html> would break this).
+  const top = await page.evaluate(async () => {
+    const story = document.querySelector(".np-t-stickyStory");
+    let y = 0;
+    for (let n = story; n; n = n.offsetParent) y += n.offsetTop;
+    window.scrollTo(0, y + story.offsetHeight * 0.4);
+    await new Promise((r) => setTimeout(r, 120));
+    return Math.round(document.querySelector(".np-story__media").getBoundingClientRect().top);
+  });
+  assert.equal(top, 50);
+  await page.close();
+});
+
+test("the editorial fonts are in the catalogue and fall back to the right kind of font", () => {
+  const Fonts = require("../public/wallpaper/fonts.js");
+  for (const f of ["Libre Caslon Text", "Libre Caslon Display", "Newsreader", "Young Serif", "Hanken Grotesk", "Inter Tight"]) {
+    assert.ok(Fonts.has(f), f);
+    assert.match(Fonts.cssUrl(f), /^https:\/\/fonts\.googleapis\.com\/css2\?family=/);
+  }
+  // Every serif in the catalogue falls back to a serif, every other to sans.
+  for (const fam of Fonts.FAMILIES) {
+    const stack = R.fontStack({ family: fam.f, source: "google" });
+    if (fam.c === "serif") assert.match(stack, /Georgia, serif$/, fam.f);
+  }
+});
+
+test("a quote's portrait: small by the name (default), large and round, or 4:5 beside it", () => {
+  const id = "c".repeat(64) + ".jpg";
+  const assets = { [id]: { id, name: "p.jpg", type: "image", w: 800, h: 1000, variants: [] } };
+  const q = (portrait) => render([{ type: "quote", props: { text: "Sitat.", name: "Navn", image: id, portrait } }], { assets });
+  assert.equal(D.normalizeSection({ type: "quote" }).props.portrait, "small");
+  const small = q(undefined);
+  assert.match(small, /class="np-quote np-quote--large np-quote--p-small"/);
+  assert.match(small, /<figcaption class="np-quote__by"><img/);
+  const round = q("round");
+  assert.match(round, /np-quote--p-round"><div class="np-quote__portrait"><img/);
+  assert.doesNotMatch(round, /<figcaption class="np-quote__by"><img/);
+  const side = q("side");
+  assert.match(side, /class="np-wrap np-w-wide"><figure class="np-quote np-quote--large np-quote--p-side"><div class="np-quote__portrait">[\s\S]*<div class="np-quote__body"><blockquote/);
+  // Without a picture every look falls back to the plain quote.
+  assert.match(render([{ type: "quote", props: { text: "Sitat.", portrait: "side" } }]), /np-quote--p-small/);
+});

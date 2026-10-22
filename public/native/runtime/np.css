@@ -1664,3 +1664,35 @@ div.np-acc { color: inherit; }
 .np-cols:has(.is-hl) .np-col:not(.is-hl) .np-col__fill { opacity: 1; background: linear-gradient(180deg, color-mix(in srgb, var(--np-primary) 28%, transparent), color-mix(in srgb, var(--np-primary) 45%, transparent)); }
 .np-on-dark .np-cols:has(.is-hl) .np-col:not(.is-hl) .np-col__fill { background: rgba(255, 255, 255, 0.42); }
 .np-col.is-hl .np-col__v { font-weight: 800; }
+
+/* ---- no sideways page on phones ----
+   Entrances that start scaled, tilted or offset (blur, settle, zoom, slide,
+   curtain …), marquees and wide tracks may stick out past the screen before
+   they play. overflow-x: clip cuts that off without making <main> a scroll
+   container, so position: sticky (pinned stories, stack, hero zoom) and
+   position: fixed (lightbox, phone hotspot cards) keep working.
+   Not on <html>: then body's own overflow-x: hidden would no longer pass
+   to the viewport, body would become the scroller and every sticky element
+   would stick to it instead of the screen. */
+#np-main, .np-footer, .np-fb, .np-credit-line { overflow-x: clip; }
+
+/* ---- quote portraits: small by the name (default), large and round over
+   the quote, or a tall 4:5 portrait beside it ---- */
+.np-quote__portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; }
+.np-quote--p-round .np-quote__portrait { width: clamp(112px, 9vw + 60px, 168px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin: 0 auto 28px; box-shadow: 0 0 0 4px var(--np-page, #fff), 0 0 0 6px color-mix(in srgb, var(--np-accent) 55%, transparent), 0 20px 44px -18px rgba(0, 0, 0, 0.45); }
+.np-on-dark .np-quote--p-round .np-quote__portrait { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 20px 44px -18px rgba(0, 0, 0, 0.6); }
+.np-align-left .np-quote--p-round .np-quote__portrait { margin-left: 0; }
+.np-quote--p-round::before { display: none; }
+.np-quote--p-side { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 72px); align-items: center; text-align: left; }
+.np-quote--p-side::before { display: none; }
+.np-quote--p-side .np-quote__portrait { aspect-ratio: 4 / 5; border-radius: calc(var(--np-radius) * 1.2); overflow: hidden; box-shadow: 0 28px 60px -30px rgba(0, 0, 0, 0.55); }
+.np-quote--p-side .np-quote__body::before { content: ""; display: block; width: 56px; height: 4px; border-radius: 2px; background: var(--np-accent); margin-bottom: 26px; }
+.np-on-dark .np-quote--p-side .np-quote__body::before { background: currentColor; opacity: 0.6; }
+.np-quote--p-side .np-quote__by { margin-top: 26px; }
+@media (max-width: 699px) {
+  .np-quote--p-side { grid-template-columns: 1fr; gap: 24px; }
+  .np-quote--p-side .np-quote__portrait { width: min(72%, 300px); }
+}
+/* The browser's default blockquote indent (40 px each side) never belonged
+   here; it only showed once a quote stood left-aligned beside a portrait. */
+.np-quote__text { margin: 0; }
