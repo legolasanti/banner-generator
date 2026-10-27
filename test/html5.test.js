@@ -59,6 +59,17 @@ test("index.html carries the CM360 contract", async (t) => {
     assert.ok(!/(?:src|href)\s*=\s*["']https?:\/\//.test(html));
   });
 
+  await t.test("fits the Vinnersjanse strip in whatever browser serves it, never cutting it", () => {
+    const html = buildDesktop();
+    // The check runs after the click exit, at once, on font load and on load.
+    assert.ok(html.includes(html5.STRIP_FIT));
+    assert.ok(html.indexOf(html5.STRIP_FIT) > html.indexOf('class="ad-exit"'));
+    assert.match(html5.STRIP_FIT, /document\.fonts\.ready/);
+    assert.match(html5.STRIP_FIT, /addEventListener\("load"/);
+    // Never below 80 % of the designed size.
+    assert.match(html5.STRIP_FIT, /size \* 0\.8/);
+  });
+
   await t.test("uses no storage APIs — CM360 rejects bundles that do", () => {
     assert.ok(!/localStorage|sessionStorage|indexedDB|openDatabase/.test(buildDesktop()));
   });
