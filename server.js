@@ -104,6 +104,7 @@ const HTML_PHOTO_RESERVE_BYTES = 40 * 1024;
 // download packages. Shared verbatim with the browser (public/assets/app.js
 // loads the same file), so the format list can never drift between the two.
 const formats = require("./public/assets/formats.js");
+const fileTags = require("./public/assets/filetags.js");
 
 // The abc shopping mark used by the Houseads header. Travels inside every
 // house HTML5 package under this name, so the markup rewrite and the ZIP agree.
@@ -683,6 +684,9 @@ async function buildHtmlPackages(params) {
     folderAbs,
     fileBase,
     rendered,
+    // The format's part of each package name; Norsk Tipping's carries the
+    // creative code. Defaults to the format label.
+    fileStemFor = (spec) => spec.label,
     photoBuffer,
     zoom,
     clickUrl,
@@ -739,7 +743,7 @@ async function buildHtmlPackages(params) {
       photoBudget = Math.max(40 * 1024, photoBudget - (zip.length - maxBytes) - 4 * 1024);
     }
 
-    const zipName = html5.creativeZipName(fileBase, spec.label);
+    const zipName = html5.creativeZipName(fileBase, fileStemFor(spec));
     await fsp.writeFile(path.join(htmlDir, zipName), zip);
     out[spec.key] = "html/" + zipName;
 
@@ -1057,6 +1061,11 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const format = ["png", "jpeg", "auto"].includes(b.format) ? b.format : settings.export.format || "png";
     const specBudget = (spec) => budgetFor(settings, spec);
     const baseName = sanitizeFilename(b.filename);
+    // Norsk Tipping's creative code ("F1P0G1T0R0"), appended after the format
+    // in every filename. Anything that is not exactly the five pairs is dropped
+    // rather than sanitised into something a report would misread.
+    const fileTag = productCfg.fileTags ? fileTags.clean(b.fileTag) : "";
+    const fileStemFor = (spec) => fileTags.withCode(formats.fileStem(spec), fileTag);
 
     // "image" = flattened PNG/JPEG. "html" = a Campaign Manager 360 HTML5
     // creative per format, where the headline stays live text.
@@ -1153,7 +1162,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
     const report = [];
     for (const spec of productSpecs) {
       const result = rendered[spec.key];
-      const fname = `${fileBase}-${spec.label}.${result.image.ext}`;
+      const fname = `${fileBase}-${fileStemFor(spec)}.${result.image.ext}`;
       await fsp.writeFile(path.join(folderAbs, fname), result.image.buffer);
       files[spec.key] = fname;
       report.push({
@@ -1178,6 +1187,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
         folderAbs,
         fileBase,
         rendered,
+        fileStemFor,
         photoBuffer: req.file.buffer,
         zoom: imageZoom,
         clickUrl,
@@ -1197,6 +1207,7 @@ app.post("/api/generate", withMulter(uploadImage), async (req, res) => {
       product,
       filename: baseName,
       fileBase,
+      fileTag,
       timestamp: now.toISOString(),
       headline,
       subtitle,
@@ -1344,9 +1355,13 @@ app.get("/api/history/:id/download", async (req, res) => {
     });
   }
 
-  if (setSpecs.length === 1) {
-    const spec = setSpecs[0];
-    const fname = files[spec.key];
+  // "all" is everything the entry was made with — an entry from before the
+  // ReadPeak 308×380 was retired still has that file, and keeps it.
+  const setKeys = setSpecs.map((spec) => spec.key);
+  const keys = set === "all" ? setKeys.concat(Object.keys(files).filter((key) => !setKeys.includes(key))) : setKeys;
+
+  if (keys.length === 1) {
+    const fname = files[keys[0]];
     const fpath = fname && path.join(folderAbs, fname);
     if (!fname || !(await pathExists(fpath))) {
       return res.status(404).json({ error: "Denne størrelsen finnes ikke for oppføringen" });
@@ -1364,8 +1379,8 @@ app.get("/api/history/:id/download", async (req, res) => {
     else res.destroy();
   });
   archive.pipe(res);
-  for (const spec of setSpecs) {
-    const fname = files[spec.key];
+  for (const key of keys) {
+    const fname = files[key];
     if (fname && (await pathExists(path.join(folderAbs, fname)))) {
       archive.file(path.join(folderAbs, fname), { name: fname });
     }

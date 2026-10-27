@@ -13,7 +13,9 @@
 })(typeof window !== "undefined" ? window : this, function () {
   "use strict";
 
-  var MAX_LENGTH = 60;
+  // Room for a campaign name, a week, a placement and Norsk Tipping's
+  // creative code ("vikinglotto-torsdaguke44-kampanje-...") without cutting it.
+  var MAX_LENGTH = 100;
   // A filename from a headline is cut at a word below this (see nameFromHeadline).
   var NAME_FROM_HEADLINE_MAX = 48;
 
@@ -44,7 +46,7 @@
   /**
    * A filename from a headline, cut at a word rather than mid-word: «Denne
    * overskriften er altfor lang …» → "denne-overskriften-er-altfor-lang", not
-   * "…-fordi-d" where the 60-character limit happened to fall.
+   * "…-fordi-d" where the length limit happened to fall.
    */
   function nameFromHeadline(headline, sanitize) {
     var full = (sanitize || sanitizeFilename)(headline);
@@ -74,7 +76,7 @@
       var base = r.filename ? sanitizeFilename(r.filename) : nameFromHeadline(String(r.headline || ""));
       if (base === "banner" && !r.filename) base = "banner-" + (i + 1);
       var unique = base;
-      for (var n = 2; used[unique]; n++) unique = (base.slice(0, 55) + "-" + n).replace(/-+/g, "-");
+      for (var n = 2; used[unique]; n++) unique = (base.slice(0, MAX_LENGTH - 5) + "-" + n).replace(/-+/g, "-");
       used[unique] = true;
       return unique;
     });

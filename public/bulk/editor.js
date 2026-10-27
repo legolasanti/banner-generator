@@ -132,7 +132,7 @@
       dom.weight.appendChild(b);
     });
 
-    dom.filename = h("input.bk-input", { type: "text", maxlength: 60, placeholder: "lages fra overskriften" });
+    dom.filename = h("input.bk-input", { type: "text", maxlength: 100, placeholder: "lages fra overskriften" });
     dom.filename.addEventListener("input", function () { store.updateRow(current, { filename: dom.filename.value.trim() }, { touch: true }); });
     dom.fileOut = h("span.field__hint.bk-ed__fileout");
     dom.click = h("input.bk-input", { type: "url", placeholder: "https://… (bare for HTML5)", spellcheck: "false" });

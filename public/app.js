@@ -31,6 +31,8 @@
 
   // The product registry, shared verbatim with the server (assets/formats.js).
   const F = window.BannerFormats;
+  // Norsk Tipping's creative code at the end of the filename (assets/filetags.js).
+  const TAGS = window.BannerFileTags;
 
   const state = {
     // Which product tab is open. Decides the formats, the visible fields and
@@ -70,6 +72,9 @@
     lastBlobUrl: null,
     outputType: "image", // "image" (PNG/JPEG) | "html" (Campaign Manager 360)
     showVinnerOnNewsgrid: false, // off by default — only turned on when fronting a jackpot
+    // The Kreativkode answers, { F: true, P: false, … }; unanswered = missing.
+    // T is never stored: it is measured from the headline.
+    tags: {},
   };
 
   // ---- product helpers -----------------------------------------------------
@@ -244,6 +249,10 @@
     accentHex: $("#accentHex"),
     filename: $("#filename"),
     filenamePreview: $("#filenamePreview"),
+    tagQuestions: $("#tagQuestions"),
+    tagList: $("#tagList"),
+    tagCode: $("#tagCode"),
+    tagNote: $("#tagNote"),
 
     form: $("#bannerForm"),
     downloadSet: $("#downloadSet"),
@@ -291,14 +300,9 @@
   };
 
   // -------- helpers ---------------------------------------------------------
-  function sanitizeFilename(name) {
-    let s = String(name || "").trim().toLowerCase();
-    s = s.replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a");
-    s = s.normalize("NFKD").replace(/[̀-ͯ]/g, "");
-    s = s.replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    s = s.replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).replace(/-+$/g, "");
-    return s || "banner";
-  }
+  // The server's own rule (bulk/names.js), so the preview never promises a
+  // name the download does not get.
+  const sanitizeFilename = window.BULK_NAMES.sanitizeFilename;
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + " B";
@@ -551,6 +555,9 @@
     // An even grid, never a ragged wrap: up to four choices share one row;
     // with more (Houseads' "Alle 6" + six sizes) "Alle" gets the top row and
     // the sizes sit three by three under it.
+    // One package is no choice at all (the Nyhetsgrid tab): no chooser.
+    const field = el.downloadSet.closest(".field");
+    if (field) field.hidden = sets.length < 2;
     el.downloadSet.classList.toggle("is-many", sets.length > 4);
     el.downloadSet.style.setProperty("--cols", sets.length > 4 ? 3 : sets.length);
     sets.forEach((set) => {
@@ -581,11 +588,17 @@
     });
   }
 
-  /** Show only the fields this product actually uses. */
+  /**
+   * Show only the fields this product actually uses: data-when names the
+   * products, data-field names a field from the product's `fields` in formats.js.
+   */
   function applyFieldVisibility() {
     $$("[data-when]").forEach((node) => {
       const products = node.dataset.when.split(/\s+/);
       node.classList.toggle("is-off", products.indexOf(state.product) === -1);
+    });
+    $$("[data-field]").forEach((node) => {
+      node.classList.toggle("is-off", !F.hasField(state.product, node.dataset.field));
     });
   }
 
@@ -614,8 +627,8 @@
   // The line under the product name at the top of the form: what this
   // product is for, so nobody has to guess which tab they need.
   const PRODUCT_INTRO = {
-    norsktipping: "Spillbannere i 4 formater. Vinnersjanse, 18+-merke og «Annonse» legges på automatisk.",
-    readpeak: "Native-annonser for alle annonsører, i ReadPeak 308×380 og Nyhetsgrid 190×190.",
+    norsktipping: "Spillbannere i 3 formater. Vinnersjanse, 18+-merke og «Annonse» legges på automatisk.",
+    readpeak: "Forsidens nyhetsgrid for alle annonsører: bilde og overskrift i 190×190.",
     houseads: "Egne annonser for abc shopping i 6 formater.",
   };
 
@@ -770,6 +783,7 @@
 
     // Download
     el.filename.value = "";
+    state.tags = {};
     el.clickUrl.value = "";
     state.downloadSets = {};
     state.outputType = "image";
@@ -954,24 +968,151 @@
     el.headlineCount.textContent = el.headline.value.length + " / 120";
     el.subtitleCount.textContent = el.subtitle.value.length + " / 120";
   }
+  // lib/html5.js creativeZipName: DV360 refuses package names of 50+
+  // characters, so the user's part is shortened and the format part kept.
+  const MAX_ZIP_NAME = 49;
+
+  /** The code the files get right now: "F1P0G1T0R0", or "" while incomplete. */
+  function currentFileTag() {
+    return productCfg().fileTags ? TAGS.code(state.tags, el.headline.value) : "";
+  }
+
+  /**
+   * "→ euro-fredaguke44-desktop_F1P0G1T0R0.png", shown against the product's
+   * first format — every file in the package is named the same way, only the
+   * format part differs. The code is set apart so it reads as one unit; while
+   * questions are open it shows as a draft ("_F?P1G?T1R?") in a quieter tone.
+   */
   function updateFilenamePreview() {
+    updateTagSummary();
     const v = el.filename.value.trim();
-    if (!v) {
-      el.filenamePreview.textContent = "";
-      return;
-    }
+    el.filenamePreview.textContent = "";
+    if (!v) return;
     const ts = state.settings.export.includeTimestampInFilename ? "-{tidsstempel}" : "";
-    // Shown against the product's first format — every file in the package is
-    // named the same way, only the format label differs.
-    const base = sanitizeFilename(v) + ts + "-" + productSpecs()[0].label;
-    if (state.outputType === "html") {
-      el.filenamePreview.textContent = "→ " + base + ".zip";
-      return;
-    }
+    const stem = F.fileStem(productSpecs()[0]);
+    const tagged = !!productCfg().fileTags;
+    const tag = tagged ? TAGS.code(state.tags, el.headline.value) || TAGS.draft(state.tags, el.headline.value) : "";
+    const tail = tag ? "_" + tag : "";
     // "auto" — and any format that has to give way to the size limit — is
     // decided at render time, so show both possibilities rather than lie.
-    const ext = state.format === "jpeg" ? "jpg" : state.format === "auto" ? "png/jpg" : "png";
-    el.filenamePreview.textContent = "→ " + base + "." + ext;
+    const ext =
+      state.outputType === "html" ? "zip" : state.format === "jpeg" ? "jpg" : state.format === "auto" ? "png/jpg" : "png";
+    let head = sanitizeFilename(v) + ts;
+    if (state.outputType === "html") {
+      const room = MAX_ZIP_NAME - ("-" + stem + tail + ".zip").length;
+      if (head.length > room) head = head.slice(0, Math.max(1, room)).replace(/-+$/, "");
+    }
+
+    const name = document.createElement("span");
+    name.className = "fname__base";
+    name.textContent = head + "-" + stem;
+    el.filenamePreview.append("→ ", name);
+    if (tail) {
+      const code = document.createElement("span");
+      code.className = "fname__code" + (TAGS.code(state.tags, el.headline.value) ? "" : " is-draft");
+      code.textContent = tail;
+      el.filenamePreview.appendChild(code);
+    }
+    el.filenamePreview.append("." + ext);
+  }
+
+  // -------- Kreativkode -----------------------------------------------------
+  /**
+   * One row per question in assets/filetags.js: a letter, the question, and
+   * Ja/Nei. T is measured from the headline, so its row shows the result and
+   * the character count instead of buttons.
+   */
+  function buildTagQuestions() {
+    el.tagList.innerHTML = "";
+    TAGS.QUESTIONS.forEach((q) => {
+      const row = document.createElement("div");
+      row.className = "tagq__row";
+      row.dataset.q = q.id;
+
+      const key = document.createElement("span");
+      key.className = "tagq__key";
+      key.textContent = q.id;
+      key.setAttribute("aria-hidden", "true");
+
+      const text = document.createElement("span");
+      text.className = "tagq__text";
+      text.id = "tagq-" + q.id;
+      const title = document.createElement("span");
+      title.className = "tagq__title";
+      title.textContent = q.title;
+      const ask = document.createElement("span");
+      ask.className = "tagq__ask";
+      ask.textContent = q.question + (q.example ? " F.eks. «" + q.example + "»" : "");
+      text.append(title, ask);
+      row.append(key, text);
+
+      if (q.auto) {
+        const auto = document.createElement("span");
+        auto.className = "tagq__auto";
+        auto.setAttribute("aria-labelledby", text.id);
+        row.appendChild(auto);
+      } else {
+        const group = document.createElement("div");
+        group.className = "segmented tagq__seg";
+        group.setAttribute("role", "radiogroup");
+        group.setAttribute("aria-labelledby", text.id);
+        [["1", "Ja"], ["0", "Nei"]].forEach(([val, label]) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "seg";
+          btn.dataset.val = val;
+          btn.setAttribute("role", "radio");
+          btn.textContent = label;
+          btn.addEventListener("click", () => {
+            // A second click on the chosen answer takes it back — a mis-tap
+            // should not leave a wrong code in the report.
+            const answer = val === "1";
+            state.tags = Object.assign({}, state.tags, { [q.id]: state.tags[q.id] === answer ? null : answer });
+            updateFilenamePreview();
+          });
+          group.appendChild(btn);
+        });
+        row.appendChild(group);
+      }
+      el.tagList.appendChild(row);
+    });
+  }
+
+  /** Reflect the answers in the rows, the code chip and the note under them. */
+  function updateTagSummary() {
+    if (!el.tagList) return;
+    const headline = el.headline.value;
+    const answers = TAGS.resolve(state.tags, headline);
+    $$(".tagq__row", el.tagList).forEach((row) => {
+      const v = answers[row.dataset.q];
+      row.classList.toggle("is-answered", v !== null);
+      $$(".seg", row).forEach((btn) => {
+        const on = v !== null && (btn.dataset.val === "1") === v;
+        btn.classList.toggle("is-active", on);
+        btn.setAttribute("aria-checked", on ? "true" : "false");
+      });
+      const auto = $(".tagq__auto", row);
+      if (auto) {
+        const n = TAGS.textLength(headline);
+        auto.textContent = n ? (v ? "Ja" : "Nei") + " · " + n + " tegn" : "Skriv overskrift";
+        auto.classList.toggle("is-empty", !n);
+      }
+    });
+
+    const code = TAGS.code(state.tags, headline);
+    el.tagCode.textContent = code || TAGS.draft(state.tags, headline);
+    el.tagCode.classList.toggle("is-done", !!code);
+    const open = TAGS.QUESTIONS.filter((q) => answers[q.id] === null);
+    if (code) {
+      el.tagNote.textContent = "Koden står i navnet på alle filene i pakken.";
+    } else if (open.length === 1 && open[0].auto) {
+      el.tagNote.textContent = "Skriv en overskrift, så måles T automatisk.";
+    } else {
+      const left = open.filter((q) => !q.auto).length;
+      el.tagNote.textContent =
+        "Svar på " + (left === 1 ? "ett spørsmål til" : left + " spørsmål til") + ", så kommer koden i filnavnet.";
+    }
+    el.tagNote.classList.toggle("is-done", !!code);
   }
 
   /** The KB ceiling one format is held to: its own, or the default. 0 = off. */
@@ -1051,6 +1192,8 @@
         updateCounters();
         renderPreviews();
         scheduleAutoFit();
+        // T in the creative code is measured from the headline.
+        if (productCfg().fileTags) updateFilenamePreview();
       });
       el.subtitle.addEventListener(ev, () => { updateCounters(); renderPreviews(); });
       el.brandLabel.addEventListener(ev, () => {
@@ -1346,6 +1489,7 @@
     fd.append("resolution", state.resolution);
     fd.append("format", state.format);
     fd.append("filename", el.filename.value);
+    fd.append("fileTag", currentFileTag());
     fd.append("jpegQuality", state.settings.export.jpegQuality);
     fd.append("downloadSet", downloadSet);
     fd.append("outputType", outputType);
@@ -1993,6 +2137,7 @@
     initUpload();
     initDrag();
     initFields();
+    buildTagQuestions();
     initAppearance();
     initAdvanced();
     initOutputType();

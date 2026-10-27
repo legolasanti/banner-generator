@@ -48,8 +48,8 @@
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
         </button>
         <span class="tabs__sep" aria-hidden="true"></span>
-        <button class="tab" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="Norsk Tipping-bannere i 4 formater, med vinnersjanse og 18+-merke">Norsk Tipping</button>
-        <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ReadPeak-annonser for alle annonsører: merkevare, ingress og «Les mer»">ReadPeak</button>
+        <button class="tab" data-tab="norsktipping" id="tab-norsktipping" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="Norsk Tipping-bannere i 3 formater, med vinnersjanse og 18+-merke">Norsk Tipping</button>
+        <button class="tab" data-tab="readpeak" id="tab-readpeak" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="Nyhetsgrid 190×190 på forsiden, for alle annonsører">Nyhetsgrid</button>
         <button class="tab" data-tab="houseads" id="tab-houseads" role="tab" aria-selected="false" aria-controls="view-new" tabindex="-1" title="ABC Nyheters egne annonser i 6 formater, og Artikkelpuff 980×600 med tre saker">Houseads</button>
         <span class="tabs__sep" aria-hidden="true"></span>
         <button class="tab" data-tab="live" id="tab-live" role="tab" aria-selected="false" aria-controls="view-live" tabindex="-1" title="Dynamiske HTML5-annonser for Norsk Tipping: dagens kamper fra et regneark">NT Live</button>
@@ -95,20 +95,20 @@
             <div class="home__grid home__grid--3">
               <a class="tool" href="#/norsktipping">
                 <span class="tool__formats" aria-hidden="true">
-                  <i style="--w:308;--h:380"></i><i style="--w:580;--h:500"></i><i style="--w:320;--h:400"></i><i style="--w:190;--h:190"></i>
+                  <i style="--w:580;--h:500"></i><i style="--w:320;--h:400"></i><i style="--w:190;--h:190"></i>
                 </span>
                 <span class="tool__title">Norsk Tipping</span>
                 <span class="tool__desc">Spillbannere med vinnersjanse, 18+-merke og «Annonse» lagt på automatisk.</span>
-                <span class="tool__meta"><span class="badge">4 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__meta"><span class="badge">3 formater</span><span class="badge">Bilde · HTML5</span></span>
                 <span class="tool__go">Lag bannere <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
               </a>
               <a class="tool" href="#/readpeak">
                 <span class="tool__formats" aria-hidden="true">
-                  <i style="--w:308;--h:380"></i><i style="--w:190;--h:190"></i>
+                  <i style="--w:190;--h:190"></i>
                 </span>
-                <span class="tool__title">ReadPeak</span>
-                <span class="tool__desc">Native-annonser for alle annonsører, med merkevare, ingress og «Les mer».</span>
-                <span class="tool__meta"><span class="badge">2 formater</span><span class="badge">Bilde · HTML5</span></span>
+                <span class="tool__title">Nyhetsgrid</span>
+                <span class="tool__desc">Forsidens nyhetsgrid for alle annonsører: bilde og overskrift i 190×190.</span>
+                <span class="tool__meta"><span class="badge">1 format</span><span class="badge">Bilde · HTML5</span></span>
                 <span class="tool__go">Lag annonse <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
               </a>
               <a class="tool" href="#/houseads">
@@ -146,7 +146,7 @@
                 </span>
                 <span class="tool__body">
                   <span class="tool__title">Bulk</span>
-                  <span class="tool__desc">Mange bannere på én gang: én rad i regnearket blir én banner i alle størrelser. Houseads, ReadPeak og Norsk Tipping.</span>
+                  <span class="tool__desc">Mange bannere på én gang: én rad i regnearket blir én banner i alle størrelser. Houseads, Nyhetsgrid og Norsk Tipping.</span>
                   <span class="tool__meta"><span class="badge">Regneark → ZIP</span><span class="badge">Bilde · HTML5</span></span>
                 </span>
                 <span class="tool__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
@@ -296,7 +296,10 @@
                 <textarea id="headline" rows="3" maxlength="120" placeholder="F.eks. Jonny vant 42 millioner – slik har han brukt pengene"></textarea>
               </div>
 
-              <div class="field" data-when="norsktipping readpeak">
+              <!-- Ingress, Merkevare and «Les mer» are shown by formats.js
+                   `fields` (data-field); they belonged to the retired ReadPeak
+                   308×380, so no product offers them today. -->
+              <div class="field" data-field="subtitle">
                 <label class="field__label" for="subtitle">
                   Ingress <span class="field__hint" id="subtitleHint">vises kun på ReadPeak</span>
                   <span class="counter" id="subtitleCount">0 / 120</span>
@@ -304,16 +307,14 @@
                 <textarea id="subtitle" rows="2" maxlength="120" placeholder="F.eks. Slik har han brukt pengene"></textarea>
               </div>
 
-              <div class="field" data-when="norsktipping readpeak">
+              <div class="field" data-field="brandLabel">
                 <label class="field__label" for="brandLabel">
                   Merkevare <span class="field__hint" id="brandLabelHint">ReadPeak-etikett</span>
                 </label>
                 <input type="text" id="brandLabel" maxlength="40" />
               </div>
 
-              <!-- ReadPeak only: the placement is sold to any advertiser, and
-                   their call to action is rarely the literal words "Les mer". -->
-              <div class="field" data-when="readpeak">
+              <div class="field" data-field="ctaText">
                 <label class="field__label" for="ctaText">
                   «Les mer»-tekst <span class="field__hint">tom = ingen oppfordring</span>
                 </label>
@@ -338,7 +339,7 @@
               <!-- 3 · Utseende --------------------------------------------- -->
               <section class="fgroup">
                 <h3 class="fgroup__title"><span class="fgroup__step">3</span>Utseende</h3>
-              <div class="field" data-when="norsktipping readpeak">
+              <div class="field" data-field="lesMer">
                 <label class="field__label">Les mer-stil &amp; farge <span class="field__hint">ReadPeak</span></label>
                 <div class="appearance">
                   <div class="segmented" id="lesMerStyle" role="group" aria-label="Les mer-stil">
@@ -372,13 +373,13 @@
                 <div class="adv" id="advPanel" hidden>
                   <!-- One slider per format of the selected product, built by
                        app.js from formats.js — the format list is not the same
-                       for Norsk Tipping, ReadPeak and Houseads. -->
+                       for Norsk Tipping, Nyhetsgrid and Houseads. -->
                   <div class="adv__group">
                     <span class="adv__label">Tekststørrelse <span class="field__hint">per format</span></span>
                     <div class="sizectrls" id="sizeCtrls"></div>
                   </div>
 
-                  <div class="adv__group" data-when="norsktipping readpeak">
+                  <div class="adv__group" data-field="lesMer">
                     <span class="adv__label">Les mer-størrelse</span>
                     <div class="slider">
                       <span class="slider__name">Punkt</span>
@@ -415,9 +416,21 @@
 
               <div class="field">
                 <label class="field__label" for="filename">Filnavn <span class="field__hint">uten filtype</span></label>
-                <input type="text" id="filename" maxlength="60" placeholder="rekdal-vikinglotto" />
-                <span class="field__preview" id="filenamePreview"></span>
+                <input type="text" id="filename" maxlength="100" placeholder="euro-fredaguke44" spellcheck="false" autocomplete="off" />
+                <span class="field__preview fname" id="filenamePreview" aria-live="polite"></span>
               </div>
+
+              <!-- Norsk Tipping: five yes/no answers that end every filename
+                   (_F1P0G1T0R0), so Ad Manager reports split on them. The
+                   rows are built by app.js from assets/filetags.js. -->
+              <fieldset class="field tagq" data-when="norsktipping" id="tagQuestions">
+                <legend class="tagq__head">
+                  <span class="field__label">Kreativkode <span class="field__hint">legges til i filnavnet</span></span>
+                  <span class="tagq__code" id="tagCode" aria-hidden="true"></span>
+                </legend>
+                <div class="tagq__list" id="tagList"></div>
+                <p class="tagq__note" id="tagNote"></p>
+              </fieldset>
 
               <!-- Image vs HTML5 decides what the whole download is, so it gets
                    two proper cards rather than a cramped toggle. The buttons
@@ -468,7 +481,7 @@
               </div>
               <button type="submit" class="btn-generate" id="generateBtn">
                 <span class="btn-generate__spinner" aria-hidden="true"></span>
-                <span class="btn-generate__label">Generer bannere · 4 størrelser</span>
+                <span class="btn-generate__label">Generer bannere · 3 størrelser</span>
               </button>
               <p class="form__hint" id="generateHint">Last opp et bilde eller hent det fra en lenke først.</p>
               <div class="result" id="result" hidden>
@@ -630,7 +643,7 @@
             <div class="limits" id="formatLimits"></div>
             <span class="field__preview">
               Skriv KB, eller 0 for ingen grense på det formatet. Størrelsen gjelder
-              plasseringen, så ReadPeak 308×380 deler grense mellom Norsk Tipping og ReadPeak.
+              plasseringen, så Nyhetsgrid 190×190 deler grense mellom Norsk Tipping og andre annonsører.
             </span>
           </div>
           <div class="field">
@@ -660,6 +673,7 @@
 
 
     <script src="assets/formats.js"></script>
+    <script src="assets/filetags.js"></script>
     <script src="assets/banner.js"></script>
     <script src="assets/autofit.js"></script>
     <!-- Wallpaper editor: shared model/renderer first (the server uses the

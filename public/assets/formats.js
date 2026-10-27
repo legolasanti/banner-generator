@@ -2,10 +2,12 @@
    formats.js — SINGLE SOURCE OF TRUTH for what this tool can produce.
 
    Three products, each with its own set of banner formats:
-     • norsktipping — the original four Norsk Tipping placements
-     • readpeak     — the same two ReadPeak placements sold to any advertiser,
-                      so without the 18+/Hjelpelinjen mark and without the
-                      Vinnersjanse strip (both are Norsk Tipping obligations)
+     • norsktipping — Norsk Tipping's Desktop, Mobil and Nyhetsgrid placements
+     • readpeak     — the Nyhetsgrid placement sold to any advertiser (shown
+                      as «Nyhetsgrid»; the id stays "readpeak" so history,
+                      settings and Bulk sheets keep working), without the
+                      18+/Hjelpelinjen mark and without the Vinnersjanse strip
+                      (both are Norsk Tipping obligations)
      • houseads     — abc shopping's own house formats, Noto Serif on white,
                       ANNONSE + logo across the top
 
@@ -29,40 +31,32 @@
   var TEMPLATE = "banner.html";
 
   // ---- Norsk Tipping -----------------------------------------------------
-  var NT_READPEAK = {
-    key: "readpeak", type: "readpeak", file: TEMPLATE,
-    width: 308, height: 380, label: "readpeak-308x380",
-    media: { width: 308, height: 160 },
-    name: "ReadPeak",
-  };
+  // `fileStem` is what the downloaded file is called after the user's name:
+  // "euro-fredaguke44-desktop_F1P0G1T0R0.png". Norsk Tipping's reports are
+  // read by placement, and the size only made the names longer. `label`
+  // stays the format's identity for settings (size limits) and history.
   var NT_DESKTOP = {
     key: "desktop", type: "desktop", file: TEMPLATE,
-    width: 580, height: 500, label: "desktop-580x500",
+    width: 580, height: 500, label: "desktop-580x500", fileStem: "desktop",
     media: { width: 580, height: 355 },
     name: "Desktop",
   };
   var NT_MOBILE = {
     key: "mobile", type: "mobile", file: TEMPLATE,
-    width: 320, height: 400, label: "mobile-320x400",
+    width: 320, height: 400, label: "mobile-320x400", fileStem: "mobile",
     media: { width: 320, height: 275 },
     name: "Mobil",
   };
   var NT_NEWSGRID = {
     key: "newsgrid", type: "newsgrid", file: TEMPLATE,
-    width: 190, height: 190, label: "newsgrid-190x190",
+    width: 190, height: 190, label: "newsgrid-190x190", fileStem: "newsgrid",
     media: { width: 190, height: 107 },
     name: "Nyhetsgrid", hint: "forsiden",
   };
 
-  // ---- ReadPeak (generic advertiser) -------------------------------------
-  // Deliberately the same geometry as the Norsk Tipping pair — the placements
-  // are identical, only the regulated furniture comes off.
-  var RP_READPEAK = {
-    key: "readpeak", type: "readpeak", file: TEMPLATE,
-    width: 308, height: 380, label: "readpeak-308x380",
-    media: { width: 308, height: 160 },
-    name: "ReadPeak",
-  };
+  // ---- Nyhetsgrid (generic advertiser) -----------------------------------
+  // Deliberately the same geometry as Norsk Tipping's — the placement is
+  // identical, only the regulated furniture comes off.
   var RP_NEWSGRID = {
     key: "newsgrid", type: "newsgrid", file: TEMPLATE,
     width: 190, height: 190, label: "newsgrid-190x190",
@@ -150,18 +144,22 @@
       label: "Norsk Tipping",
       // Which typeface the HTML5 packages have to carry for this product.
       fontPrefix: "arimo-",
-      specs: [NT_READPEAK, NT_DESKTOP, NT_MOBILE, NT_NEWSGRID],
+      specs: [NT_DESKTOP, NT_MOBILE, NT_NEWSGRID],
       // Regulated furniture: the 18+/Hjelpelinjen mark and the Vinnersjanse
       // strip only belong on Norsk Tipping's own placements.
       ageBadge: true,
       vinnersjanse: true,
-      // Fields the form offers for this product.
-      fields: ["subtitle", "brandLabel", "gameType", "lesMer"],
+      // Fields the form offers for this product. Ingress, Merkevare and «Les
+      // mer» belonged to the ReadPeak 308×380 only, which is no longer sold.
+      fields: ["gameType"],
+      // The five yes/no questions whose answers end the filename
+      // (assets/filetags.js), so Ad Manager reports can be split on them.
+      fileTags: true,
       brandLabelDefault: "NORSK TIPPING",
       // Download packages, in the order they appear in the UI.
       sets: [
-        { id: "all", label: "Alle 4", keys: ["readpeak", "desktop", "mobile", "newsgrid"], count: "4 størrelser" },
-        { id: "core", label: "Kun de 3 første", keys: ["readpeak", "desktop", "mobile"], count: "3 størrelser" },
+        { id: "all", label: "Alle 3", keys: ["desktop", "mobile", "newsgrid"], count: "3 størrelser" },
+        { id: "core", label: "Desktop + Mobil", keys: ["desktop", "mobile"], count: "2 størrelser" },
         { id: "newsgrid", label: "Kun Nyhetsgrid 190×190", keys: ["newsgrid"], count: "1 størrelse (190×190)" },
       ],
       defaultSet: "all",
@@ -169,18 +167,15 @@
 
     readpeak: {
       id: "readpeak",
-      label: "ReadPeak",
+      label: "Nyhetsgrid",
       fontPrefix: "arimo-",
-      specs: [RP_READPEAK, RP_NEWSGRID],
+      specs: [RP_NEWSGRID],
       ageBadge: false,
       vinnersjanse: false,
-      fields: ["subtitle", "brandLabel", "lesMer", "ctaText"],
+      // Image and headline only: the 190×190 has no room for anything else.
+      fields: [],
       brandLabelDefault: "",
-      sets: [
-        { id: "all", label: "Begge", keys: ["readpeak", "newsgrid"], count: "2 størrelser" },
-        { id: "readpeak", label: "Kun ReadPeak 308×380", keys: ["readpeak"], count: "1 størrelse (308×380)" },
-        { id: "newsgrid", label: "Kun Nyhetsgrid 190×190", keys: ["newsgrid"], count: "1 størrelse (190×190)" },
-      ],
+      sets: [{ id: "all", label: "Nyhetsgrid 190×190", keys: ["newsgrid"], count: "1 størrelse (190×190)" }],
       defaultSet: "all",
     },
 
@@ -272,6 +267,11 @@
     return getProduct(productId).fields.indexOf(field) !== -1;
   }
 
+  /** The format's part of a filename: "desktop" for Norsk Tipping, else the label. */
+  function fileStem(spec) {
+    return (spec && (spec.fileStem || spec.label)) || "banner";
+  }
+
   return {
     PRODUCTS: PRODUCTS,
     ORDER: ORDER,
@@ -282,6 +282,7 @@
     findSet: findSet,
     specByKey: specByKey,
     hasField: hasField,
+    fileStem: fileStem,
     autoFitRule: autoFitRule,
   };
 });

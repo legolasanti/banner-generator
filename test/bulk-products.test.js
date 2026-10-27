@@ -166,7 +166,7 @@ test("a ReadPeak request keeps its copy and fills only what the form would", () 
     SETTINGS
   );
   assert.equal(req.product, "readpeak");
-  assert.deepEqual(req.specs.map((s) => s.key), ["readpeak", "newsgrid"]);
+  assert.deepEqual(req.specs.map((s) => s.key), ["newsgrid"], "the ReadPeak 308×380 is retired");
   assert.equal(req.name, "readpeak-bulk");
   const [a, b] = req.rows;
   assert.equal(a.subtitle, "Mer tekst");
@@ -183,7 +183,7 @@ test("a Norsk Tipping request: fixed «Les mer», NORSK TIPPING by default, odds
   const req = service.parseRequest(
     {
       rows: [{ headline: "A", imageId: IMAGE_ID, ctaText: "Kjøp", vinnersjanse: "Vinnersjanse 1:61", subtitle: "x".repeat(300) }],
-      options: { product: "norsktipping", formats: ["readpeak", "mobile"], showVinnerOnNewsgrid: true },
+      options: { product: "norsktipping", formats: ["desktop", "mobile"], showVinnerOnNewsgrid: true },
     },
     SETTINGS
   );
@@ -258,7 +258,7 @@ test("the report adds the Ingress for ReadPeak and Norsk Tipping; Historikk name
   assert.match(rp, /2;a;Hei;Ingress;readpeak-308x380;100 %/);
   const house = reportCsv({ product: "houseads", rows }, {}, false);
   assert.ok(!/Ingress/.test(house));
-  assert.equal(bulkHistory.headlineFor(4, 2, null, "readpeak"), "ReadPeak · 4 bannere · 2 formater");
+  assert.equal(bulkHistory.headlineFor(4, 2, null, "readpeak"), "Nyhetsgrid · 4 bannere · 2 formater");
   assert.equal(bulkHistory.headlineFor(4, 2, null, "houseads"), "4 bannere · 2 formater");
 });
 
@@ -323,7 +323,7 @@ test("switching product keeps the rows, drops hand-set sizes and takes the new f
   store.setProduct("readpeak");
   assert.equal(state.rows.length, 1);
   assert.deepEqual(state.rows[0].manual, {});
-  assert.deepEqual(state.formats, ["readpeak", "newsgrid"]);
+  assert.deepEqual(state.formats, ["newsgrid"]);
   assert.equal(store.rule(formats.getProduct("readpeak").specs[0]).min, 0.75, "measured from 100 % down to a floor");
 });
 
@@ -347,13 +347,9 @@ test("the page's checks per product", () => {
   const many = issues(row);
   assert.ok(many.some((t) => /^error: Knappeteksten er lengre enn 40/.test(t)));
   assert.ok(many.some((t) => /^error: Ingressen er lengre enn 120/.test(t)));
+  assert.equal(row.level, "error");
   row.ctaText = "Kjøp";
   row.subtitle = "";
-  row.fit = { readpeak: { fits: true, scale: 1, ruleScale: 1, copy: { ctaWraps: true, brandWraps: true } } };
-  const measured = issues(row);
-  assert.ok(measured.includes("error: 308×380: knappeteksten går over to linjer – gjør den kortere"));
-  assert.ok(measured.includes("warn: 308×380: merkevaren går over to linjer"));
-  assert.equal(row.level, "error");
 
   store.setProduct("norsktipping");
   const nt = state.rows[0];

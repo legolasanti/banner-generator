@@ -52,7 +52,7 @@
     },
     readpeak: {
       id: "readpeak",
-      label: "ReadPeak",
+      label: "Nyhetsgrid",
       fields: COMMON.concat(["subtitle", "brandLabel", "ctaText"]),
       // The wording real ReadPeak creatives run; the single tab starts at
       // "Les mer", which reads unfinished on its own.

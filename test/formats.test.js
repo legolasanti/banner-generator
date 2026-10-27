@@ -93,8 +93,13 @@ test("download sets only name formats the product actually has", () => {
 
 test("specsFor narrows to the named set and falls back safely", () => {
   const nt = formats.specsFor("norsktipping", "core").map((s) => s.key);
-  assert.deepEqual(nt, ["readpeak", "desktop", "mobile"]);
+  assert.deepEqual(nt, ["desktop", "mobile"]);
 
+  // The ReadPeak 308×380 is retired: Norsk Tipping keeps three placements, the
+  // advertiser tab (still id "readpeak") only the Nyhetsgrid.
+  assert.deepEqual(formats.getProduct("norsktipping").specs.map((s) => s.key), ["desktop", "mobile", "newsgrid"]);
+  assert.deepEqual(formats.specsFor("readpeak").map((s) => s.key), ["newsgrid"]);
+  assert.equal(formats.getProduct("readpeak").label, "Nyhetsgrid");
   assert.equal(formats.specsFor("readpeak", "newsgrid").length, 1);
   // No set id means the product's whole format list.
   for (const id of formats.ORDER) {
